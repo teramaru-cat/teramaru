@@ -51,7 +51,8 @@ export const TARGETS = {
     drops: { item: 'candy', count: 3 },
     stages: [1, 2, 3, 4],
     motion: 'lively',
-    legs: [{ x: -12, y: 0, r: 6 }, { x: 12, y: 0, r: 6 }],
+    legs: [{ x: -15, y: 0, r: 6 }, { x: 15, y: 0, r: 6 }],
+    sway: { x: 14, y: 6, speed: 0.85 }, // 体ごと動く大きさと速さ（lively 用）
     look: { skin: '#f6d0a8', hair: '#3a2a20', hat: 'cap', capColor: '#f0c030', top: '#e05050', bottom: '#3a6ab0', legs: '#f6d0a8', socks: '#f6f2ea', shoes: '#40a0e0', garment: 'shorts', child: true },
     wander: 10, // 街でもうろうろする（ドット/秒）
     onedari: { base: 0.20, perTp: 0.008 },

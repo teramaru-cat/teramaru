@@ -1,7 +1,8 @@
 // 小さな演出（ハート・数字・ご飯が飛んでいく など）
 // 1つ1つが update(dt) → まだ続くなら true、draw(ctx) を持つ。
 
-import { drawText } from '../core/text.js';
+import { drawText, textWidth } from '../core/text.js';
+import { drawDigits, digitsWidth } from '../art/digits.js';
 import { SPR } from '../art/sprites.js';
 import { UI } from '../art/palette.js';
 
@@ -21,7 +22,19 @@ export class PopText {
   update(dt) { this.t += dt; this.y -= 14 * dt; return this.t < this.life; }
   draw(ctx) {
     ctx.globalAlpha = Math.min(1, (this.life - this.t) * 3);
-    drawText(ctx, this.text, Math.round(this.x), Math.round(this.y), { font: 'small', color: this.color, outline: UI.white, align: 'center' });
+    // 先頭の数字（+2 など）はデジタル数字、残り（TP など）はドット文字
+    const m = /^([+\-0-9]+)(.*)$/.exec(this.text);
+    const x = Math.round(this.x);
+    const y = Math.round(this.y);
+    if (m) {
+      const w1 = digitsWidth(m[1]);
+      const w2 = m[2] ? textWidth(m[2], 'small') + 1 : 0;
+      const x0 = x - Math.floor((w1 + w2) / 2);
+      drawDigits(ctx, m[1], x0, y, { color: this.color, outline: UI.white });
+      if (m[2]) drawText(ctx, m[2], x0 + w1 + 1, y - 1, { font: 'small', color: this.color, outline: UI.white });
+    } else {
+      drawText(ctx, this.text, x, y, { font: 'small', color: this.color, outline: UI.white, align: 'center' });
+    }
     ctx.globalAlpha = 1;
   }
 }

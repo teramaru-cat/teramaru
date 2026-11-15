@@ -123,8 +123,9 @@ export class RingingScene {
     let bx = 0;
     let by = 0;
     if (def.motion === 'lively') {
-      bx = 20 * Math.sin(t * 1.1);
-      by = 8 * Math.sin(t * 1.7 + 1);
+      const sw = def.sway ?? { x: 20, y: 8, speed: 1 };
+      bx = sw.x * Math.sin(t * 1.1 * sw.speed);
+      by = sw.y * Math.sin(t * 1.7 * sw.speed + 1);
     }
     this.bx = bx;
     this.by = by;
@@ -376,7 +377,7 @@ export class RingingScene {
       else if (f >= 0.5) ctx.drawImage(SPR.heart, 0, 0, 4, 6, x, y, 4, 6);
     }
 
-    this.play.drawCounters(ctx, W - 28 - 60, 4);
+    this.play.drawCounters(ctx, W - 28, 4, true);
     this.pauseBtn.draw(ctx, { pressed: this.pauseBtn.isHeld() });
 
     if (this.phase === 'play' && this.pt < 3.5) {

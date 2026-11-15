@@ -6,6 +6,7 @@ import { drawText } from '../core/text.js';
 import { Button, panel } from '../core/ui.js';
 import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
+import { drawDigits, digitsWidth } from '../art/digits.js';
 import { BAL } from '../data/balance.js';
 import { getTown } from '../game/town.js';
 import { Cat } from '../game/cat.js';
@@ -157,13 +158,20 @@ export class PlayScene {
     if (this.bubble > 0) this.drawBubble(ctx, cx, cy);
   }
 
-  // TP・ご飯の数（てらまりんぐ画面でも使う）
-  drawCounters(ctx, x, y) {
-    panel(ctx, x, y, 60, 16, UI.cream);
-    ctx.drawImage(SPR.heart, x + 4, y + 5);
-    drawText(ctx, String(this.state.tp), x + 13, y + 4, { font: 'small', color: UI.ink });
-    ctx.drawImage(SPR.food.bread, x + 32, y + 6);
-    drawText(ctx, String(this.state.fp), x + 40, y + 4, { font: 'small', color: UI.ink });
+  // TP・ご飯の数（てらまりんぐ画面でも使う）。right=true なら x を右端として並べる
+  drawCounters(ctx, x, y, right = false) {
+    const tp = String(this.state.tp);
+    const fp = String(this.state.fp);
+    const w = 4 + 7 + 3 + digitsWidth(tp) + 8 + 6 + 3 + digitsWidth(fp) + 5;
+    if (right) x -= w;
+    panel(ctx, x, y, w, 16, UI.cream);
+    let cx = x + 4;
+    ctx.drawImage(SPR.heart, cx, y + 5);
+    cx += 10;
+    cx += drawDigits(ctx, tp, cx, y + 5, { color: UI.ink }) + 8;
+    ctx.drawImage(SPR.food.bread, cx, y + 6);
+    cx += 9;
+    drawDigits(ctx, fp, cx, y + 5, { color: UI.ink });
   }
 
   drawProp(ctx, p, cx, cy) {
