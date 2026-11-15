@@ -175,9 +175,59 @@ export function drawGarment(ctx, look, cx, bx) {
 }
 
 // 落とし物（ご飯）の小さい絵
+// てらまりんぐ画面では2倍で描く
 export const FOOD_ROWS = {
-  bread: { rows: ['.oooo.', 'occcco', 'ocwcco', 'occcco', '.oooo.'], pal: { o: INK, c: '#d9a050', w: '#f0d090' } },
-  niboshi: { rows: ['.ooooo.', 'osssseo', '.ooooo.'], pal: { o: INK, s: '#b8c0c8', e: '#2a1d17' } },
-  candy: { rows: ['o.ooo.o', 'oorrroo', 'orwrrro', 'oorrroo', 'o.ooo.o'], pal: { o: INK, r: '#f07890', w: UI.white } },
-  fish: { rows: ['.ooooo.', 'opwpppo', 'opppppo', '.ooooo.'], pal: { o: INK, p: '#f08a6a', w: '#ffd0c0' } },
+  // パン屋さん：切れ目の入ったパン
+  bread: {
+    rows: [
+      '..oooooo..',
+      '.occlcllo.',
+      'occdccdcco',
+      'occcdccdco',
+      'occcccccco',
+      '.obbbbbbo.',
+      '..oooooo..',
+    ],
+    pal: { o: INK, c: '#d9a050', l: '#f0c878', d: '#a8682a', b: '#b87a38' },
+  },
+  // おばあちゃん：にぼし
+  niboshi: {
+    rows: [
+      '..oooooo..oo',
+      '.oessssssoso',
+      'osssssssssso',
+      '.ollllllooso',
+      '..oooooo..oo',
+    ],
+    pal: { o: INK, s: '#a8b0bc', l: '#d4dae2', e: '#2a1d17' },
+  },
+  // 子ども：包み紙のあめ
+  candy: {
+    rows: [
+      'oo..ooo..oo',
+      'oyoorrrooyo',
+      'oyyrwrrryyo',
+      'oyoorrrooyo',
+      'oo..ooo..oo',
+    ],
+    pal: { o: INK, r: '#f07890', w: UI.white, y: '#f0d040' },
+  },
+  // 魚屋さん：鮭の切り身
+  fish: {
+    rows: [
+      '.oooooooo.',
+      'oppwpppppo',
+      'opppwppppo',
+      'oppppwpppo',
+      'osssssssso',
+      '.oooooooo.',
+    ],
+    pal: { o: INK, p: '#f08a6a', w: '#ffd8c8', s: '#8a929c' },
+  },
+};
+
+// HUD の「ご飯」アイコン（おにぎり）
+export const FOOD_ICON = {
+  rows: ['..ooo..', '.owwwo.', 'owwwwwo', 'owbbbwo', 'obbbbbo', '.ooooo.'],
+  pal: { o: INK, w: '#fbf8f0', b: '#2f3a30' },
 };

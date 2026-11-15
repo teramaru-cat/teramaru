@@ -169,7 +169,7 @@ export class PlayScene {
     ctx.drawImage(SPR.heart, cx, y + 5);
     cx += 10;
     cx += drawDigits(ctx, tp, cx, y + 5, { color: UI.ink }) + 8;
-    ctx.drawImage(SPR.food.bread, cx, y + 6);
+    ctx.drawImage(SPR.foodIcon, cx, y + 5);
     cx += 9;
     drawDigits(ctx, fp, cx, y + 5, { color: UI.ink });
   }

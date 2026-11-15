@@ -18,6 +18,8 @@ const DIGIT = {
 };
 
 function dots(ch) {
+  // 1 は右寄せのセグメントだと「：」に見えるので、真ん中に縦棒
+  if (ch === '1') return [[1, 1], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5], [2, 6]];
   if (DIGIT[ch]) return [...DIGIT[ch]].flatMap((s) => SEG[s]);
   if (ch === '+') return [[2, 1], [2, 2], [0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [2, 4], [2, 5]];
   if (ch === '-') return SEG.g;

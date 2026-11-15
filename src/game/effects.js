@@ -42,8 +42,8 @@ export class PopText {
 // 飛び出して → ちょっと浮いて → target（てらまる）へ吸い込まれるもの
 // img：絵、getTarget()：吸い込まれ先の位置、onArrive()：届いたとき
 export class Absorb {
-  constructor({ img, x, y, vx, vy, gravity = 0, floor = null, wait = 0.6, getTarget, onArrive }) {
-    Object.assign(this, { img, x, y, vx, vy, gravity, floor, wait, getTarget, onArrive });
+  constructor({ img, x, y, vx, vy, gravity = 0, floor = null, wait = 0.6, scale = 1, getTarget, onArrive }) {
+    Object.assign(this, { img, x, y, vx, vy, gravity, floor, wait, scale, getTarget, onArrive });
     this.t = 0;
     this.z = 0; // 地面からの高さ（ご飯が跳ねる用）
     this.vz = floor !== null ? 70 + Math.random() * 40 : 0;
@@ -79,13 +79,13 @@ export class Absorb {
     return true;
   }
   draw(ctx) {
-    const w = this.img.width;
-    const h = this.img.height;
+    const w = this.img.width * this.scale;
+    const h = this.img.height * this.scale;
     if (this.floor !== null && this.z > 0 && this.t < this.wait) {
       ctx.fillStyle = 'rgba(40,30,20,0.25)';
       ctx.fillRect(Math.round(this.x - w / 2), Math.round(this.y), w, 2);
     }
-    ctx.drawImage(this.img, Math.round(this.x - w / 2), Math.round(this.y - this.z - h));
+    ctx.drawImage(this.img, Math.round(this.x - w / 2), Math.round(this.y - this.z - h), w, h);
   }
 }
 

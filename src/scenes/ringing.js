@@ -237,6 +237,7 @@ export class RingingScene {
         const v = 40 + Math.random() * 50;
         this.fx.add(new Absorb({
           img: SPR.food[drop.item],
+          scale: BAL.ring.zoom,
           x: mid + (Math.random() - 0.5) * 20,
           y: GROUND_Y + 8,
           vx: Math.cos(a) * v,
@@ -302,12 +303,16 @@ export class RingingScene {
     const H = screen.H;
     const Z = BAL.ring.zoom;
     const town = this.play.town;
-    // 地面：街の絵をそのまま拡大
+    // 地面：街の地面だけの絵を拡大（建物は描かない）
     const sw = W / Z;
     const sh = H / Z;
     const sx = Math.round(Math.max(0, Math.min(town.w - sw, this.target.x - this.gx / Z)));
     const sy = Math.round(Math.max(0, Math.min(town.h - sh, this.target.y - GROUND_Y / Z)));
-    ctx.drawImage(town.image, sx, sy, sw, sh, 0, 0, W, H);
+    ctx.drawImage(town.groundImage, sx, sy, sw, sh, 0, 0, W, H);
+    // 人の体の影（ここに立っている感じを出す）
+    const bx = Math.round((this.gx + this.bx) / 2) * 2;
+    ctx.fillStyle = 'rgba(40,30,20,0.18)';
+    for (const [hw, hy] of [[30, -2], [36, 0], [38, 2], [36, 4], [30, 6]]) ctx.fillRect(bx - hw, GROUND_Y + this.by - 4 + hy, hw * 2, 2);
 
     // 足のまわりの輪：回った分だけ点が光る
     for (const L of this.legs) this.drawRing(ctx, L);

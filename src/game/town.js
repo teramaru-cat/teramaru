@@ -135,6 +135,10 @@ export class Town {
         for (let yy = 2; yy < cw.h * TILE - 1; yy += 6) x.fillRect(px + 3, py + yy, cw.w * TILE - 6, 3);
       }
     }
+    // 地面だけの絵（てらまりんぐ画面の床に使う。建物の壁が後ろに見えないように）
+    const [g, gctx] = makeCanvas(this.w, this.h);
+    gctx.drawImage(c, 0, 0);
+    this.groundImage = g;
     // 建物
     for (const b of this.stage.buildings) drawBuilding(x, b);
     return c;
