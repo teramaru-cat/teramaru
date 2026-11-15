@@ -190,16 +190,16 @@ export const FOOD_ROWS = {
     ],
     pal: { o: INK, c: '#d9a050', l: '#f0c878', d: '#a8682a', b: '#b87a38' },
   },
-  // おばあちゃん：にぼし
-  niboshi: {
+  // おばあちゃん：ちくわ
+  chikuwa: {
     rows: [
-      '..oooooo..oo',
-      '.oessssssoso',
-      'osssssssssso',
-      '.ollllllooso',
-      '..oooooo..oo',
+      '.oooooooooo.',
+      'obcbbcbbcowo',
+      'occbccbccoho',
+      'obcbbcbbcowo',
+      '.oooooooooo.',
     ],
-    pal: { o: INK, s: '#a8b0bc', l: '#d4dae2', e: '#2a1d17' },
+    pal: { o: INK, b: '#b06a30', c: '#e8c088', w: '#f4ead0', h: '#7a5030' },
   },
   // 子ども：包み紙のあめ
   candy: {
@@ -212,17 +212,18 @@ export const FOOD_ROWS = {
     ],
     pal: { o: INK, r: '#f07890', w: UI.white, y: '#f0d040' },
   },
-  // 魚屋さん：鮭の切り身
+  // 魚屋さん：おさかな
   fish: {
     rows: [
-      '.oooooooo.',
-      'oppwpppppo',
-      'opppwppppo',
-      'oppppwpppo',
-      'osssssssso',
-      '.oooooooo.',
+      '....oooo....',
+      '..oobbbboo.o',
+      '.oebbbbbbobo',
+      'obbbbbbbbbto',
+      '.ollllllloto',
+      '..oolllloo.o',
+      '....oooo....',
     ],
-    pal: { o: INK, p: '#f08a6a', w: '#ffd8c8', s: '#8a929c' },
+    pal: { o: INK, b: '#5a88b8', l: '#d8e4ee', e: '#fbf8f0', t: '#7aa0c8' },
   },
 };
 

@@ -36,7 +36,7 @@ export const TARGETS = {
     kind: 'human',
     durability: 3,
     tp: 5,
-    drops: { item: 'niboshi', count: 3 },
+    drops: { item: 'chikuwa', count: 3 },
     stages: [1, 2, 3, 4],
     motion: 'still',
     legs: [{ x: -16, y: 0, r: 6 }, { x: 10, y: 0, r: 6 }, { x: 36, y: 8, r: 3, cane: true }],
@@ -75,7 +75,7 @@ export const TARGETS = {
 // 落とし物（ご飯）。1個 = ご飯ポイント fp
 export const ITEMS = {
   bread: { name: 'パンくず', fp: 2 },
-  niboshi: { name: 'にぼし', fp: 2 },
+  chikuwa: { name: 'ちくわ', fp: 2 },
   candy: { name: 'お菓子', fp: 2 },
-  fish: { name: '魚の切り身', fp: 2 },
+  fish: { name: 'おさかな', fp: 2 },
 };

@@ -38,8 +38,8 @@ export class PauseScene {
     const px = Math.round((W - pw) / 2);
     const py = Math.round((H - ph) / 2);
     panel(ctx, px, py, pw, ph, UI.cream2);
-    drawText(ctx, 'ポーズ', W / 2, py + 8, { color: UI.ink, align: 'center' });
-    this.menu.layout(W / 2, py + 30, 100, 20, 6);
+    drawText(ctx, 'ひとやすみ', W / 2, py + 9, { font: 'small', scale: 2, color: UI.ink, align: 'center' });
+    this.menu.layout(W / 2, py + 36, 100, 20, 5);
     this.menu.draw(ctx);
   }
 }
