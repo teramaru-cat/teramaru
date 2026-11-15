@@ -1,0 +1,173 @@
+// 街にいるターゲット（人など）と、出現・補充
+
+import { TARGETS } from '../data/targets.js';
+import { BAL } from '../data/balance.js';
+import { SPR } from '../art/sprites.js';
+import { TILE } from './town.js';
+
+const FOOT_W = 10;
+const FOOT_H = 4;
+
+export class Target {
+  constructor(id, x, y) {
+    this.id = id;
+    this.def = TARGETS[id];
+    this.x = x;
+    this.y = y; // 足元
+    this.cooldown = 0; // >0 のあいだは近づいても始まらない（途中でやめたあと）
+    this.state = 'idle'; // idle | leaving | gone
+    this.t = Math.random() * 10;
+    this.leaveT = 0;
+    this.wdir = { x: 0, y: 0 };
+    this.wtime = 0;
+    this.moving = false;
+    this.flip = Math.random() < 0.5;
+  }
+
+  update(dt, town) {
+    this.t += dt;
+    if (this.cooldown > 0) this.cooldown -= dt;
+    this.moving = false;
+    if (this.state === 'leaving') {
+      // てらまりんぐされて満足して去っていく
+      this.leaveT += dt;
+      this.moving = true;
+      const nx = this.x + this.wdir.x * 28 * dt;
+      const ny = this.y + this.wdir.y * 28 * dt;
+      if (!town.blocked(nx, ny, FOOT_W, FOOT_H)) { this.x = nx; this.y = ny; }
+      if (this.leaveT > 1.6) this.state = 'gone';
+      return;
+    }
+    const sp = this.def.wander ?? 0;
+    if (sp > 0) {
+      this.wtime -= dt;
+      if (this.wtime <= 0) {
+        const a = Math.random() * Math.PI * 2;
+        const go = Math.random() < 0.7;
+        this.wdir = go ? { x: Math.cos(a), y: Math.sin(a) } : { x: 0, y: 0 };
+        this.wtime = 1 + Math.random() * 1.5;
+      }
+      if (this.wdir.x || this.wdir.y) {
+        const nx = this.x + this.wdir.x * sp * dt;
+        const ny = this.y + this.wdir.y * sp * dt;
+        if (!town.blocked(nx, ny, FOOT_W, FOOT_H)) {
+          this.x = nx;
+          this.y = ny;
+          this.moving = true;
+          if (Math.abs(this.wdir.x) > 0.3) this.flip = this.wdir.x < 0;
+        } else {
+          this.wtime = 0;
+        }
+      }
+    }
+  }
+
+  leave(fromX, fromY) {
+    this.state = 'leaving';
+    this.leaveT = 0;
+    const dx = this.x - fromX;
+    const dy = this.y - fromY;
+    const d = Math.hypot(dx, dy) || 1;
+    this.wdir = { x: dx / d, y: dy / d };
+  }
+
+  canRing() { return this.state === 'idle' && this.cooldown <= 0; }
+
+  sprite() {
+    const fr = SPR.people[this.id];
+    return this.moving ? fr[Math.floor(this.t * 6) % 2] : fr[0];
+  }
+
+  draw(ctx, cx, cy) {
+    const img = this.sprite();
+    const x = Math.round(this.x) - cx;
+    const y = Math.round(this.y) - cy;
+    ctx.fillStyle = 'rgba(40,30,20,0.25)';
+    ctx.fillRect(x - 6, y - 1, 12, 2);
+    const a = this.state === 'leaving' ? Math.max(0, 1 - this.leaveT / 1.6) : this.cooldown > 0 ? 0.55 : 1;
+    ctx.globalAlpha = a;
+    const bob = !this.moving && this.def.motion !== 'still' && Math.floor(this.t * 3) % 2 ? 1 : 0;
+    if (this.flip) {
+      ctx.save();
+      ctx.translate(x, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, -7, y - img.height + 1 + bob);
+      ctx.restore();
+    } else {
+      ctx.drawImage(img, x - 7, y - img.height + 1 + bob);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ターゲットの出し入れ
+export class Spawner {
+  constructor(town, stageId) {
+    this.town = town;
+    this.ids = Object.keys(TARGETS).filter((id) => TARGETS[id].stages.includes(stageId) && SPR.people[id]);
+    this.targets = [];
+    this.waiting = 0; // 補充待ちの数
+    this.timers = [];
+    // 出られる場所：歩道・広場・公園の小道で、ぶつからないところ
+    this.spots = [];
+    for (let r = 0; r < town.rows; r++) {
+      for (let c = 0; c < town.cols; c++) {
+        const g = town.grid[r][c];
+        if (g !== 'S' && g !== 'P') continue;
+        const x = c * TILE + TILE / 2;
+        const y = r * TILE + TILE - 2;
+        if (!town.blocked(x, y, FOOT_W + 4, FOOT_H + 4)) this.spots.push({ x, y });
+      }
+    }
+  }
+
+  fill(cat) {
+    while (this.targets.length + this.timers.length < BAL.town.targets) {
+      const t = this.spawn(cat, true);
+      if (!t) break;
+    }
+  }
+
+  spawn(cat, initial = false) {
+    for (let tries = 0; tries < 40; tries++) {
+      const s = this.spots[Math.floor(Math.random() * this.spots.length)];
+      const dc = Math.hypot(s.x - cat.x, s.y - cat.y);
+      if (dc < (initial ? 60 : 110)) continue;
+      if (this.targets.some((t) => Math.hypot(t.x - s.x, t.y - s.y) < 56)) continue;
+      // 同じ種類ばかりにならないよう、少ないものを優先
+      const counts = Object.fromEntries(this.ids.map((id) => [id, 0]));
+      for (const t of this.targets) counts[t.id] = (counts[t.id] ?? 0) + 1;
+      const min = Math.min(...Object.values(counts));
+      const pool = this.ids.filter((id) => counts[id] === min);
+      const id = pool[Math.floor(Math.random() * pool.length)];
+      const t = new Target(id, s.x + (Math.random() - 0.5) * 6, s.y);
+      this.targets.push(t);
+      return t;
+    }
+    return null;
+  }
+
+  update(dt, cat) {
+    for (const t of this.targets) t.update(dt, this.town);
+    const before = this.targets.length;
+    this.targets = this.targets.filter((t) => t.state !== 'gone');
+    for (let i = this.targets.length; i < before; i++) this.timers.push(BAL.town.respawn);
+    this.timers = this.timers.map((x) => x - dt);
+    while (this.timers.length && this.timers[0] <= 0) {
+      this.timers.shift();
+      this.spawn(cat);
+    }
+  }
+
+  // てらまるが触れているターゲット
+  touching(cat) {
+    let best = null;
+    let bestD = BAL.town.touchDist;
+    for (const t of this.targets) {
+      if (!t.canRing()) continue;
+      const d = Math.hypot(t.x - cat.x, (t.y - cat.y) * 1.4);
+      if (d < bestD) { best = t; bestD = d; }
+    }
+    return best;
+  }
+}

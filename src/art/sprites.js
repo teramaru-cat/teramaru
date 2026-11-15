@@ -3,6 +3,8 @@
 
 import { CAT } from './palette.js';
 import { makeCanvas } from '../core/renderer.js';
+import { makePerson, FOOD_ROWS } from './people.js';
+import { TARGETS } from '../data/targets.js';
 
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -130,4 +132,11 @@ export function buildSprites() {
     left: frames(SIDE_TOP, SIDE_LEGS, LEFT_PAL, true),
   };
   SPR.heart = makeSprite(HEART, { o: '#8a2040', h: '#f06080', w: '#ffd0dc' });
+  SPR.heartEmpty = makeSprite(HEART, { o: '#8a2040', h: '#e8d8c8', w: '#f4ece0' });
+  SPR.food = {};
+  for (const [k, f] of Object.entries(FOOD_ROWS)) SPR.food[k] = makeSprite(f.rows, f.pal);
+  SPR.people = {};
+  for (const [id, t] of Object.entries(TARGETS)) {
+    if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true)];
+  }
 }

@@ -16,7 +16,7 @@ export class Cat {
     this.animT = 0;
   }
 
-  update(dt, mv, town) {
+  update(dt, mv, town, speedMul = 1) {
     this.px = this.x;
     this.py = this.y;
     const len = Math.hypot(mv.x, mv.y);
@@ -25,7 +25,7 @@ export class Cat {
       this.animT = 0;
       return;
     }
-    const sp = BAL.cat.speed;
+    const sp = BAL.cat.speed * speedMul;
     const dx = mv.x * sp * dt;
     const dy = mv.y * sp * dt;
     const { footW, footH } = BAL.cat;
