@@ -29,6 +29,7 @@ export class PlayScene {
     this.cam = { x: 0, y: 0 };
     this.snapCamera();
     this.banner = 2.6; // ステージ名の表示時間
+    this.feverIntro = 0; // 「トイレフィーバー！」の表示時間
     this.bubble = 0; // 「にゃ」の吹き出し
     this.t = 0;
     this.pauseBtn = new Button('pause', '', { icon: 'pause', pad: 6 });
@@ -152,6 +153,7 @@ export class PlayScene {
     this.tick(dt);
     if (this.banner > 0) this.banner -= dt;
     if (this.bubble > 0) this.bubble -= dt;
+    if (this.feverIntro > 0) this.feverIntro -= dt;
 
     // 動けない動作（爪とぎ・トイレ・倒れる）
     if (this.action) {
@@ -166,7 +168,7 @@ export class PlayScene {
     this.cat.update(dt, moveVector(this.catScreen()), this.town, this.speedMul(), this.turnRate());
     this.followCamera(dt);
     this.spawner.update(dt, this.cat);
-    if (this.state.toilet > 0 && this.cat.moving && Math.random() < dt * 20) this.addDashSpark();
+    if (this.state.toilet > 0 && Math.random() < dt * (this.cat.moving ? 40 : 16)) this.addDashSpark();
 
     this.checkWater();
     this.checkScratch();
@@ -272,6 +274,7 @@ export class PlayScene {
       st.fp -= BAL.toilet.every;
       st.weight = Math.max(0, st.weight - BAL.toilet.weightDown);
       st.toilet = BAL.toilet.buff;
+      this.feverIntro = 1.8;
       this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'すっきり！', UI.orangeD));
       this.action = null;
     } else if (a.kind === 'faint') {
@@ -320,12 +323,22 @@ export class PlayScene {
 
   addDashSpark() {
     const c = this.cat;
-    const sp = { x: c.x + (Math.random() - 0.5) * 10, y: c.y - Math.random() * 10, t: 0 };
+    const cols = ['#ff7090', '#f8c838', '#70d0ff', '#90e070', '#c090ff'];
+    const sp = {
+      x: c.x + (Math.random() - 0.5) * 22, y: c.y - 2 - Math.random() * 22, t: 0,
+      col: cols[Math.floor(Math.random() * cols.length)], big: Math.random() < 0.6,
+    };
     this.fx.add({
-      update(dt) { sp.t += dt; return sp.t < 0.35; },
+      update(dt) { sp.t += dt; sp.y -= 8 * dt; return sp.t < 0.5; },
       draw(ctx) {
-        ctx.fillStyle = sp.t < 0.15 ? '#fff4a0' : '#f8c838';
-        ctx.fillRect(Math.round(sp.x), Math.round(sp.y), 1, 1);
+        const x = Math.round(sp.x);
+        const y = Math.round(sp.y);
+        ctx.fillStyle = sp.t < 0.12 ? '#ffffff' : sp.col;
+        ctx.fillRect(x, y, 1, 1);
+        if (sp.big && sp.t < 0.35) {
+          ctx.fillRect(x - 1, y, 3, 1);
+          ctx.fillRect(x, y - 1, 1, 3);
+        }
       },
     });
   }
@@ -582,6 +595,8 @@ export class PlayScene {
     this.drawTimer(ctx);
     this.drawScore(ctx, screen.W - 28, 4);
 
+    this.drawFever(ctx);
+
     // ステージ名
     if (this.banner > 0) {
       const a = Math.min(1, this.banner * 2, (2.6 - this.banner) * 4);
@@ -595,6 +610,50 @@ export class PlayScene {
     this.confirmBtn.draw(ctx, { pressed: this.confirmBtn.isHeld() });
 
     drawSticks(ctx);
+  }
+
+  // トイレフィーバー：始まりの大きな文字と、残り時間のバー
+  drawFever(ctx) {
+    const W = screen.W;
+    const left = this.state.toilet;
+    if (left <= 0) return;
+    const rainbow = ['#ff5080', '#f8a020', '#e8c000', '#40b040', '#3090e0', '#9050e0'];
+    const k = Math.floor(this.t * 8);
+
+    // 残り時間のバー（時計の下）
+    const lw = textWidth('フィーバー', 'small');
+    const bw = lw + 40;
+    const bx = Math.round(W / 2 - bw / 2);
+    const by = 26;
+    const end = left < 3 && Math.floor(left * 6) % 2 === 0; // 終わりぎわは点滅
+    panel(ctx, bx, by, bw, 15, end ? '#fff0f4' : UI.cream);
+    drawText(ctx, 'フィーバー', bx + 4, by + 4, { font: 'small', color: rainbow[k % rainbow.length] });
+    const gx = bx + lw + 8;
+    const gw = bw - lw - 12;
+    ctx.fillStyle = '#e0d4c0';
+    ctx.fillRect(gx, by + 5, gw, 5);
+    ctx.fillStyle = rainbow[(k + 2) % rainbow.length];
+    ctx.fillRect(gx, by + 5, Math.ceil(gw * left / BAL.toilet.buff), 5);
+
+    // はじまり：「トイレフィーバー！」を大きく（1文字ずつ色が変わる）
+    if (this.feverIntro > 0) {
+      const t = 1.8 - this.feverIntro;
+      const a = Math.min(1, this.feverIntro * 3);
+      const pop = t < 0.15 ? 3 : 2;
+      const text = 'トイレフィーバー！';
+      const chars = [...text];
+      const total = chars.reduce((w, ch) => w + textWidth(ch, 'small') * pop + pop, 0) - pop;
+      let x = Math.round(W / 2 - total / 2);
+      const y = 44 - (pop - 2) * 4;
+      ctx.globalAlpha = a;
+      chars.forEach((ch, i) => {
+        const bob = Math.round(Math.sin(this.t * 10 + i * 0.8) * 2);
+        drawText(ctx, ch, x, y + bob, { font: 'small', scale: pop, color: rainbow[(i + k) % rainbow.length], outline: UI.white });
+        x += textWidth(ch, 'small') * pop + pop;
+      });
+      drawText(ctx, 'さわるだけで メロメロ！', W / 2, y + 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
+      ctx.globalAlpha = 1;
+    }
   }
 
   drawDebug(ctx, cx, cy) {
