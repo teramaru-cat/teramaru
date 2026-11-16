@@ -122,6 +122,10 @@ const HEART = [
   '...o...',
 ];
 
+const CLOCK = ['..ooo..', '.owwwo.', 'owwowwo', 'owwoowo', 'owwwwwo', '.owwwo.', '..ooo..'];
+const STAR = ['...o...', '..oyo..', 'ooyyyoo', 'oyyyyyo', '.oyyyo.', '.oyoyo.', '.oo.oo.'];
+const COIN = ['..ooo..', '.oyyyo.', 'oyywyyo', 'oyyyyyo', 'oyyyyyo', '.oyyyo.', '..ooo..'];
+
 export const SPR = {};
 
 export function buildSprites() {
@@ -132,6 +136,9 @@ export function buildSprites() {
     left: frames(SIDE_TOP, SIDE_LEGS, LEFT_PAL, true),
   };
   SPR.heart = makeSprite(HEART, { o: '#8a2040', h: '#f06080', w: '#ffd0dc' });
+  SPR.clock = makeSprite(CLOCK, { o: '#3a2a20', w: '#fbf8f0' });
+  SPR.star = makeSprite(STAR, { o: '#8a5a10', y: '#f8c838' });
+  SPR.coin = makeSprite(COIN, { o: '#8a5a10', y: '#f0b828', w: '#fff0b0' });
   SPR.heartEmpty = makeSprite(HEART, { o: '#8a2040', h: '#e8d8c8', w: '#f4ece0' });
   SPR.food = {};
   for (const [k, f] of Object.entries(FOOD_ROWS)) SPR.food[k] = makeSprite(f.rows, f.pal);

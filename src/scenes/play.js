@@ -12,7 +12,9 @@ import { getTown } from '../game/town.js';
 import { Cat } from '../game/cat.js';
 import { Spawner } from '../game/target.js';
 import { claimMove, moveVector, drawSticks } from '../game/control.js';
+import { liveScore } from '../game/score.js';
 import { RingingScene } from './ringing.js';
+import { ResultScene } from './result.js';
 import { PauseScene } from './pause.js';
 
 export class PlayScene {
@@ -29,8 +31,9 @@ export class PlayScene {
     this.t = 0;
     this.pauseBtn = new Button('pause', '', { icon: 'pause', pad: 6 });
     this.confirmBtn = new Button('confirm', 'けってい', { pad: 6 });
-    // 1プレイ分の状態（M3でタイマー・スコアを足す）
-    this.state = { tp: 0, fp: 0, tpTotal: 0, fpTotal: 0 };
+    // 1プレイ分の状態
+    this.state = { timeLeft: BAL.playSeconds, tp: 0, fp: 0, tpTotal: 0, fpTotal: 0, kamaware: 0, faints: 0 };
+    this.ending = 0; // 時間切れの「おしまい！」を見せている残り秒
     this.spawner = new Spawner(this.town, stageId);
     this.spawner.fill(this.cat);
     this.flash = 0; // てらまりんぐから戻ったときの白いフェード
@@ -40,7 +43,7 @@ export class PlayScene {
   enter() { input.releaseAll(); }
   resume() { input.releaseAll(); }
 
-  onHidden() { this.openPause(); }
+  onHidden() { if (!this.ending) this.openPause(); }
 
   openPause() {
     this.game.scenes.push(new PauseScene(this.game, this));
@@ -61,7 +64,17 @@ export class PlayScene {
     this.t += dt;
     this.layoutButtons();
 
+    // 時間切れ → 「おしまい！」を少し見せてからリザルトへ
+    if (this.ending > 0) {
+      this.ending -= dt;
+      if (this.flash > 0) this.flash -= dt;
+      if (this.ending <= 0) this.game.scenes.replace(new ResultScene(this.game, this.stageId, this.state));
+      return;
+    }
+    if (this.state.timeLeft <= 0) { this.startEnding(); return; }
+
     if (input.hit(KEY.pause)) { this.openPause(); return; }
+    if (this.game.debug && input.hit(['KeyT'])) this.state.timeLeft = Math.min(this.state.timeLeft, 5);
 
     for (const p of input.fresh()) {
       if (this.pauseBtn.contains(p.x, p.y)) {
@@ -78,6 +91,7 @@ export class PlayScene {
     }
     if (input.hit(KEY.confirm)) this.onConfirm();
 
+    this.tick(dt);
     this.cat.update(dt, moveVector(this.catScreen()), this.town);
     this.followCamera(dt);
     this.spawner.update(dt, this.cat);
@@ -88,6 +102,16 @@ export class PlayScene {
     // ターゲットに触れたら、てらまりんぐへ
     const t = this.spawner.touching(this.cat);
     if (t) this.game.scenes.push(new RingingScene(this.game, this, t));
+  }
+
+  // 残り時間を減らす（てらまりんぐ中も RingingScene から呼ばれる）
+  tick(dt) {
+    this.state.timeLeft = Math.max(0, this.state.timeLeft - dt);
+  }
+
+  startEnding() {
+    this.ending = 1.8;
+    input.releaseAll();
   }
 
   // てらまりんぐが終わったとき（RingingScene から呼ばれる）
@@ -135,6 +159,35 @@ export class PlayScene {
       ctx.fillStyle = `rgba(255,250,240,${Math.min(1, this.flash / 0.3)})`;
       ctx.fillRect(0, 0, screen.W, screen.H);
     }
+    if (this.ending > 0) {
+      const a = Math.min(1, (1.8 - this.ending) * 4);
+      ctx.fillStyle = `rgba(20,12,8,${0.45 * a})`;
+      ctx.fillRect(0, 0, screen.W, screen.H);
+      const pop = Math.round(Math.max(0, 1 - (1.8 - this.ending) * 5) * -20);
+      drawText(ctx, 'おしまい！', screen.W / 2, 70 + pop, { scale: 2, color: UI.orange, outline: UI.ink, align: 'center' });
+    }
+  }
+
+  // 残り時間（てらまりんぐ画面でも使う）
+  drawTimer(ctx) {
+    const W = screen.W;
+    const sec = Math.ceil(this.state.timeLeft);
+    const hurry = sec <= BAL.hurryAt;
+    const w = 44;
+    const x = Math.round(W / 2 - w / 2);
+    panel(ctx, x, 3, w, 20, hurry ? '#ffe0d8' : UI.cream);
+    ctx.drawImage(SPR.clock, x + 5, 9);
+    const blink = hurry && Math.floor(this.state.timeLeft * 4) % 2 === 0;
+    drawDigits(ctx, sec, x + w - 6, 6, { color: hurry ? (blink ? UI.red : '#a02020') : UI.ink, align: 'right', scale: 2 });
+  }
+
+  drawScore(ctx, rightX, y) {
+    const sc = String(liveScore(this.state));
+    const w = 4 + 7 + 3 + digitsWidth(sc) + 5;
+    const x = rightX - w;
+    panel(ctx, x, y, w, 16, UI.cream);
+    ctx.drawImage(SPR.star, x + 4, y + 5);
+    drawDigits(ctx, sc, x + 14, y + 5, { color: UI.ink });
   }
 
   // 街（地面・物・ターゲット・てらまる）。てらまりんぐのズームインでも使う
@@ -212,6 +265,8 @@ export class PlayScene {
       drawText(ctx, this.town.stage.name, 12 + slide, 37, { color: UI.ink });
     }
     this.drawCounters(ctx, 4, 4);
+    this.drawTimer(ctx);
+    this.drawScore(ctx, screen.W - 28, 4);
 
     this.pauseBtn.draw(ctx, { pressed: this.pauseBtn.isHeld() });
     this.confirmBtn.draw(ctx, { pressed: this.confirmBtn.isHeld() });

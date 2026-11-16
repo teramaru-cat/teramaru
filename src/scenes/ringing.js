@@ -74,6 +74,7 @@ export class RingingScene {
     }
     this.updateLegs(dt);
     this.fx.update(dt);
+    if (this.phase !== 'out') this.play.tick(dt); // てらまりんぐ中も残り時間は減る
 
     if (this.phase === 'in') {
       if (this.pt >= BAL.ring.intro) this.setPhase('play');
@@ -108,6 +109,9 @@ export class RingingScene {
 
     const dur = this.def.durability;
     if (this.gauge >= dur && this.legs.every((L) => L.laps >= 1)) { this.startWin(); return; }
+
+    // 時間切れ：その場で街へ戻る（リザルトへ）
+    if (this.play.state.timeLeft <= 0) { this.result = 'timeup'; this.setPhase('out'); return; }
 
     const c = this.cat;
     if (c.x < -8 || c.x > screen.W + 8 || c.y > screen.H + 14) {
@@ -384,6 +388,7 @@ export class RingingScene {
     }
 
     this.play.drawCounters(ctx, W - 28, 4, true);
+    this.play.drawTimer(ctx);
     this.pauseBtn.draw(ctx, { pressed: this.pauseBtn.isHeld() });
 
     if (this.phase === 'play' && this.pt < 3.5) {

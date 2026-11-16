@@ -80,8 +80,8 @@ export class Menu {
   // 選ばれたら id を返す
   update() {
     const n = this.buttons.length;
-    if (input.hit(KEY.up)) this.focus = (this.focus + n - 1) % n;
-    if (input.hit(KEY.down)) this.focus = (this.focus + 1) % n;
+    if (input.hit(KEY.up) || input.hit(KEY.left)) this.focus = (this.focus + n - 1) % n;
+    if (input.hit(KEY.down) || input.hit(KEY.right)) this.focus = (this.focus + 1) % n;
     if (input.hit(KEY.confirm)) return this.buttons[this.focus].id;
 
     if (input.hover && input.pointers.size === 0) {

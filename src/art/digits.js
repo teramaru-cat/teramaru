@@ -25,27 +25,28 @@ for (const [ch, rows] of Object.entries(GLYPH)) {
 
 const ADV = 6; // 1文字の幅（すきま込み）
 
-export function digitsWidth(str) {
-  return String(str).length * ADV - 1;
+export function digitsWidth(str, scale = 1) {
+  return (String(str).length * ADV - 1) * scale;
 }
 
 // y は上端。align: left | center | right。outline を付けると縁取り
-export function drawDigits(ctx, str, x, y, { color = '#000', outline = null, align = 'left' } = {}) {
+export function drawDigits(ctx, str, x, y, { color = '#000', outline = null, align = 'left', scale = 1 } = {}) {
   str = String(str);
+  const s = scale;
   let x0 = x;
-  if (align === 'center') x0 = x - Math.floor(digitsWidth(str) / 2);
-  if (align === 'right') x0 = x - digitsWidth(str);
+  if (align === 'center') x0 = x - Math.floor(digitsWidth(str, s) / 2);
+  if (align === 'right') x0 = x - digitsWidth(str, s);
   x0 = Math.round(x0);
   y = Math.round(y);
   const pass = (col, ox, oy) => {
     ctx.fillStyle = col;
     [...str].forEach((ch, i) => {
-      for (const [dx, dy] of DOTS[ch] ?? []) ctx.fillRect(x0 + i * ADV + dx + ox, y + dy + oy, 1, 1);
+      for (const [dx, dy] of DOTS[ch] ?? []) ctx.fillRect(x0 + (i * ADV + dx) * s + ox, y + dy * s + oy, s, s);
     });
   };
   if (outline) {
     for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) pass(outline, ox, oy);
   }
   pass(color, 0, 0);
-  return digitsWidth(str);
+  return digitsWidth(str, s);
 }
