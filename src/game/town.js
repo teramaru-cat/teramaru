@@ -124,15 +124,17 @@ export class Town {
         }
       }
     }
-    // 横断歩道（白い帯は歩く向きに長い）
+    // 横断歩道（白い帯は歩道と平行。渡る向きに帯が並ぶ）
     x.fillStyle = '#f2f0ea';
     for (const cw of this.stage.crosswalks) {
       const px = cw.c * TILE;
       const py = cw.r * TILE;
       if (cw.dir === 'v') {
-        for (let xx = 2; xx < cw.w * TILE - 1; xx += 6) x.fillRect(px + xx, py + 3, 3, cw.h * TILE - 6);
+        // 縦に渡る（道路は横向き）→ 横長の帯が縦に並ぶ
+        for (let yy = 3; yy < cw.h * TILE - 3; yy += 6) x.fillRect(px + 3, py + yy, cw.w * TILE - 6, 3);
       } else {
-        for (let yy = 2; yy < cw.h * TILE - 1; yy += 6) x.fillRect(px + 3, py + yy, cw.w * TILE - 6, 3);
+        // 横に渡る（道路は縦向き）→ 縦長の帯が横に並ぶ
+        for (let xx = 3; xx < cw.w * TILE - 3; xx += 6) x.fillRect(px + xx, py + 3, 3, cw.h * TILE - 6);
       }
     }
     // 地面だけの絵（てらまりんぐ画面の床に使う。建物の壁が後ろに見えないように）
