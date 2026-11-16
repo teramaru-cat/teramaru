@@ -2,7 +2,8 @@
 
 import { screen } from '../core/renderer.js';
 import { input } from '../core/input.js';
-import { drawText } from '../core/text.js';
+import { drawText, textWidth } from '../core/text.js';
+import { drawDigits, digitsWidth } from '../art/digits.js';
 import { Menu, panel } from '../core/ui.js';
 import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
@@ -52,16 +53,23 @@ export class TitleScene {
     }
     ctx.globalAlpha = 1;
 
-    // てらまる（4倍）
+    // てらまる（3倍。サブタイトルの下〜ボタンの上に収める）
     const bob = Math.floor(this.t * 2) % 2;
     const img = SPR.cat.down[0];
-    ctx.drawImage(img, W / 2 - 32, 130 - img.height * 4 + bob, 64, img.height * 4);
+    const k = 3;
+    ctx.drawImage(img, Math.round(W / 2 - (img.width * k) / 2), 130 - img.height * k + bob, img.width * k, img.height * k);
 
     this.menu.layout(W / 2, 138, 96, 20, 6);
     this.menu.draw(ctx);
 
     const coins = this.game.save.coins;
-    panel(ctx, 4, H - 14, 104, 11, UI.cream);
-    drawText(ctx, `てらまるコイン ${coins}まい`, 8, H - 12, { font: 'small', color: UI.ink });
+    const label = 'てらまるコイン';
+    const lw = textWidth(label, 'small');
+    const cw = digitsWidth(String(coins));
+    const mw = textWidth('まい', 'small');
+    panel(ctx, 4, H - 14, lw + cw + mw + 16, 11, UI.cream);
+    drawText(ctx, label, 8, H - 12, { font: 'small', color: UI.ink });
+    drawDigits(ctx, coins, 8 + lw + 3, H - 11, { color: UI.ink });
+    drawText(ctx, 'まい', 8 + lw + cw + 5, H - 12, { font: 'small', color: UI.ink });
   }
 }
