@@ -672,8 +672,17 @@ export class PlayScene {
     let h = img.height;
     if (a?.kind === 'scratch') x += Math.floor(this.t * 20) % 2 ? 1 : -1;
     if (a?.kind === 'toilet') { h -= 2; x += Math.floor(this.t * 12) % 2 ? 1 : 0; } // しゃがんでカキカキ
-    else if (!a && this.full()) x += Math.floor(this.t * (5 + 5 * this.gamanRate())) % 2 ? 1 : -1; // もじもじ
+    else if (!a && this.full() && !this.cat.moving) x += Math.floor(this.t * 3) % 2; // 止まっているときだけ、ゆっくりもじもじ
     ctx.drawImage(img, x - w / 2, y - h, w, h);
+
+    // おなかいっぱい：頭の横にピンクの線（体は揺らさない）
+    if (!a && this.full() && Math.floor(this.t * 2) % 2 === 0) {
+      ctx.fillStyle = UI.pink;
+      ctx.fillRect(x - w / 2 - 3, y - h + 4, 2, 1);
+      ctx.fillRect(x - w / 2 - 4, y - h + 6, 2, 1);
+      ctx.fillRect(x + w / 2 + 1, y - h + 4, 2, 1);
+      ctx.fillRect(x + w / 2 + 2, y - h + 6, 2, 1);
+    }
 
     // 汗（お水が足りない）
     if (this.state.thirst >= BAL.water.warn && Math.floor(this.t * 4) % 2 === 0) {
