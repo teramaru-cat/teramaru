@@ -76,9 +76,9 @@ const BACK_TOP = [
 ];
 
 const FB_LEGS = {
-  idle: ['...owwoooowwo...', '...owwo..owwo...', '...owwo..owwo...', '...owwo..owwo...', '...oooo..oooo...'],
-  a: ['...owwoooowwo...', '...owwo..owwo...', '...owwo..owwo...', '...oooo..owwo...', '.........oooo...'],
-  b: ['...owwoooowwo...', '...owwo..owwo...', '...owwo..owwo...', '...owwo..oooo...', '...oooo.........'],
+  idle: ['...owoooooowo...', '...owo....owo...', '...owo....owo...', '...owo....owo...', '...ooo....ooo...'],
+  a: ['...owoooooowo...', '...owo....owo...', '...owo....owo...', '...ooo....owo...', '..........ooo...'],
+  b: ['...owoooooowo...', '...owo....owo...', '...owo....owo...', '...owo....ooo...', '...ooo..........'],
 };
 
 // 横向き（右向き）。H＝耳・頭の後ろ、F＝目の周り、E＝目。頭は背中の高さにそのまま付く（首は短い）。
