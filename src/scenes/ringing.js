@@ -20,6 +20,7 @@ import { PauseScene } from './pause.js';
 const TAU = Math.PI * 2;
 const GROUND_Y = 112; // 足が地面に着いている高さ（画面）
 const TOP_LIMIT = 58; // てらまるはこれより上（服の中）には行けない
+const LAP_WORDS = ['すりっ', 'すりすり', 'ゴロゴロ']; // 足を1周したときに出る言葉（ランダム）
 
 function wrap(a) {
   while (a > Math.PI) a -= TAU;
@@ -201,7 +202,7 @@ export class RingingScene {
           L.acc -= Math.sign(L.acc) * TAU;
           L.laps++;
           this.gauge = Math.min(dur, this.gauge + 1);
-          this.fx.add(new PopText(L.x, L.y - 34, 'スリスリッ', UI.orangeD));
+          this.fx.add(new PopText(L.x, L.y - 34, LAP_WORDS[Math.floor(Math.random() * LAP_WORDS.length)], UI.orangeD));
         }
       }
       L.prevA = a;
