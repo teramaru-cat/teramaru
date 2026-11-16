@@ -61,6 +61,11 @@ export const STAGES = {
       { type: 'water', ...at(41, 28) },
       { type: 'water', ...at(33, 8) },
       { type: 'water', ...at(50, 14) },
+      // 猫砂（おなかがいっぱいになったら行く）
+      { type: 'litter', ...at(15, 8) },
+      { type: 'litter', ...at(17, 24) },
+      { type: 'litter', ...at(54, 17) },
+      { type: 'litter', ...at(36, 31) },
       // その他
       { type: 'fountain', x: 46 * T, y: 25 * T + 14 },
       { type: 'bench', ...at(40, 23) },

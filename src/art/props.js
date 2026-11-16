@@ -1,4 +1,4 @@
-// 街の小物（木・爪とぎ電柱・水皿・ベンチ・自販機・噴水・植木鉢）
+// 街の小物（木・爪とぎ電柱・水皿・猫砂・ベンチ・自販機・噴水・植木鉢）
 // それぞれ画像と「足元の位置（ox, oy）」「ぶつかる箱（solid）」を返す。
 
 import { makeCanvas, fillCircle, fillEllipse } from '../core/renderer.js';
@@ -55,6 +55,28 @@ function waterBowl() {
   x.fillStyle = '#ffffff';
   x.fillRect(5, 3, 2, 1);
   return { img: c, ox: 7, oy: 7, solid: null };
+}
+
+// 猫砂のトイレ（水色の箱に砂）
+function litterBox() {
+  const [c, x] = makeCanvas(18, 11);
+  x.fillStyle = '#2a5a7a';
+  x.fillRect(0, 2, 18, 9);
+  x.fillStyle = '#5aa8d8';
+  x.fillRect(1, 3, 16, 7);
+  x.fillStyle = '#8ccaee';
+  x.fillRect(1, 3, 16, 1);
+  // 砂
+  x.fillStyle = '#e8d6a8';
+  x.fillRect(2, 0, 14, 5);
+  x.fillStyle = '#2a5a7a';
+  x.fillRect(1, 0, 1, 3);
+  x.fillRect(16, 0, 1, 3);
+  x.fillStyle = '#c8b080';
+  for (const [sx, sy] of [[4, 1], [8, 2], [12, 1], [6, 3], [14, 3], [10, 0]]) x.fillRect(sx, sy, 1, 1);
+  x.fillStyle = '#fff4d8';
+  x.fillRect(3, 0, 3, 1);
+  return { img: c, ox: 9, oy: 9, solid: null };
 }
 
 function bench() {
@@ -143,6 +165,7 @@ export function buildProps() {
     tree: tree(),
     scratch: scratchPole(),
     water: waterBowl(),
+    litter: litterBox(),
     bench: bench(),
     vending: vending(),
     fountain: fountain(),

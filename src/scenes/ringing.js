@@ -183,7 +183,7 @@ export class RingingScene {
   }
 
   hit(nx, ny, stomped) {
-    this.stun = BAL.ring.stun * BAL.weight.stun[this.play.weightLevel()];
+    this.stun = BAL.ring.stun * BAL.tummy.stun[this.play.tummyLevel()];
     this.immune = 1.2;
     this.gauge = Math.max(0, this.gauge - BAL.ring.hitPenalty);
     this.cat.x += nx * 8;

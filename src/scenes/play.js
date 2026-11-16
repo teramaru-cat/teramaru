@@ -38,14 +38,14 @@ export class PlayScene {
     this.state = {
       timeLeft: BAL.playSeconds,
       tp: 0, // 今持っているTP（おねだりで使う）
-      fp: 0, // トイレまでのご飯ポイント（100でトイレ）
+      fp: 0, // おなか（ご飯ポイントでたまる。BAL.tummy.full でいっぱい）
       tpTotal: 0, // スコア用：もらった合計
       fpTotal: 0,
       kamaware: 0,
       faints: 0,
       thirst: 0, // 最後に水を飲んでからの秒数
       lastDrink: -99, // 最後にご飯ポイントをもらった水飲みの時刻（連打よけ）
-      weight: BAL.weight.start,
+      gaman: 0, // おなかがいっぱいになってからの秒数
       scratch: 0, // 爪とぎボーナスの残り秒
       lastScratch: -99, // 最後に爪とぎした時刻
       toilet: 0, // トイレのあとのダッシュの残り秒
@@ -81,16 +81,32 @@ export class PlayScene {
 
   // ---- 状態 ----
 
-  weightLevel() {
-    const w = this.state.weight;
-    return w >= BAL.weight.round ? 2 : w >= BAL.weight.chubby ? 1 : 0;
+  // おなかの段階：0 ふつう、1 ぽっちゃり、2 いっぱい（がまん中）
+  tummyLevel() {
+    const f = this.state.fp;
+    return f >= BAL.tummy.full ? 2 : f >= BAL.tummy.chubby ? 1 : 0;
   }
+
+  full() { return this.state.fp >= BAL.tummy.full; }
+
+  // がまんの重さ（0〜1）
+  gamanRate() { return this.full() ? Math.min(1, this.state.gaman / BAL.tummy.gaman) : 0; }
 
   speedMul() {
-    return BAL.weight.speed[this.weightLevel()] * (this.state.toilet > 0 ? BAL.toilet.speed : 1);
+    const T = BAL.tummy;
+    const lv = this.tummyLevel();
+    let s = T.speed[lv];
+    if (lv === 2) s += (T.gamanSpeed - s) * this.gamanRate();
+    return s * (this.state.toilet > 0 ? BAL.toilet.speed : 1);
   }
 
-  turnRate() { return BAL.weight.turn[this.weightLevel()]; }
+  turnRate() {
+    const T = BAL.tummy;
+    const lv = this.tummyLevel();
+    let r = T.turn[lv];
+    if (lv === 2) r += (T.gamanTurn - r) * this.gamanRate();
+    return r;
+  }
 
   addTp(n) {
     this.state.tp += n;
@@ -99,9 +115,13 @@ export class PlayScene {
 
   addFp(n) {
     const st = this.state;
-    st.fp += n;
+    const wasFull = this.full();
+    st.fp = Math.min(BAL.tummy.full, st.fp + n);
     st.fpTotal += n;
-    st.weight = Math.min(100, st.weight + n * BAL.weight.perFp);
+    if (!wasFull && this.full()) {
+      st.gaman = 0;
+      this.fx.add(new PopText(this.cat.x, this.cat.y - 34, 'もじもじ…', UI.pink, 1.4));
+    }
   }
 
   // 残り時間・お水・ボーナスの時間を進める（てらまりんぐ中も RingingScene から呼ばれる）
@@ -112,6 +132,7 @@ export class PlayScene {
     if (thirst && this.action?.kind !== 'faint') st.thirst += dt;
     if (st.scratch > 0) st.scratch = Math.max(0, st.scratch - dt);
     if (st.toilet > 0) st.toilet = Math.max(0, st.toilet - dt);
+    if (thirst && this.full()) st.gaman += dt;
   }
 
   thirsty() { return this.state.thirst >= BAL.water.limit; }
@@ -163,7 +184,6 @@ export class PlayScene {
       return;
     }
     if (this.thirsty()) { this.startFaint(); return; }
-    if (this.state.fp >= BAL.toilet.every) { this.startToilet(); return; }
 
     this.cat.update(dt, moveVector(this.catScreen()), this.town, this.speedMul(), this.turnRate());
     this.followCamera(dt);
@@ -172,6 +192,7 @@ export class PlayScene {
 
     this.checkWater();
     this.checkScratch();
+    this.checkLitter();
 
     // ターゲットに触れたら、てらまりんぐへ（トイレのあとのダッシュ中は自動で成功）
     const t = this.spawner.touching(this.cat);
@@ -186,7 +207,7 @@ export class PlayScene {
     if (input.hit(['KeyT'])) this.state.timeLeft = Math.min(this.state.timeLeft, 5);
     if (input.hit(['KeyF'])) this.addFp(30);
     if (input.hit(['KeyH'])) this.state.thirst = BAL.water.limit - 3;
-    if (input.hit(['KeyG'])) this.state.weight = Math.min(100, this.state.weight + 20);
+    if (input.hit(['KeyG'])) this.addFp(BAL.tummy.full);
   }
 
   // 爪とぎボーナス：人に触れたら使う（TP2倍）
@@ -247,10 +268,31 @@ export class PlayScene {
     this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'ガリガリ', UI.orangeD));
   }
 
+  // おなかがいっぱいで猫砂に着いたら、トイレ
+  checkLitter() {
+    if (!this.full()) return;
+    const p = this.findProp(['litter'], BAL.toilet.reach);
+    if (!p) return;
+    this.cat.x = this.cat.px = p.x;
+    this.cat.y = this.cat.py = p.y + 2;
+    this.startToilet();
+  }
+
   startToilet() {
-    this.action = { kind: 'toilet', t: 0 };
+    this.action = { kind: 'toilet', t: 0, sand: 0 };
     this.cat.dir = 'down';
-    this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'うーん…', UI.ink));
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'カキカキ', UI.orangeD));
+  }
+
+  // 猫砂が飛ぶ
+  addSand() {
+    const c = this.cat;
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const sp = { x: c.x + side * 4, y: c.y - 1, vx: side * (20 + Math.random() * 30), vy: -30 - Math.random() * 30, t: 0 };
+    this.fx.add({
+      update(dt) { sp.t += dt; sp.x += sp.vx * dt; sp.y += sp.vy * dt; sp.vy += 160 * dt; return sp.t < 0.4; },
+      draw(ctx) { ctx.fillStyle = '#d8c090'; ctx.fillRect(Math.round(sp.x), Math.round(sp.y), 1, 1); },
+    });
   }
 
   startFaint() {
@@ -270,9 +312,11 @@ export class PlayScene {
       st.scratch = BAL.scratch.window;
       this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'つめ ばっちり！', UI.orangeD));
       this.action = null;
-    } else if (a.kind === 'toilet' && a.t >= BAL.toilet.motion) {
-      st.fp -= BAL.toilet.every;
-      st.weight = Math.max(0, st.weight - BAL.toilet.weightDown);
+    } else if (a.kind === 'toilet' && a.t < BAL.toilet.motion) {
+      if (Math.random() < dt * 25) this.addSand();
+    } else if (a.kind === 'toilet') {
+      st.fp = 0;
+      st.gaman = 0;
       st.toilet = BAL.toilet.buff;
       this.feverIntro = 1.8;
       this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'すっきり！', UI.orangeD));
@@ -469,22 +513,79 @@ export class PlayScene {
     ctx.restore();
 
     if (this.bubble > 0) this.drawBubble(ctx, cx, cy);
+    if (this.full() && this.action?.kind !== 'toilet') this.drawLitterGuide(ctx, cx, cy);
+  }
+
+  // おなかがいっぱいのとき：猫砂の上で矢印が跳ねる。画面の外なら、いちばん近い猫砂の方向を画面の端に出す
+  drawLitterGuide(ctx, cx, cy) {
+    const W = screen.W;
+    const H = screen.H;
+    const bob = Math.round(Math.abs(Math.sin(this.t * 5)) * -4);
+    const col = Math.floor(this.t * 4) % 2 ? UI.pink : '#ff9ab8';
+    let near = null;
+    let nd = Infinity;
+    for (const p of this.town.props) {
+      if (p.type !== 'litter') continue;
+      const sx = p.x - cx;
+      const sy = p.y - cy;
+      const d = Math.hypot(p.x - this.cat.x, p.y - this.cat.y);
+      const seen = sx > 6 && sx < W - 6 && sy > 44 && sy < H + 4; // 矢印まで見えるか（上はHUDの下から）
+      if (d < nd) { nd = d; near = { sx, sy, seen }; }
+      if (!seen) continue;
+      // 下向きの矢印
+      const ax = Math.round(sx);
+      const ay = Math.round(sy) - 22 + bob;
+      ctx.fillStyle = UI.white;
+      ctx.fillRect(ax - 4, ay - 1, 9, 5);
+      ctx.fillRect(ax - 2, ay + 4, 5, 3);
+      ctx.fillStyle = col;
+      ctx.fillRect(ax - 3, ay, 7, 3);
+      ctx.fillRect(ax - 1, ay + 3, 3, 2);
+      ctx.fillRect(ax, ay + 5, 1, 1);
+      drawText(ctx, 'トイレ', ax, ay - 9, { font: 'small', color: UI.pink, outline: UI.white, align: 'center' });
+    }
+    // いちばん近い猫砂が画面の外 → 端に三角
+    if (near && !near.seen) {
+      const ccx = this.cat.x - cx;
+      const ccy = this.cat.y - 8 - cy;
+      const ang = Math.atan2(near.sy - ccy, near.sx - ccx);
+      const m = 22;
+      const k = Math.min(Math.abs((W / 2 - m) / (Math.cos(ang) || 1e-6)), Math.abs((H / 2 - m) / (Math.sin(ang) || 1e-6)));
+      const ex = Math.round(W / 2 + Math.cos(ang) * k);
+      const ey = Math.round(H / 2 + Math.sin(ang) * k);
+      // 白い丸に猫砂の絵、外側にピンクの三角
+      const R = 12;
+      const tx = ex + Math.cos(ang) * (R + 5);
+      const ty = ey + Math.sin(ang) * (R + 5);
+      const nx = -Math.sin(ang);
+      const ny = Math.cos(ang);
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(ex + Math.cos(ang) * (R - 2) + nx * 6, ey + Math.sin(ang) * (R - 2) + ny * 6);
+      ctx.lineTo(ex + Math.cos(ang) * (R - 2) - nx * 6, ey + Math.sin(ang) * (R - 2) - ny * 6);
+      ctx.fill();
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(ex, ey, R, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = UI.white;
+      ctx.beginPath();
+      ctx.arc(ex, ey, R - 2, 0, Math.PI * 2);
+      ctx.fill();
+      const li = this.town.props.find((p) => p.type === 'litter').def.img;
+      ctx.drawImage(li, ex - Math.floor(li.width / 2), ey - Math.floor(li.height / 2));
+    }
   }
 
   // TP・ご飯（トイレまで ○/100）の数（てらまりんぐ画面でも使う）。right=true なら x を右端として並べる
   drawCounters(ctx, x, y, right = false) {
     const tp = String(this.state.tp);
-    const fp = `${this.state.fp}/${BAL.toilet.every}`;
-    const w = 4 + 10 + digitsWidth(tp) + 8 + 12 + digitsWidth(fp) + 5;
+    const w = 4 + 10 + digitsWidth(tp) + 5;
     if (right) x -= w;
     panel(ctx, x, y, w, 16, UI.cream);
-    let cx = x + 4;
-    ctx.drawImage(SPR.heart, cx, y + 5);
-    cx += 10;
-    cx += drawDigits(ctx, tp, cx, y + 5, { color: UI.ink }) + 8;
-    ctx.drawImage(SPR.foodIcon, cx, y + 6);
-    cx += 12;
-    drawDigits(ctx, fp, cx, y + 5, { color: UI.ink });
+    ctx.drawImage(SPR.heart, x + 4, y + 5);
+    drawDigits(ctx, tp, x + 14, y + 5, { color: UI.ink });
     return w;
   }
 
@@ -497,17 +598,19 @@ export class PlayScene {
     const warn = st.thirst >= BAL.water.warn;
     const blink = warn && Math.floor(this.t * 6) % 2 === 0;
     const wW = 4 * 6 - 1;
-    // 体重：5つの目盛り
-    const wl = this.weightLevel();
+    // おなか：6つの目盛り（いっぱいで赤く点滅）
+    const SEG = 6;
+    const wl = this.tummyLevel();
     const weightCol = ['#7ab050', '#e0a030', UI.red][wl];
-    const lab = '体重';
+    const fullBlink = wl === 2 && Math.floor(this.t * 4) % 2 === 0;
+    const lab = 'おなか';
     const lw = textWidth(lab, 'small');
     if (st.scratch > 0) parts.push({ img: SPR.paw, sec: Math.ceil(st.scratch) });
     if (st.toilet > 0) parts.push({ img: SPR.bolt, sec: Math.ceil(st.toilet) });
-    let w = 4 + wW + 6 + lw + 2 + 5 * 3 + 3;
+    let w = 4 + wW + 6 + lw + 2 + SEG * 3 + 3;
     for (const p of parts) w += 6 + 9 + digitsWidth(String(p.sec));
     if (right) x -= w;
-    panel(ctx, x, y, w, 13, warn ? '#ffe0d8' : UI.cream);
+    panel(ctx, x, y, w, 13, warn || fullBlink ? '#ffe0d8' : UI.cream);
     let cx = x + 4;
     for (let i = 0; i < 4; i++) {
       const full = left > i * (BAL.water.limit / 4);
@@ -517,11 +620,11 @@ export class PlayScene {
     cx += wW + 6;
     drawText(ctx, lab, cx, y + 3, { font: 'small', color: UI.ink });
     cx += lw + 2;
-    for (let i = 0; i < 5; i++) {
-      ctx.fillStyle = st.weight > i * 20 ? weightCol : '#d8d0c0';
+    for (let i = 0; i < SEG; i++) {
+      ctx.fillStyle = st.fp >= ((i + 1) * BAL.tummy.full) / SEG ? weightCol : '#d8d0c0';
       ctx.fillRect(cx + i * 3, y + 4, 2, 5);
     }
-    cx += 5 * 3;
+    cx += SEG * 3;
     for (const p of parts) {
       cx += 6;
       ctx.drawImage(p.img, cx, y + 3);
@@ -565,10 +668,11 @@ export class PlayScene {
 
     const img = this.cat.sprite();
     // 太ると横に広がる
-    const w = img.width + this.weightLevel() * 2;
+    const w = img.width + this.tummyLevel() * 2;
     let h = img.height;
     if (a?.kind === 'scratch') x += Math.floor(this.t * 20) % 2 ? 1 : -1;
-    if (a?.kind === 'toilet') h -= 2; // しゃがむ
+    if (a?.kind === 'toilet') { h -= 2; x += Math.floor(this.t * 12) % 2 ? 1 : 0; } // しゃがんでカキカキ
+    else if (!a && this.full()) x += Math.floor(this.t * (5 + 5 * this.gamanRate())) % 2 ? 1 : -1; // もじもじ
     ctx.drawImage(img, x - w / 2, y - h, w, h);
 
     // 汗（お水が足りない）
@@ -667,6 +771,6 @@ export class PlayScene {
       ctx.strokeRect(Math.round(p.x - s.w / 2 - cx) + 0.5, Math.round(p.y - s.h - cy) + 0.5, s.w - 1, s.h - 1);
     }
     const st = this.state;
-    drawText(ctx, `${Math.round(this.cat.x)},${Math.round(this.cat.y)} ${this.game.fps}fps w${Math.round(st.weight)} 水${st.thirst.toFixed(1)}`, 4, screen.H - 10, { font: 'small', color: '#ffffff', outline: '#000000' });
+    drawText(ctx, `${Math.round(this.cat.x)},${Math.round(this.cat.y)} ${this.game.fps}fps お${st.fp} 水${st.thirst.toFixed(1)}`, 4, screen.H - 10, { font: 'small', color: '#ffffff', outline: '#000000' });
   }
 }
