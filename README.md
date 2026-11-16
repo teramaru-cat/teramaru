@@ -20,12 +20,14 @@
 
 ```sh
 cd ~/Desktop/てらまるゲーム
-python3 -m http.server 8000
-# ブラウザで http://localhost:8000 を開く
-# 当たり判定などを見たいときは http://localhost:8000/?debug=1
+python3 serve.py
+# ブラウザで http://localhost:8123 を開く
+# 当たり判定などを見たいときは http://localhost:8123/?debug=1
 ```
 
-スマホで試すときは、同じWi-Fiにつないで `http://<MacのIPアドレス>:8000` を開く。
+スマホで試すときは、同じWi-Fiにつないで `http://<MacのIPアドレス>:8123` を開く。
+
+`serve.py` はブラウザに古いファイルを使わせない設定のサーバー（`python3 -m http.server` だと、直したのに古い画面のままになることがある）。
 
 ## 状態
 
