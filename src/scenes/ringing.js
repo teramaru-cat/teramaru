@@ -201,7 +201,7 @@ export class RingingScene {
           L.acc -= Math.sign(L.acc) * TAU;
           L.laps++;
           this.gauge = Math.min(dur, this.gauge + 1);
-          this.fx.add(new PopText(L.x, L.y - 34, 'くるっ', UI.orangeD));
+          this.fx.add(new PopText(L.x, L.y - 34, 'スリスリッ', UI.orangeD));
         }
       }
       L.prevA = a;
