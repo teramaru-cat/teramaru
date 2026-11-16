@@ -190,16 +190,20 @@ export const FOOD_ROWS = {
     ],
     pal: { o: INK, c: '#d9a050', l: '#f0c878', d: '#a8682a', b: '#b87a38' },
   },
-  // おばあちゃん：ちくわ
-  chikuwa: {
+  // おばあちゃん：おにぎり
+  onigiri: {
     rows: [
-      '.oooooooooo.',
-      'obcbbcbbcowo',
-      'occbccbccoho',
-      'obcbbcbbcowo',
-      '.oooooooooo.',
+      '....oo....',
+      '...owwo...',
+      '..owwwwo..',
+      '.owlwwwwo.',
+      '.owwwwwwo.',
+      'owwbbbbwwo',
+      'owbbbbbbwo',
+      'owbbbbbbwo',
+      '.oooooooo.',
     ],
-    pal: { o: INK, b: '#b06a30', c: '#e8c088', w: '#f4ead0', h: '#7a5030' },
+    pal: { o: INK, w: '#fbf8f0', l: '#ffffff', b: '#2f3a30' },
   },
   // 子ども：包み紙のあめ
   candy: {
@@ -227,8 +231,8 @@ export const FOOD_ROWS = {
   },
 };
 
-// HUD の「ご飯」アイコン（おにぎり）
+// HUD の「ご飯」アイコン（猫のごはん皿）
 export const FOOD_ICON = {
-  rows: ['..ooo..', '.owwwo.', 'owwwwwo', 'owbbbwo', 'obbbbbo', '.ooooo.'],
-  pal: { o: INK, w: '#fbf8f0', b: '#2f3a30' },
+  rows: ['..c.c.c..', '.ccccccc.', 'ooooooooo', 'orrrrrrro', '.orrrrro.', '..ooooo..'],
+  pal: { o: INK, c: '#b8783a', r: '#e05050' },
 };

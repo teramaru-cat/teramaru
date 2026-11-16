@@ -162,15 +162,15 @@ export class PlayScene {
   drawCounters(ctx, x, y, right = false) {
     const tp = String(this.state.tp);
     const fp = String(this.state.fp);
-    const w = 4 + 7 + 3 + digitsWidth(tp) + 8 + 6 + 3 + digitsWidth(fp) + 5;
+    const w = 4 + 10 + digitsWidth(tp) + 8 + 12 + digitsWidth(fp) + 5;
     if (right) x -= w;
     panel(ctx, x, y, w, 16, UI.cream);
     let cx = x + 4;
     ctx.drawImage(SPR.heart, cx, y + 5);
     cx += 10;
     cx += drawDigits(ctx, tp, cx, y + 5, { color: UI.ink }) + 8;
-    ctx.drawImage(SPR.foodIcon, cx, y + 5);
-    cx += 9;
+    ctx.drawImage(SPR.foodIcon, cx, y + 6);
+    cx += 12;
     drawDigits(ctx, fp, cx, y + 5, { color: UI.ink });
   }
 
