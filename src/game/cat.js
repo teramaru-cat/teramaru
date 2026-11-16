@@ -1,4 +1,4 @@
-// てらまる（M1：歩くだけ）
+// てらまる（移動・向き・歩きのコマ）
 
 import { BAL } from '../data/balance.js';
 import { SPR } from '../art/sprites.js';
@@ -14,30 +14,53 @@ export class Cat {
     this.dir = 'down';
     this.moving = false;
     this.animT = 0;
+    this.vx = 0; // 今の進む向き（体重で曲がりにくくするため、入力とは別に持つ）
+    this.vy = 0;
   }
 
-  update(dt, mv, town, speedMul = 1) {
+  // mv：入力の向き（長さ0〜1）、speedMul：速さの倍率、turn：曲がる速さ（0 ならすぐ曲がれる。体重が重いと小さくなる）
+  update(dt, mv, town, speedMul = 1, turn = 0) {
     this.px = this.x;
     this.py = this.y;
-    const len = Math.hypot(mv.x, mv.y);
+    // 重いときは、入力の向きへ少しずつしか向きを変えられない
+    if (turn > 0 && (this.vx || this.vy)) {
+      const k = Math.min(1, turn * dt);
+      this.vx += (mv.x - this.vx) * k;
+      this.vy += (mv.y - this.vy) * k;
+    } else {
+      this.vx = mv.x;
+      this.vy = mv.y;
+    }
+    const v = { x: this.vx, y: this.vy };
+    const len = Math.hypot(v.x, v.y);
     this.moving = len > 0.05;
     if (!this.moving) {
       this.animT = 0;
+      if (Math.hypot(mv.x, mv.y) < 0.05) { this.vx = 0; this.vy = 0; }
       return;
     }
     const sp = BAL.cat.speed * speedMul;
-    const dx = mv.x * sp * dt;
-    const dy = mv.y * sp * dt;
+    const dx = v.x * sp * dt;
+    const dy = v.y * sp * dt;
     const { footW, footH } = BAL.cat;
     // 横と縦を別々に動かして、壁に沿って滑れるようにする
     if (!town.blocked(this.x + dx, this.y, footW, footH)) this.x += dx;
     if (!town.blocked(this.x, this.y + dy, footW, footH)) this.y += dy;
 
-    const ax = Math.abs(mv.x);
-    const ay = Math.abs(mv.y);
-    if (ax > ay * 1.1) this.dir = mv.x > 0 ? 'right' : 'left';
-    else if (ay > ax * 1.1) this.dir = mv.y > 0 ? 'down' : 'up';
+    const ax = Math.abs(v.x);
+    const ay = Math.abs(v.y);
+    if (ax > ay * 1.1) this.dir = v.x > 0 ? 'right' : 'left';
+    else if (ay > ax * 1.1) this.dir = v.y > 0 ? 'down' : 'up';
     this.animT += dt * Math.min(1, len);
+  }
+
+  stop() {
+    this.px = this.x;
+    this.py = this.y;
+    this.vx = 0;
+    this.vy = 0;
+    this.moving = false;
+    this.animT = 0;
   }
 
   // 描画用の位置（更新と更新の間をなめらかにつなぐ）

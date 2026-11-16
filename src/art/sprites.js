@@ -126,6 +126,10 @@ const CLOCK = ['..ooo..', '.owwwo.', 'owwowwo', 'owwoowo', 'owwwwwo', '.owwwo.',
 const STAR = ['...o...', '..oyo..', 'ooyyyoo', 'oyyyyyo', '.oyyyo.', '.oyoyo.', '.oo.oo.'];
 const COIN = ['..ooo..', '.oyyyo.', 'oyywyyo', 'oyyyyyo', 'oyyyyyo', '.oyyyo.', '..ooo..'];
 
+const DROP = ['..o..', '.obo.', '.obo.', 'obbbo', 'obwbo', 'obbbo', '.ooo.'];
+const PAW = ['p.p.p', '.....', '.ppp.', 'ppppp', 'ppppp', '.p.p.'];
+const BOLT = ['..oo.', '.oyo.', 'oyyo.', 'oyyyo', '.oyyo', '.oyo.', '.oo..'];
+
 export const SPR = {};
 
 export function buildSprites() {
@@ -136,6 +140,10 @@ export function buildSprites() {
     left: frames(SIDE_TOP, SIDE_LEGS, LEFT_PAL, true),
   };
   SPR.heart = makeSprite(HEART, { o: '#8a2040', h: '#f06080', w: '#ffd0dc' });
+  SPR.drop = makeSprite(DROP, { o: '#1f4f9a', b: '#4aa0e0', w: '#ffffff' });
+  SPR.dropEmpty = makeSprite(DROP, { o: '#8a8a90', b: '#d8d4cc', w: '#eeeae2' });
+  SPR.paw = makeSprite(PAW, { p: '#d06070' });
+  SPR.bolt = makeSprite(BOLT, { o: '#8a5a10', y: '#f8d838' });
   SPR.clock = makeSprite(CLOCK, { o: '#3a2a20', w: '#fbf8f0' });
   SPR.star = makeSprite(STAR, { o: '#8a5a10', y: '#f8c838' });
   SPR.coin = makeSprite(COIN, { o: '#8a5a10', y: '#f0b828', w: '#fff0b0' });

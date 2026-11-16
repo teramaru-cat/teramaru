@@ -56,6 +56,8 @@ export const STAGES = {
       { type: 'water', ...at(5, 8) },
       { type: 'water', ...at(7, 23) },
       { type: 'water', ...at(41, 28) },
+      { type: 'water', ...at(33, 8) },
+      { type: 'water', ...at(50, 14) },
       // その他
       { type: 'fountain', x: 46 * T, y: 25 * T + 14 },
       { type: 'bench', ...at(40, 23) },

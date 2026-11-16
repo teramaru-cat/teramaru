@@ -1,17 +1,19 @@
-// プレイ画面（街を歩く・ターゲットに触れるとてらまりんぐ・ポーズ・決定ボタン）
+// プレイ画面（街を歩く・てらまりんぐ・お水・爪とぎ・トイレ・倒れて病院・ポーズ）
 
 import { screen, snapPx } from '../core/renderer.js';
 import { input, KEY } from '../core/input.js';
-import { drawText } from '../core/text.js';
+import { drawText, textWidth } from '../core/text.js';
 import { Button, panel } from '../core/ui.js';
 import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
 import { drawDigits, digitsWidth } from '../art/digits.js';
 import { BAL } from '../data/balance.js';
+import { ITEMS } from '../data/targets.js';
 import { getTown } from '../game/town.js';
 import { Cat } from '../game/cat.js';
 import { Spawner } from '../game/target.js';
 import { claimMove, moveVector, drawSticks } from '../game/control.js';
+import { Effects, PopText, Absorb, heartAbsorb } from '../game/effects.js';
 import { liveScore } from '../game/score.js';
 import { RingingScene } from './ringing.js';
 import { ResultScene } from './result.js';
@@ -32,12 +34,28 @@ export class PlayScene {
     this.pauseBtn = new Button('pause', '', { icon: 'pause', pad: 6 });
     this.confirmBtn = new Button('confirm', 'けってい', { pad: 6 });
     // 1プレイ分の状態
-    this.state = { timeLeft: BAL.playSeconds, tp: 0, fp: 0, tpTotal: 0, fpTotal: 0, kamaware: 0, faints: 0 };
+    this.state = {
+      timeLeft: BAL.playSeconds,
+      tp: 0, // 今持っているTP（おねだりで使う）
+      fp: 0, // トイレまでのご飯ポイント（100でトイレ）
+      tpTotal: 0, // スコア用：もらった合計
+      fpTotal: 0,
+      kamaware: 0,
+      faints: 0,
+      thirst: 0, // 最後に水を飲んでからの秒数
+      lastDrink: -99, // 最後にご飯ポイントをもらった水飲みの時刻（連打よけ）
+      weight: BAL.weight.start,
+      scratch: 0, // 爪とぎボーナスの残り秒
+      toilet: 0, // トイレのあとのダッシュの残り秒
+    };
+    this.action = null; // { kind: 'scratch' | 'toilet' | 'faint', t } 動けない動作中
     this.ending = 0; // 時間切れの「おしまい！」を見せている残り秒
     this.spawner = new Spawner(this.town, stageId);
     this.spawner.fill(this.cat);
-    this.flash = 0; // てらまりんぐから戻ったときの白いフェード
+    this.fx = new Effects(); // 街の中の演出（座標は街）
+    this.flash = 0; // 白いフェード
     this.lastCam = { x: 0, y: 0 };
+    this.nearScratch = null;
   }
 
   enter() { input.releaseAll(); }
@@ -60,21 +78,60 @@ export class PlayScene {
     return { x: this.cat.x - this.cam.x, y: this.cat.y - 8 - this.cam.y };
   }
 
+  // ---- 状態 ----
+
+  weightLevel() {
+    const w = this.state.weight;
+    return w >= BAL.weight.round ? 2 : w >= BAL.weight.chubby ? 1 : 0;
+  }
+
+  speedMul() {
+    return BAL.weight.speed[this.weightLevel()] * (this.state.toilet > 0 ? BAL.toilet.speed : 1);
+  }
+
+  turnRate() { return BAL.weight.turn[this.weightLevel()]; }
+
+  addTp(n) {
+    this.state.tp += n;
+    this.state.tpTotal += n;
+  }
+
+  addFp(n) {
+    const st = this.state;
+    st.fp += n;
+    st.fpTotal += n;
+    st.weight = Math.min(100, st.weight + n * BAL.weight.perFp);
+  }
+
+  // 残り時間・お水・ボーナスの時間を進める（てらまりんぐ中も RingingScene から呼ばれる）
+  tick(dt) {
+    const st = this.state;
+    st.timeLeft = Math.max(0, st.timeLeft - dt);
+    if (this.action?.kind !== 'faint') st.thirst += dt;
+    if (st.scratch > 0) st.scratch = Math.max(0, st.scratch - dt);
+    if (st.toilet > 0) st.toilet = Math.max(0, st.toilet - dt);
+  }
+
+  thirsty() { return this.state.thirst >= BAL.water.limit; }
+
+  // ---- 更新 ----
+
   update(dt) {
     this.t += dt;
     this.layoutButtons();
+    this.fx.update(dt);
+    if (this.flash > 0) this.flash -= dt;
 
     // 時間切れ → 「おしまい！」を少し見せてからリザルトへ
     if (this.ending > 0) {
       this.ending -= dt;
-      if (this.flash > 0) this.flash -= dt;
       if (this.ending <= 0) this.game.scenes.replace(new ResultScene(this.game, this.stageId, this.state));
       return;
     }
     if (this.state.timeLeft <= 0) { this.startEnding(); return; }
 
     if (input.hit(KEY.pause)) { this.openPause(); return; }
-    if (this.game.debug && input.hit(['KeyT'])) this.state.timeLeft = Math.min(this.state.timeLeft, 5);
+    if (this.game.debug) this.debugKeys();
 
     for (const p of input.fresh()) {
       if (this.pauseBtn.contains(p.x, p.y)) {
@@ -92,25 +149,183 @@ export class PlayScene {
     if (input.hit(KEY.confirm)) this.onConfirm();
 
     this.tick(dt);
-    this.cat.update(dt, moveVector(this.catScreen()), this.town);
-    this.followCamera(dt);
-    this.spawner.update(dt, this.cat);
     if (this.banner > 0) this.banner -= dt;
     if (this.bubble > 0) this.bubble -= dt;
-    if (this.flash > 0) this.flash -= dt;
 
-    // ターゲットに触れたら、てらまりんぐへ
+    // 動けない動作（爪とぎ・トイレ・倒れる）
+    if (this.action) {
+      this.cat.stop();
+      this.updateAction(dt);
+      this.spawner.update(dt, this.cat);
+      return;
+    }
+    if (this.thirsty()) { this.startFaint(); return; }
+    if (this.state.fp >= BAL.toilet.every) { this.startToilet(); return; }
+
+    this.cat.update(dt, moveVector(this.catScreen()), this.town, this.speedMul(), this.turnRate());
+    this.followCamera(dt);
+    this.spawner.update(dt, this.cat);
+    if (this.state.toilet > 0 && this.cat.moving && Math.random() < dt * 20) this.addDashSpark();
+
+    this.checkWater();
+    this.nearScratch = this.findProp(['scratch'], 10);
+    this.confirmBtn.label = this.nearScratch ? 'つめとぎ' : 'けってい';
+
+    // ターゲットに触れたら、てらまりんぐへ（トイレのあとのダッシュ中は自動で成功）
     const t = this.spawner.touching(this.cat);
-    if (t) this.game.scenes.push(new RingingScene(this.game, this, t));
+    if (t) {
+      const mult = this.takeScratchBonus(t);
+      if (this.state.toilet > 0) this.autoRing(t, mult);
+      else this.game.scenes.push(new RingingScene(this.game, this, t, mult));
+    }
   }
 
-  // 残り時間を減らす（てらまりんぐ中も RingingScene から呼ばれる）
-  tick(dt) {
-    this.state.timeLeft = Math.max(0, this.state.timeLeft - dt);
+  debugKeys() {
+    if (input.hit(['KeyT'])) this.state.timeLeft = Math.min(this.state.timeLeft, 5);
+    if (input.hit(['KeyF'])) this.addFp(30);
+    if (input.hit(['KeyH'])) this.state.thirst = BAL.water.limit - 3;
+    if (input.hit(['KeyG'])) this.state.weight = Math.min(100, this.state.weight + 20);
+  }
+
+  // 爪とぎボーナス：人に触れたら使う（TP2倍）
+  takeScratchBonus(target) {
+    if (this.state.scratch > 0 && target.def.kind === 'human') {
+      this.state.scratch = 0;
+      return BAL.scratch.mult;
+    }
+    return 1;
+  }
+
+  // 近くの小物（水飲み・爪とぎ）。当たり箱を pad だけ広げて重なるか
+  findProp(types, pad) {
+    const c = this.cat;
+    for (const p of this.town.props) {
+      if (!types.includes(p.type)) continue;
+      const s = p.def.solid;
+      if (s) {
+        if (c.x > p.x - s.w / 2 - pad && c.x < p.x + s.w / 2 + pad && c.y > p.y - s.h - pad && c.y < p.y + pad + 4) return p;
+      } else if (Math.hypot(c.x - p.x, c.y - p.y) < 12) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  checkWater() {
+    const p = this.findProp(['water', 'fountain'], 8);
+    if (!p) return;
+    const st = this.state;
+    if (st.thirst < 0.5) return; // 飲んだばかり
+    const award = this.t - st.lastDrink >= BAL.water.refill;
+    st.thirst = 0;
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'ごくごく', '#2a70c0'));
+    if (award) {
+      st.lastDrink = this.t;
+      this.addFp(BAL.water.fp);
+      this.fx.add(new PopText(this.cat.x + 10, this.cat.y - 18, `+${BAL.water.fp}`, UI.orangeD, 0.8));
+    }
+  }
+
+  onConfirm() {
+    if (this.action) return;
+    if (this.nearScratch) { this.startScratch(); return; }
+    this.bubble = 1.0; // ほかでは「にゃ」と鳴くだけ（おねだりは M5）
+  }
+
+  startScratch() {
+    this.action = { kind: 'scratch', t: 0 };
+    this.cat.dir = 'up';
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'ガリガリ', UI.orangeD));
+  }
+
+  startToilet() {
+    this.action = { kind: 'toilet', t: 0 };
+    this.cat.dir = 'down';
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'うーん…', UI.ink));
+  }
+
+  startFaint() {
+    const st = this.state;
+    st.faints++;
+    st.scratch = 0;
+    st.toilet = 0;
+    this.action = { kind: 'faint', t: 0, moved: false };
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'バタッ', UI.red));
+  }
+
+  updateAction(dt) {
+    const a = this.action;
+    a.t += dt;
+    const st = this.state;
+    if (a.kind === 'scratch' && a.t >= BAL.scratch.motion) {
+      st.scratch = BAL.scratch.window;
+      this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'つめ ばっちり！', UI.orangeD));
+      this.action = null;
+    } else if (a.kind === 'toilet' && a.t >= BAL.toilet.motion) {
+      st.fp -= BAL.toilet.every;
+      st.weight = Math.max(0, st.weight - BAL.toilet.weightDown);
+      st.toilet = BAL.toilet.buff;
+      this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'すっきり！', UI.orangeD));
+      this.action = null;
+    } else if (a.kind === 'faint') {
+      // 倒れる → 白くなって病院へ → 休んで復帰
+      const F = BAL.faint;
+      if (!a.moved && a.t >= F.fall + 0.4) {
+        a.moved = true;
+        const h = this.town.stage.hospital;
+        this.cat.x = this.cat.px = h.x;
+        this.cat.y = this.cat.py = h.y;
+        this.cat.dir = 'down';
+        this.snapCamera();
+        st.thirst = 0;
+      }
+      if (a.t >= F.total) {
+        this.action = null;
+        this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'げんきになった！', UI.orangeD));
+      }
+    }
+  }
+
+  // トイレのあとのダッシュ中：触れるだけで成功（ミニゲームなし）。ごほうびは同じ
+  autoRing(target, mult) {
+    const tp = target.def.tp * mult;
+    const getCat = () => ({ x: this.cat.x, y: this.cat.y - 8 });
+    this.fx.add(new PopText(target.x, target.y - 34, 'メロメロ！', UI.pink));
+    if (mult > 1) this.fx.add(new PopText(target.x, target.y - 44, `TP×${mult}`, UI.orangeD));
+    const n = Math.max(3, Math.min(10, tp));
+    for (let i = 0; i < n; i++) {
+      const v = Math.floor(tp / n) + (i < tp % n ? 1 : 0);
+      this.fx.add(heartAbsorb(target.x + (Math.random() - 0.5) * 12, target.y - 16, getCat, () => { if (v > 0) this.addTp(v); }));
+    }
+    const drop = target.def.drops;
+    if (drop) {
+      const fp = ITEMS[drop.item].fp;
+      for (let i = 0; i < drop.count; i++) {
+        const a = Math.random() * Math.PI * 2;
+        this.fx.add(new Absorb({
+          img: SPR.food[drop.item], x: target.x, y: target.y, vx: Math.cos(a) * 30, vy: Math.sin(a) * 15,
+          floor: 0, wait: 0.5, getTarget: getCat, onArrive: () => this.addFp(fp),
+        }));
+      }
+    }
+    target.leave(this.cat.x, this.cat.y);
+  }
+
+  addDashSpark() {
+    const c = this.cat;
+    const sp = { x: c.x + (Math.random() - 0.5) * 10, y: c.y - Math.random() * 10, t: 0 };
+    this.fx.add({
+      update(dt) { sp.t += dt; return sp.t < 0.35; },
+      draw(ctx) {
+        ctx.fillStyle = sp.t < 0.15 ? '#fff4a0' : '#f8c838';
+        ctx.fillRect(Math.round(sp.x), Math.round(sp.y), 1, 1);
+      },
+    });
   }
 
   startEnding() {
     this.ending = 1.8;
+    this.action = null;
     input.releaseAll();
   }
 
@@ -122,11 +337,6 @@ export class PlayScene {
 
   worldToScreen(x, y) {
     return { x: x - this.lastCam.x, y: y - this.lastCam.y };
-  }
-
-  onConfirm() {
-    // M1 では「にゃ」と鳴くだけ（爪とぎなどは M4 で）
-    this.bubble = 1.0;
   }
 
   // カメラはてらまるにぴったり付いていく（遅れて追うと、マウス操作のときに
@@ -150,11 +360,14 @@ export class PlayScene {
     this.snapCamera();
   }
 
+  // ---- 描画 ----
+
   draw(ctx) {
     this.layoutButtons();
     this.drawWorld(ctx);
     if (this.game.debug) this.drawDebug(ctx, this.lastCam.x, this.lastCam.y);
     this.drawHud(ctx);
+    if (this.action?.kind === 'faint') this.drawFaint(ctx);
     if (this.flash > 0) {
       ctx.fillStyle = `rgba(255,250,240,${Math.min(1, this.flash / 0.3)})`;
       ctx.fillRect(0, 0, screen.W, screen.H);
@@ -165,6 +378,28 @@ export class PlayScene {
       ctx.fillRect(0, 0, screen.W, screen.H);
       const pop = Math.round(Math.max(0, 1 - (1.8 - this.ending) * 5) * -20);
       drawText(ctx, 'おしまい！', screen.W / 2, 70 + pop, { scale: 2, color: UI.orange, outline: UI.ink, align: 'center' });
+    }
+  }
+
+  // 倒れたとき：白くなって病院へ。病院では「やすみちゅう」と残り秒
+  drawFaint(ctx) {
+    const a = this.action;
+    const F = BAL.faint;
+    const W = screen.W;
+    let white = 0;
+    if (a.t > F.fall && a.t < F.fall + 0.4) white = (a.t - F.fall) / 0.4;
+    else if (a.t >= F.fall + 0.4 && a.t < F.fall + 0.8) white = 1 - (a.t - F.fall - 0.4) / 0.4;
+    if (a.t >= F.fall + 0.4) {
+      const left = Math.max(0, Math.ceil(F.total - a.t));
+      const msg = 'びょういんで やすみちゅう';
+      const w = textWidth(msg, 'small') + 30;
+      panel(ctx, Math.round(W / 2 - w / 2), 44, w, 14, UI.cream);
+      drawText(ctx, msg, Math.round(W / 2 - w / 2) + 6, 47, { font: 'small', color: UI.ink });
+      drawDigits(ctx, left, Math.round(W / 2 + w / 2) - 8, 48, { color: UI.red, align: 'right' });
+    }
+    if (white > 0) {
+      ctx.fillStyle = `rgba(255,250,240,${white})`;
+      ctx.fillRect(0, 0, W, screen.H);
     }
   }
 
@@ -208,13 +443,18 @@ export class PlayScene {
     things.sort((a, b) => a.y - b.y);
     for (const t of things) t.draw();
 
+    ctx.save();
+    ctx.translate(-cx, -cy);
+    this.fx.draw(ctx);
+    ctx.restore();
+
     if (this.bubble > 0) this.drawBubble(ctx, cx, cy);
   }
 
-  // TP・ご飯の数（てらまりんぐ画面でも使う）。right=true なら x を右端として並べる
+  // TP・ご飯（トイレまで ○/100）の数（てらまりんぐ画面でも使う）。right=true なら x を右端として並べる
   drawCounters(ctx, x, y, right = false) {
     const tp = String(this.state.tp);
-    const fp = String(this.state.fp);
+    const fp = `${this.state.fp}/${BAL.toilet.every}`;
     const w = 4 + 10 + digitsWidth(tp) + 8 + 12 + digitsWidth(fp) + 5;
     if (right) x -= w;
     panel(ctx, x, y, w, 16, UI.cream);
@@ -225,6 +465,49 @@ export class PlayScene {
     ctx.drawImage(SPR.foodIcon, cx, y + 6);
     cx += 12;
     drawDigits(ctx, fp, cx, y + 5, { color: UI.ink });
+    return w;
+  }
+
+  // お水・体重・ボーナス（2段目）。てらまりんぐ画面でも使う
+  drawStatus(ctx, x, y, right = false) {
+    const st = this.state;
+    const parts = [];
+    // お水：残り時間を4つのしずくで
+    const left = Math.max(0, BAL.water.limit - st.thirst);
+    const warn = st.thirst >= BAL.water.warn;
+    const blink = warn && Math.floor(this.t * 6) % 2 === 0;
+    const wW = 4 * 6 - 1;
+    // 体重：5つの目盛り
+    const wl = this.weightLevel();
+    const weightCol = ['#7ab050', '#e0a030', UI.red][wl];
+    const lab = '体重';
+    const lw = textWidth(lab, 'small');
+    if (st.scratch > 0) parts.push({ img: SPR.paw, sec: Math.ceil(st.scratch) });
+    if (st.toilet > 0) parts.push({ img: SPR.bolt, sec: Math.ceil(st.toilet) });
+    let w = 4 + wW + 6 + lw + 2 + 5 * 3 + 3;
+    for (const p of parts) w += 6 + 9 + digitsWidth(String(p.sec));
+    if (right) x -= w;
+    panel(ctx, x, y, w, 13, warn ? '#ffe0d8' : UI.cream);
+    let cx = x + 4;
+    for (let i = 0; i < 4; i++) {
+      const full = left > i * (BAL.water.limit / 4);
+      if (blink && full) continue;
+      ctx.drawImage(full ? SPR.drop : SPR.dropEmpty, cx + i * 6, y + 3);
+    }
+    cx += wW + 6;
+    drawText(ctx, lab, cx, y + 3, { font: 'small', color: UI.ink });
+    cx += lw + 2;
+    for (let i = 0; i < 5; i++) {
+      ctx.fillStyle = st.weight > i * 20 ? weightCol : '#d8d0c0';
+      ctx.fillRect(cx + i * 3, y + 4, 2, 5);
+    }
+    cx += 5 * 3;
+    for (const p of parts) {
+      cx += 6;
+      ctx.drawImage(p.img, cx, y + 3);
+      cx += 9;
+      cx += drawDigits(ctx, p.sec, cx, y + 3, { color: UI.ink });
+    }
   }
 
   drawProp(ctx, p, cx, cy) {
@@ -236,13 +519,44 @@ export class PlayScene {
   }
 
   drawCat(ctx, cx, cy) {
-    const x = snapPx(this.drawPosCat.x - cx);
+    let x = snapPx(this.drawPosCat.x - cx);
     const y = snapPx(this.drawPosCat.y - cy);
+    const a = this.action;
     ctx.fillStyle = 'rgba(40,30,20,0.28)';
     ctx.fillRect(x - 6, y - 1, 12, 2);
     ctx.fillRect(x - 4, y - 2, 8, 4);
+
+    // 倒れている（横向きの絵を倒して描く）
+    if (a?.kind === 'faint') {
+      const img = SPR.cat.right[0];
+      ctx.save();
+      ctx.translate(Math.round(x), Math.round(y));
+      ctx.rotate(Math.PI / 2);
+      ctx.drawImage(img, -img.width + 2, -8);
+      ctx.restore();
+      // 目が回っている
+      for (let i = 0; i < 3; i++) {
+        const ang = this.t * 4 + (i * Math.PI * 2) / 3;
+        ctx.fillStyle = '#f8c838';
+        ctx.fillRect(Math.round(x + Math.cos(ang) * 7), Math.round(y - 14 + Math.sin(ang) * 2), 2, 2);
+      }
+      return;
+    }
+
     const img = this.cat.sprite();
-    ctx.drawImage(img, x - 8, y - img.height);
+    // 太ると横に広がる
+    const w = img.width + this.weightLevel() * 2;
+    let h = img.height;
+    if (a?.kind === 'scratch') x += Math.floor(this.t * 20) % 2 ? 1 : -1;
+    if (a?.kind === 'toilet') h -= 2; // しゃがむ
+    ctx.drawImage(img, x - w / 2, y - h, w, h);
+
+    // 汗（お水が足りない）
+    if (this.state.thirst >= BAL.water.warn && Math.floor(this.t * 4) % 2 === 0) {
+      ctx.fillStyle = '#4aa0e0';
+      ctx.fillRect(x + 6, y - h - 1, 1, 2);
+      ctx.fillRect(x + 7, y - h + 1, 2, 2);
+    }
   }
 
   drawBubble(ctx, cx, cy) {
@@ -256,20 +570,22 @@ export class PlayScene {
   }
 
   drawHud(ctx) {
+    this.drawCounters(ctx, 4, 4);
+    this.drawStatus(ctx, 4, 22);
+    this.drawTimer(ctx);
+    this.drawScore(ctx, screen.W - 28, 4);
+
     // ステージ名
     if (this.banner > 0) {
       const a = Math.min(1, this.banner * 2, (2.6 - this.banner) * 4);
       const slide = Math.round((1 - a) * -60);
-      panel(ctx, 6 + slide, 24, 112, 30, UI.cream);
-      drawText(ctx, `ステージ${this.stageId}`, 12 + slide, 27, { font: 'small', color: UI.orangeD });
-      drawText(ctx, this.town.stage.name, 12 + slide, 37, { color: UI.ink });
+      panel(ctx, 6 + slide, 40, 112, 30, UI.cream);
+      drawText(ctx, `ステージ${this.stageId}`, 12 + slide, 43, { font: 'small', color: UI.orangeD });
+      drawText(ctx, this.town.stage.name, 12 + slide, 53, { color: UI.ink });
     }
-    this.drawCounters(ctx, 4, 4);
-    this.drawTimer(ctx);
-    this.drawScore(ctx, screen.W - 28, 4);
 
     this.pauseBtn.draw(ctx, { pressed: this.pauseBtn.isHeld() });
-    this.confirmBtn.draw(ctx, { pressed: this.confirmBtn.isHeld() });
+    this.confirmBtn.draw(ctx, { pressed: this.confirmBtn.isHeld(), lit: !!this.nearScratch });
 
     drawSticks(ctx);
   }
@@ -284,6 +600,7 @@ export class PlayScene {
       if (!s) continue;
       ctx.strokeRect(Math.round(p.x - s.w / 2 - cx) + 0.5, Math.round(p.y - s.h - cy) + 0.5, s.w - 1, s.h - 1);
     }
-    drawText(ctx, `${Math.round(this.cat.x)},${Math.round(this.cat.y)} ${this.game.fps}fps`, 4, screen.H - 10, { font: 'small', color: '#ffffff', outline: '#000000' });
+    const st = this.state;
+    drawText(ctx, `${Math.round(this.cat.x)},${Math.round(this.cat.y)} ${this.game.fps}fps w${Math.round(st.weight)} 水${st.thirst.toFixed(1)}`, 4, screen.H - 10, { font: 'small', color: '#ffffff', outline: '#000000' });
   }
 }

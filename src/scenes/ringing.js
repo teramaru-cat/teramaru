@@ -29,8 +29,10 @@ function wrap(a) {
 }
 
 export class RingingScene {
-  constructor(game, play, target) {
+  // mult：爪とぎボーナスのTPの倍率
+  constructor(game, play, target, mult = 1) {
     this.game = game;
+    this.mult = mult;
     this.play = play;
     this.target = target;
     this.def = target.def;
@@ -103,15 +105,16 @@ export class RingingScene {
     let mv = moveVector(this.catScreen());
     if (this.stun > 0) { this.stun -= dt; mv = { x: 0, y: 0 }; }
     if (this.immune > 0) this.immune -= dt;
-    this.cat.update(dt, mv, this.ground, BAL.ring.zoom);
+    this.cat.update(dt, mv, this.ground, BAL.ring.zoom * this.play.speedMul(), this.play.turnRate());
     this.collide();
     this.countLaps();
 
     const dur = this.def.durability;
     if (this.gauge >= dur && this.legs.every((L) => L.laps >= 1)) { this.startWin(); return; }
 
-    // 時間切れ：その場で街へ戻る（リザルトへ）
+    // 時間切れ・お水切れ：その場で街へ戻る（リザルト・病院へ）
     if (this.play.state.timeLeft <= 0) { this.result = 'timeup'; this.setPhase('out'); return; }
+    if (this.play.thirsty()) { this.result = 'faint'; this.setPhase('out'); return; }
 
     const c = this.cat;
     if (c.x < -8 || c.x > screen.W + 8 || c.y > screen.H + 14) {
@@ -180,7 +183,7 @@ export class RingingScene {
   }
 
   hit(nx, ny, stomped) {
-    this.stun = BAL.ring.stun;
+    this.stun = BAL.ring.stun * BAL.weight.stun[this.play.weightLevel()];
     this.immune = 1.2;
     this.gauge = Math.max(0, this.gauge - BAL.ring.hitPenalty);
     this.cat.x += nx * 8;
@@ -218,17 +221,16 @@ export class RingingScene {
   startWin() {
     this.setPhase('win');
     this.result = 'win';
-    const st = this.play.state;
+    const play = this.play;
     const mid = this.gx + this.bx;
-    // ハート：TPをいくつかに分けて、てらまるへ吸い込む
-    const tp = this.def.tp;
+    // ハート：TPをいくつかに分けて、てらまるへ吸い込む（爪とぎボーナスなら2倍）
+    const tp = this.def.tp * this.mult;
     const n = Math.max(3, Math.min(12, tp));
     for (let i = 0; i < n; i++) {
       const v = Math.floor(tp / n) + (i < tp % n ? 1 : 0);
       this.fx.add(heartAbsorb(mid + (Math.random() - 0.5) * 50, GROUND_Y - 30 - Math.random() * 20, () => this.catCenter(), () => {
         if (v > 0) {
-          st.tp += v;
-          st.tpTotal += v;
+          play.addTp(v);
           this.fx.add(new PopText(this.cat.x + (Math.random() - 0.5) * 16, this.cat.y - 42, `+${v}TP`, UI.pink, 0.7));
         }
       }));
@@ -251,8 +253,7 @@ export class RingingScene {
           wait: 0.8 + Math.random() * 0.3,
           getTarget: () => this.catCenter(),
           onArrive: () => {
-            st.fp += fp;
-            st.fpTotal += fp;
+            play.addFp(fp);
             this.fx.add(new PopText(this.cat.x + (Math.random() - 0.5) * 16, this.cat.y - 50, `+${fp}`, UI.orangeD, 0.7));
           },
         }));
@@ -388,6 +389,8 @@ export class RingingScene {
     }
 
     this.play.drawCounters(ctx, W - 28, 4, true);
+    this.play.drawStatus(ctx, W - 4, 22, true);
+    if (this.mult > 1) drawText(ctx, `つめとぎ TP×${this.mult}`, 8, 33, { font: 'small', color: UI.orangeD, outline: UI.white });
     this.play.drawTimer(ctx);
     this.pauseBtn.draw(ctx, { pressed: this.pauseBtn.isHeld() });
 
