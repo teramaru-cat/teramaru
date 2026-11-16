@@ -67,10 +67,10 @@ export class TitleScene {
     const lw = textWidth(label, 'small');
     const cw = digitsWidth(String(coins));
     const mw = textWidth('まい', 'small');
-    panel(ctx, 4, H - 14, lw + cw + mw + 16, 11, UI.cream);
-    drawText(ctx, label, 8, H - 12, { font: 'small', color: UI.ink });
-    drawDigits(ctx, coins, 8 + lw + 3, H - 11, { color: UI.ink });
-    drawText(ctx, 'まい', 8 + lw + cw + 5, H - 12, { font: 'small', color: UI.ink });
+    panel(ctx, 4, H - 17, lw + cw + mw + 16, 13, UI.cream);
+    drawText(ctx, label, 8, H - 14, { font: 'small', color: UI.ink });
+    drawDigits(ctx, coins, 8 + lw + 3, H - 14, { color: UI.ink });
+    drawText(ctx, 'まい', 8 + lw + cw + 5, H - 14, { font: 'small', color: UI.ink });
 
     // ベストスコア（右下）。ステージが増えたらステージ選択で1つずつ見せる
     const best = Math.max(0, ...Object.values(this.game.save.bestScore));
@@ -79,9 +79,9 @@ export class TitleScene {
     const bdw = digitsWidth(String(best));
     const bw = 4 + 7 + 3 + blw + 4 + bdw + 5;
     const px = W - 4 - bw;
-    panel(ctx, px, H - 14, bw, 11, UI.cream);
-    ctx.drawImage(SPR.star, px + 4, H - 12);
-    drawText(ctx, bl, px + 14, H - 12, { font: 'small', color: UI.ink });
-    drawDigits(ctx, best, px + 14 + blw + 4, H - 11, { color: UI.ink });
+    panel(ctx, px, H - 17, bw, 13, UI.cream);
+    ctx.drawImage(SPR.star, px + 4, H - 14);
+    drawText(ctx, bl, px + 14, H - 14, { font: 'small', color: UI.ink });
+    drawDigits(ctx, best, px + 14 + blw + 4, H - 14, { color: UI.ink });
   }
 }
