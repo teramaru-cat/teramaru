@@ -74,7 +74,7 @@ export const TARGETS = {
 
 // 落とし物（ご飯）。1個 = ご飯ポイント fp
 export const ITEMS = {
-  bread: { name: 'パンくず', fp: 2 },
+  bread: { name: '食パン', fp: 2 },
   onigiri: { name: 'おにぎり', fp: 2 },
   candy: { name: 'お菓子', fp: 2 },
   fish: { name: 'おさかな', fp: 2 },

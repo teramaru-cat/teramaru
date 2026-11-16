@@ -177,18 +177,20 @@ export function drawGarment(ctx, look, cx, bx) {
 // 落とし物（ご飯）の小さい絵
 // てらまりんぐ画面では2倍で描く
 export const FOOD_ROWS = {
-  // パン屋さん：切れ目の入ったパン
+  // パン屋さん：食パン（1枚）
   bread: {
     rows: [
-      '..oooooo..',
-      '.occlcllo.',
-      'occdccdcco',
-      'occcdccdco',
+      '.oooooooo.',
       'occcccccco',
-      '.obbbbbbo.',
-      '..oooooo..',
+      'ocwwwwwwco',
+      'ocwlwwwwco',
+      '.ocwwwwco.',
+      '.ocwwwwco.',
+      '.ocwwwwco.',
+      '.occcccco.',
+      '.oooooooo.',
     ],
-    pal: { o: INK, c: '#d9a050', l: '#f0c878', d: '#a8682a', b: '#b87a38' },
+    pal: { o: INK, c: '#c8823a', w: '#fbecc8', l: '#fff8e8' },
   },
   // おばあちゃん：おにぎり
   onigiri: {
