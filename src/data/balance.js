@@ -11,14 +11,14 @@ export const BAL = {
   },
   unlock: { 2: 3000, 3: 5000, 4: 7000 },
   water: {
-    limit: 20, // 最後に水を飲んでからこの秒数で倒れる
-    warn: 15, // ここから水マークが点滅・汗
+    limit: 30, // 最後に水を飲んでからこの秒数で倒れる（てらまりんぐ中は数えない）
+    warn: 22, // ここから水マークが点滅・汗
     fp: 1, // 飲むともらえるご飯ポイント
     refill: 3, // 前に飲んでからこの秒数以上たっていないと、ご飯ポイントは付かない（その場で連打できないように）
   },
   faint: { total: 5, fall: 1.0 }, // 倒れてから復帰までの合計秒数、その場で倒れている秒数
-  scratch: { motion: 1, window: 5, mult: 2 }, // 爪とぎの動き（秒）、そのあと人に触れればいい秒数、TPの倍率
-  toilet: { every: 100, motion: 1, buff: 10, speed: 1.5, weightDown: 10 },
+  scratch: { motion: 1, window: 8, mult: 2, again: 4 }, // 爪とぎの動き（秒）、そのあと人に触れればいい秒数、TPの倍率、次に爪とぎできるまで
+  toilet: { every: 50, motion: 1, buff: 10, speed: 1.5, weightDown: 15 },
   weight: {
     start: 20,
     perFp: 0.5, // ご飯ポイント1あたり増える量
@@ -40,7 +40,7 @@ export const BAL = {
     mouseDead: 6,
   },
   town: {
-    targets: 7, // 街に同時にいるターゲットの数
+    targets: 10, // 街に同時にいるターゲットの数
     respawn: 3, // ターゲットがいなくなってから次が出るまで（秒）
     touchDist: 10, // これより近づくと、てらまりんぐが始まる
   },

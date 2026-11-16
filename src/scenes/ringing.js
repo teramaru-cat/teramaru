@@ -76,7 +76,7 @@ export class RingingScene {
     }
     this.updateLegs(dt);
     this.fx.update(dt);
-    if (this.phase !== 'out') this.play.tick(dt); // てらまりんぐ中も残り時間は減る
+    if (this.phase !== 'out') this.play.tick(dt, false); // てらまりんぐ中も残り時間は減る（お水の時間は止まる）
 
     if (this.phase === 'in') {
       if (this.pt >= BAL.ring.intro) this.setPhase('play');

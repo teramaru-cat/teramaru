@@ -52,6 +52,9 @@ export const STAGES = {
       // 爪とぎ
       { type: 'scratch', ...at(27, 8), y: 8 * T + 12 },
       { type: 'scratch', ...at(9, 23) },
+      { type: 'scratch', ...at(24, 23) },
+      { type: 'scratch', ...at(48, 8), y: 8 * T + 12 },
+      { type: 'scratch', ...at(43, 30) },
       // 水飲み
       { type: 'water', ...at(5, 8) },
       { type: 'water', ...at(7, 23) },

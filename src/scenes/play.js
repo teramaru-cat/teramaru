@@ -46,6 +46,7 @@ export class PlayScene {
       lastDrink: -99, // 最後にご飯ポイントをもらった水飲みの時刻（連打よけ）
       weight: BAL.weight.start,
       scratch: 0, // 爪とぎボーナスの残り秒
+      lastScratch: -99, // 最後に爪とぎした時刻
       toilet: 0, // トイレのあとのダッシュの残り秒
     };
     this.action = null; // { kind: 'scratch' | 'toilet' | 'faint', t } 動けない動作中
@@ -55,7 +56,6 @@ export class PlayScene {
     this.fx = new Effects(); // 街の中の演出（座標は街）
     this.flash = 0; // 白いフェード
     this.lastCam = { x: 0, y: 0 };
-    this.nearScratch = null;
   }
 
   enter() { input.releaseAll(); }
@@ -104,10 +104,11 @@ export class PlayScene {
   }
 
   // 残り時間・お水・ボーナスの時間を進める（てらまりんぐ中も RingingScene から呼ばれる）
-  tick(dt) {
+  // thirst=false：お水の時間は進めない（てらまりんぐ中）
+  tick(dt, thirst = true) {
     const st = this.state;
     st.timeLeft = Math.max(0, st.timeLeft - dt);
-    if (this.action?.kind !== 'faint') st.thirst += dt;
+    if (thirst && this.action?.kind !== 'faint') st.thirst += dt;
     if (st.scratch > 0) st.scratch = Math.max(0, st.scratch - dt);
     if (st.toilet > 0) st.toilet = Math.max(0, st.toilet - dt);
   }
@@ -168,8 +169,7 @@ export class PlayScene {
     if (this.state.toilet > 0 && this.cat.moving && Math.random() < dt * 20) this.addDashSpark();
 
     this.checkWater();
-    this.nearScratch = this.findProp(['scratch'], 10);
-    this.confirmBtn.label = this.nearScratch ? 'つめとぎ' : 'けってい';
+    this.checkScratch();
 
     // ターゲットに触れたら、てらまりんぐへ（トイレのあとのダッシュ中は自動で成功）
     const t = this.spawner.touching(this.cat);
@@ -228,11 +228,18 @@ export class PlayScene {
 
   onConfirm() {
     if (this.action) return;
-    if (this.nearScratch) { this.startScratch(); return; }
-    this.bubble = 1.0; // ほかでは「にゃ」と鳴くだけ（おねだりは M5）
+    this.bubble = 1.0; // 今は「にゃ」と鳴くだけ（おねだりは M5）
+  }
+
+  // 爪とぎスポットに触れたら、勝手にガリガリ（ボーナス中・したばかりのときはしない）
+  checkScratch() {
+    const st = this.state;
+    if (st.scratch > 0 || this.t - st.lastScratch < BAL.scratch.again) return;
+    if (this.findProp(['scratch'], 6)) this.startScratch();
   }
 
   startScratch() {
+    this.state.lastScratch = this.t;
     this.action = { kind: 'scratch', t: 0 };
     this.cat.dir = 'up';
     this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'ガリガリ', UI.orangeD));
@@ -585,7 +592,7 @@ export class PlayScene {
     }
 
     this.pauseBtn.draw(ctx, { pressed: this.pauseBtn.isHeld() });
-    this.confirmBtn.draw(ctx, { pressed: this.confirmBtn.isHeld(), lit: !!this.nearScratch });
+    this.confirmBtn.draw(ctx, { pressed: this.confirmBtn.isHeld() });
 
     drawSticks(ctx);
   }

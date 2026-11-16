@@ -91,7 +91,7 @@ export function makePerson(look, step = false) {
     R(3, 2 + k, 6, 2, look.capColor);
     R(2, 4 + k, 8, 1, look.capColor);
   }
-  if (look.hat === 'band') R(2, 4 + k, 8, 1, WHITE);
+  if (look.hat === 'band') R(2, 4 + k, 8, 1, look.bandColor ?? WHITE);
 
   outline(c, ctx);
   return c;
@@ -231,6 +231,36 @@ export const FOOD_ROWS = {
     ],
     pal: { o: INK, b: '#5a88b8', l: '#d8e4ee', e: '#fbf8f0', t: '#7aa0c8' },
   },
+};
+
+// お肉屋さん：ほねつき肉
+FOOD_ROWS.meat = {
+  rows: [
+    '..oooooo.....',
+    '.ommmlmmo....',
+    'ommmmmmmmo.oo',
+    'ommmmmmmmwwwo',
+    'ommmmmmmmo.oo',
+    '.ommmmmmo....',
+    '..oooooo.....',
+  ],
+  pal: { o: INK, m: '#c0503a', l: '#e88a6a', w: '#f4ead8' },
+};
+
+// 八百屋さん：トマト
+FOOD_ROWS.tomato = {
+  rows: [
+    '...o.o...',
+    '..ogggo..',
+    '.oorgroo.',
+    'orrrrrrro',
+    'orwrrrrro',
+    'orrrrrrro',
+    'orrrrrrro',
+    '.orrrrro.',
+    '..ooooo..',
+  ],
+  pal: { o: INK, r: '#e04030', g: '#3a9a3a', w: '#ff9a8a' },
 };
 
 // HUD の「ご飯」アイコン（猫のごはん皿）

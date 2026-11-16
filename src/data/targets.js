@@ -70,6 +70,32 @@ export const TARGETS = {
     look: { skin: '#e8b890', hair: '#2a2a30', hat: 'band', top: '#f6f2ea', apron: '#2a4a7a', bottom: '#5a5a62', shoes: '#22262c', boots: true, garment: 'longApron' },
     onedari: { base: 0.30, perTp: 0.009 },
   },
+  butcher: {
+    name: 'お肉屋さん',
+    kind: 'human',
+    durability: 3,
+    tp: 5,
+    drops: { item: 'meat', count: 4 },
+    stages: [1, 2, 3, 4],
+    motion: 'stomp',
+    period: 1.4,
+    legs: [{ x: -18, y: 0, r: 7 }, { x: 18, y: 0, r: 7 }],
+    look: { skin: '#f0c098', hair: '#3a2a20', hat: 'cap', capColor: '#f6f2ea', top: '#c84040', apron: '#f6f2ea', bottom: '#4a4a52', shoes: '#22262c', boots: true, garment: 'longApron' },
+    onedari: { base: 0.30, perTp: 0.009 },
+  },
+  greengrocer: {
+    name: '八百屋さん',
+    kind: 'human',
+    durability: 3,
+    tp: 4,
+    drops: { item: 'tomato', count: 4 },
+    stages: [1, 2, 3, 4],
+    motion: 'stomp',
+    period: 2.2,
+    legs: [{ x: -18, y: 0, r: 7 }, { x: 18, y: 0, r: 7 }],
+    look: { skin: '#e8b890', hair: '#2a2a30', hat: 'band', bandColor: '#3a6ab0', top: '#f0e0b0', apron: '#3a8a4a', bottom: '#6b5a40', shoes: '#3a2a20', garment: 'apron' },
+    onedari: { base: 0.35, perTp: 0.010 },
+  },
 };
 
 // 落とし物（ご飯）。1個 = ご飯ポイント fp
@@ -78,4 +104,6 @@ export const ITEMS = {
   onigiri: { name: 'おにぎり', fp: 2 },
   candy: { name: 'お菓子', fp: 2 },
   fish: { name: 'おさかな', fp: 2 },
+  meat: { name: 'ほねつき肉', fp: 2 },
+  tomato: { name: 'トマト', fp: 2 },
 };
