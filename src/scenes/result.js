@@ -47,7 +47,7 @@ export class ResultScene {
     save(sv);
 
     this.rows = [
-      { label: 'てらまりんぐ', detail: [state.tpTotal, 'TP×', BAL.score.tp], value: this.sc.ring },
+      { label: 'てらまりんぐ', detail: [state.tpTotal, '×', BAL.score.tp], value: this.sc.ring },
       { label: 'ごはん', detail: [state.fpTotal, '×', BAL.score.fp], value: this.sc.food },
       { label: 'かまってもらった', detail: [], value: this.sc.kamaware },
       { label: 'ノーミス', detail: [], value: this.sc.noMiss },
