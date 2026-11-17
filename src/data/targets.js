@@ -9,7 +9,7 @@ export const TARGETS = {
   salaryman: {
     name: '棒立ちの会社員',
     kind: 'human',
-    durability: 3,
+    durability: 2,
     tp: 2,
     drops: null,
     stages: [1, 2, 3, 4],
@@ -46,7 +46,7 @@ export const TARGETS = {
   child: {
     name: '元気な子ども',
     kind: 'human',
-    durability: 1,
+    durability: 2,
     tp: 6,
     drops: { item: 'candy', count: 3 },
     stages: [1, 2, 3, 4],
