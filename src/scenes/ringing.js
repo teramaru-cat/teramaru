@@ -398,7 +398,8 @@ export class RingingScene {
       drawText(ctx, 'あしのまわりを ぐるぐる まわろう', W / 2, H - 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
       drawText(ctx, 'はしから でると やめる', W / 2, H - 12, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
     }
-    if (this.phase === 'win' || this.phase === 'out') {
+    // メロメロにできたときだけ（時間切れ・お水切れ・途中でやめたときは出さない）
+    if (this.result === 'win') {
       const bob = Math.round(Math.sin(this.pt * 8) * 1);
       drawText(ctx, 'メロメロ！', W / 2, 40 + bob, { scale: 2, color: UI.pink, outline: UI.ink, align: 'center' });
     }
