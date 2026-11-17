@@ -126,8 +126,10 @@ export class PlayScene {
   addFp(n) {
     const st = this.state;
     const wasFull = this.full();
-    if (wasFull) st.over += n;
-    st.fp = Math.min(BAL.tummy.full, st.fp + n);
+    // フィーバー中は、おなかには半分だけたまる（点数はそのまま）
+    const fill = st.toilet > 0 ? n * BAL.toilet.feverTummy : n;
+    if (wasFull) st.over += fill;
+    st.fp = Math.min(BAL.tummy.full, st.fp + fill);
     st.fpTotal += n;
     if (!wasFull && this.full()) {
       st.over = 0;

@@ -18,7 +18,7 @@ export const BAL = {
   },
   faint: { total: 5, fall: 1.0 }, // 倒れてから復帰までの合計秒数、その場で倒れている秒数
   scratch: { motion: 1, window: 8, mult: 2, again: 4 }, // 爪とぎの動き（秒）、そのあと人に触れればいい秒数、TPの倍率、次に爪とぎできるまで
-  toilet: { motion: 1.5, buff: 10, speed: 1.5, reach: 9 }, // 猫砂でカキカキする秒数、フィーバーの秒数・速さ、猫砂に届く距離
+  toilet: { feverTummy: 0.5, motion: 1.5, buff: 10, speed: 1.5, reach: 9 }, // 猫砂でカキカキする秒数、フィーバーの秒数・速さ、猫砂に届く距離
   // おなか：ご飯ポイントでたまる。いっぱいで「がまん中」→ 猫砂でトイレ → 0に戻る
   tummy: {
     full: 20, // いっぱい
