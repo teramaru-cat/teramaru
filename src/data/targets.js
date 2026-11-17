@@ -73,7 +73,7 @@ export const TARGETS = {
   butcher: {
     name: 'お肉屋さん',
     kind: 'human',
-    durability: 3,
+    durability: 4,
     tp: 5,
     drops: { item: 'meat', count: 4 },
     stages: [1, 2, 3, 4],
