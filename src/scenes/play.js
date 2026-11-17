@@ -16,6 +16,7 @@ import { claimMove, moveVector, drawSticks } from '../game/control.js';
 import { Effects, PopText, Absorb, heartAbsorb } from '../game/effects.js';
 import { liveScore } from '../game/score.js';
 import { RingingScene } from './ringing.js';
+import { KamatteScene } from './kamatte.js';
 import { ResultScene } from './result.js';
 import { PauseScene } from './pause.js';
 
@@ -31,6 +32,11 @@ export class PlayScene {
     this.banner = 2.6; // ステージ名の表示時間
     this.feverIntro = 0; // 「トイレフィーバー！」の表示時間
     this.bubble = 0; // 「にゃ」の吹き出し
+    this.aim = null; // おねだりの照準中 { pointer | key | button, sel, t }
+    this.leap = null; // おねだりで飛びついている途中
+    this.timeBonus = 0; // 「+3びょう」を時計の下に出す残り秒
+    this.timeBonusText = '';
+    this.hintShown = false; // 「おねだりできるよ」を出したか
     this.t = 0;
     this.pauseBtn = new Button('pause', '', { icon: 'pause', pad: 6 });
     this.confirmBtn = new Button('confirm', 'けってい', { pad: 6 });
@@ -111,6 +117,10 @@ export class PlayScene {
   addTp(n) {
     this.state.tp += n;
     this.state.tpTotal += n;
+    if (!this.hintShown && this.state.tp >= BAL.onedari.minTp) {
+      this.hintShown = true;
+      this.hintT = 3;
+    }
   }
 
   addFp(n) {
@@ -156,6 +166,12 @@ export class PlayScene {
     if (input.hit(KEY.pause)) { this.openPause(); return; }
     if (this.game.debug) this.debugKeys();
 
+    if (this.timeBonus > 0) this.timeBonus -= dt;
+    if (this.hintT > 0) this.hintT -= dt;
+    // おねだり：照準中・飛びついている途中は、街も時間も止まる
+    if (this.aim) { this.updateAim(dt); return; }
+    if (this.leap) { this.updateLeap(dt); return; }
+
     for (const p of input.fresh()) {
       if (this.pauseBtn.contains(p.x, p.y)) {
         p.role = 'button:pause';
@@ -164,12 +180,17 @@ export class PlayScene {
       }
       if (this.confirmBtn.contains(p.x, p.y)) {
         p.role = 'button:confirm';
-        this.onConfirm();
+        if (this.onConfirm({ button: p })) return;
+      } else if (this.grabsCat(p) && this.canOnedari()) {
+        p.role = 'aim';
+        this.startAim({ pointer: p });
+        return;
       } else {
+        if (this.grabsCat(p) && !this.action) this.needTpHint();
         claimMove(p);
       }
     }
-    if (input.hit(KEY.confirm)) this.onConfirm();
+    if (input.hit(KEY.confirm) && this.onConfirm({ key: true })) return;
 
     this.tick(dt);
     if (this.banner > 0) this.banner -= dt;
@@ -208,6 +229,7 @@ export class PlayScene {
     if (input.hit(['KeyF'])) this.addFp(30);
     if (input.hit(['KeyH'])) this.state.thirst = BAL.water.limit - 3;
     if (input.hit(['KeyG'])) this.addFp(BAL.tummy.full);
+    if (input.hit(['KeyK'])) this.addTp(30);
   }
 
   // 爪とぎボーナス：人に触れたら使う（TP2倍）
@@ -249,9 +271,199 @@ export class PlayScene {
     }
   }
 
-  onConfirm() {
-    if (this.action) return;
-    this.bubble = 1.0; // 今は「にゃ」と鳴くだけ（おねだりは M5）
+  // 決定：TPが足りていればおねだりの照準（押している間）。足りなければ「にゃ」
+  onConfirm(src) {
+    if (this.action) return false;
+    if (this.canOnedari()) { this.startAim(src); return true; }
+    this.bubble = 1.0;
+    this.needTpHint();
+    return false;
+  }
+
+  // ---- おねだり ----
+
+  canOnedari() { return !this.action && this.state.tp >= BAL.onedari.minTp; }
+
+  grabsCat(p) {
+    const cs = this.catScreen();
+    return Math.hypot(p.x - cs.x, p.y - (cs.y - 2)) < BAL.onedari.grab;
+  }
+
+  needTpHint() {
+    const need = BAL.onedari.minTp - this.state.tp;
+    if (need <= 0) return;
+    if (this.fx.list.some((e) => e.hint)) return;
+    const e = new PopText(this.cat.x, this.cat.y - 34, `おねだりは TP あと${need}`, UI.ink, 1.2);
+    e.hint = true;
+    this.fx.add(e);
+  }
+
+  // おねだりできる相手（人・動物で、近くにいて、去っていないもの）
+  onedariList() {
+    const R = BAL.onedari.radius;
+    return this.spawner.targets.filter((t) => t.state === 'idle' && (t.def.kind === 'human' || t.def.kind === 'animal')
+      && Math.hypot(t.x - this.cat.x, t.y - this.cat.y) <= R);
+  }
+
+  chance(t) {
+    const o = t.def.onedari;
+    return Math.min(1, o.base + this.state.tp * o.perTp);
+  }
+
+  startAim(src) {
+    this.cat.stop();
+    this.aim = { ...src, sel: null, t: 0 };
+    if (!src.pointer) {
+      // キーボード・ボタン：いちばん確率の高い相手（同じなら近い方）を最初に狙う
+      const list = this.onedariList();
+      list.sort((a, b) => this.chance(b) - this.chance(a) || this.distTo(a) - this.distTo(b));
+      this.aim.sel = list[0] ?? null;
+    }
+  }
+
+  distTo(t) { return Math.hypot(t.x - this.cat.x, t.y - this.cat.y); }
+
+  updateAim(dt) {
+    const a = this.aim;
+    a.t += dt;
+    const list = this.onedariList();
+    for (const t of list) t.t += dt; // その場でぴこぴこ
+    const cs = this.catScreen();
+
+    if (a.pointer) {
+      const p = a.pointer;
+      const dx = p.x - cs.x;
+      const dy = p.y - cs.y;
+      // 指が相手の絵の上にあれば、その相手
+      let sel = list.find((t) => {
+        const s = this.worldToScreen(t.x, t.y);
+        return p.x > s.x - 9 && p.x < s.x + 9 && p.y > s.y - 28 && p.y < s.y + 2;
+      }) ?? null;
+      if (!sel && Math.hypot(dx, dy) >= BAL.onedari.dead) {
+        const ang = Math.atan2(dy, dx);
+        let best = Infinity;
+        for (const t of list) {
+          const ta = Math.atan2(t.y - 12 - this.cat.y + 8, t.x - this.cat.x);
+          let diff = Math.abs(ang - ta);
+          if (diff > Math.PI) diff = Math.PI * 2 - diff;
+          if (diff > BAL.onedari.cone) continue;
+          const score = diff * 60 + this.distTo(t) * 0.2;
+          if (score < best) { best = score; sel = t; }
+        }
+      }
+      a.sel = sel;
+      if (p.up) this.fireOnedari();
+      return;
+    }
+
+    // キーボード・ボタン：方向キーで狙いを切り替える
+    const dirs = [[KEY.left, -1, 0], [KEY.right, 1, 0], [KEY.up, 0, -1], [KEY.down, 0, 1]];
+    for (const [k, vx, vy] of dirs) {
+      if (!input.hit(k)) continue;
+      const from = a.sel ?? this.cat;
+      let best = null;
+      let bs = Infinity;
+      for (const t of list) {
+        if (t === a.sel) continue;
+        const dx = t.x - from.x;
+        const dy = t.y - from.y;
+        const along = dx * vx + dy * vy;
+        if (along <= 0) continue;
+        const side = Math.abs(dx * vy - dy * vx);
+        const sc = along + side * 2;
+        if (sc < bs) { bs = sc; best = t; }
+      }
+      if (best) a.sel = best;
+    }
+    // ボタンを押している別の指で相手をタップしても選べる
+    for (const p of input.fresh()) {
+      p.role = 'none';
+      const hit = list.find((t) => {
+        const s = this.worldToScreen(t.x, t.y);
+        return p.x > s.x - 10 && p.x < s.x + 10 && p.y > s.y - 30 && p.y < s.y + 4;
+      });
+      if (hit) a.sel = hit;
+    }
+    if (a.sel && !list.includes(a.sel)) a.sel = null;
+    const released = a.key ? !input.down(KEY.confirm) : a.button.up;
+    if (released) this.fireOnedari();
+  }
+
+  fireOnedari() {
+    const t = this.aim.sel;
+    this.aim = null;
+    input.releaseAll();
+    if (!t) return; // 相手のいない方で離した：何も起きない（TPも減らない）
+    const st = this.state;
+    const chance = this.chance(t);
+    const spent = st.tp;
+    st.tp = 0;
+    const win = Math.random() < chance;
+    this.leap = { t: 0, target: t, fx: this.cat.x, fy: this.cat.y, win, spent, base: t.def.onedari.base };
+    const dx = t.x - this.cat.x;
+    const dy = t.y - this.cat.y;
+    this.cat.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'にゃーん', UI.pink, 0.8));
+  }
+
+  updateLeap(dt) {
+    const L = this.leap;
+    L.t += dt;
+    const k = Math.min(1, L.t / BAL.onedari.leap);
+    const t = L.target;
+    // 相手の手前（てらまる側）まで飛ぶ
+    const dx = L.fx - t.x;
+    const dy = L.fy - t.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const ex = t.x + (dx / d) * 12;
+    const ey = t.y + (dy / d) * 4 + 2;
+    this.cat.px = this.cat.x;
+    this.cat.py = this.cat.y;
+    this.cat.x = L.fx + (ex - L.fx) * k;
+    this.cat.y = L.fy + (ey - L.fy) * k;
+    L.z = Math.sin(Math.PI * k) * 12;
+    this.snapCamera();
+    if (k < 1) return;
+    L.z = 0;
+    this.cat.px = this.cat.x;
+    this.cat.py = this.cat.y;
+    if (L.wait === undefined) {
+      L.wait = 0;
+      if (L.win) this.fx.add(new PopText(t.x, t.y - 34, 'しょうがないなぁ', UI.pink, 0.9));
+      else this.fx.add(new PopText(t.x, t.y - 34, 'また今度ね', UI.ink, 1.2));
+    }
+    L.wait += dt;
+    if (L.wait < 0.5) return;
+    this.leap = null;
+    if (L.win) {
+      this.game.scenes.push(new KamatteScene(this.game, this, t, this.pickKamatte(L.spent, L.base)));
+    } else {
+      t.leave(this.cat.x, this.cat.y);
+      this.fx.add(new PopText(this.cat.x, this.cat.y - 28, 'しょんぼり', '#6a7a9a', 1.0));
+    }
+  }
+
+  // 使ったTPで内容を選ぶ（確率の低い相手は、ときどき一段よい内容に）
+  pickKamatte(spent, base) {
+    const K = BAL.kamatte;
+    const kinds = ['nade', 'toy', 'chase'];
+    const w = K.weights.find((r) => spent >= r.tp).w;
+    let r = Math.random() * w.reduce((s, x) => s + x, 0);
+    let i = 0;
+    while (r >= w[i]) { r -= w[i]; i++; }
+    if (base < K.upgradeBelow && i < 2 && Math.random() < K.upgrade) i++;
+    return kinds[i];
+  }
+
+  onKamatteEnd(target, score, sec) {
+    const st = this.state;
+    st.kamaware += score;
+    st.timeLeft += sec;
+    this.timeBonus = 1.8;
+    this.timeBonusText = `+${sec}`;
+    target.leave(this.cat.x, this.cat.y);
+    this.flash = 0.3;
+    input.releaseAll();
   }
 
   // 爪とぎスポットに触れたら、勝手にガリガリ（ボーナス中・したばかりのときはしない）
@@ -513,6 +725,7 @@ export class PlayScene {
     ctx.restore();
 
     if (this.bubble > 0) this.drawBubble(ctx, cx, cy);
+    if (this.aim) this.drawAim(ctx, cx, cy);
     if (this.full() && this.action?.kind !== 'toilet') this.drawLitterGuide(ctx, cx, cy);
   }
 
@@ -583,7 +796,7 @@ export class PlayScene {
     const tp = String(this.state.tp);
     const w = 4 + 10 + digitsWidth(tp) + 5;
     if (right) x -= w;
-    panel(ctx, x, y, w, 16, UI.cream);
+    panel(ctx, x, y, w, 16, this.state.tp >= BAL.onedari.minTp ? '#ffe0ea' : UI.cream); // おねだりできるときはピンク
     ctx.drawImage(SPR.heart, x + 4, y + 5);
     drawDigits(ctx, tp, x + 14, y + 5, { color: UI.ink });
     return w;
@@ -667,13 +880,14 @@ export class PlayScene {
     }
 
     const img = this.cat.sprite();
+    const lz = Math.round(this.leap?.z ?? 0); // おねだりで飛びつく高さ
     // 太ると横に広がる
     const w = img.width + this.tummyLevel() * 2;
     let h = img.height;
     if (a?.kind === 'scratch') x += Math.floor(this.t * 20) % 2 ? 1 : -1;
     if (a?.kind === 'toilet') { h -= 2; x += Math.floor(this.t * 12) % 2 ? 1 : 0; } // しゃがんでカキカキ
     else if (!a && this.full() && !this.cat.moving) x += Math.floor(this.t * 3) % 2; // 止まっているときだけ、ゆっくりもじもじ
-    ctx.drawImage(img, x - w / 2, y - h, w, h);
+    ctx.drawImage(img, x - w / 2, y - h - lz, w, h);
 
     // おなかいっぱい：頭の横にピンクの線（体は揺らさない）
     if (!a && this.full() && Math.floor(this.t * 2) % 2 === 0) {
@@ -719,8 +933,11 @@ export class PlayScene {
       drawText(ctx, this.town.stage.name, 12 + slide, 53, { color: UI.ink });
     }
 
+    this.drawOnedariHint(ctx);
     this.pauseBtn.draw(ctx, { pressed: this.pauseBtn.isHeld() });
-    this.confirmBtn.draw(ctx, { pressed: this.confirmBtn.isHeld() });
+    const ok = this.canOnedari();
+    this.confirmBtn.label = ok ? 'おねだり' : 'けってい';
+    this.confirmBtn.draw(ctx, { pressed: this.confirmBtn.isHeld(), lit: ok && Math.floor(this.t * 2) % 2 === 0 });
 
     drawSticks(ctx);
   }
@@ -765,6 +982,98 @@ export class PlayScene {
         x += textWidth(ch, 'small') * pop + pop;
       });
       drawText(ctx, 'さわるだけで メロメロ！', W / 2, y + 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // おねだりの照準：街を少し暗くして、相手と確率・矢印を出す
+  drawAim(ctx, cx, cy) {
+    const a = this.aim;
+    const list = this.onedariList();
+    ctx.fillStyle = 'rgba(20,12,8,0.35)';
+    ctx.fillRect(0, 0, screen.W, screen.H);
+    // 届く範囲（点の輪）
+    const ccx = Math.round(this.cat.x - cx);
+    const ccy = Math.round(this.cat.y - 8 - cy);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    const R = BAL.onedari.radius;
+    for (let i = 0; i < 64; i++) {
+      const ang = (i / 64) * Math.PI * 2 + this.t * 0.3;
+      ctx.fillRect(Math.round(ccx + Math.cos(ang) * R), Math.round(ccy + Math.sin(ang) * R * 0.8), 1, 1);
+    }
+    // 相手とてらまるを明るく描き直す
+    const things = list.map((t) => ({ y: t.y, draw: () => t.draw(ctx, cx, cy) }));
+    things.push({ y: this.cat.y, draw: () => this.drawCat(ctx, cx, cy) });
+    things.sort((p, q) => p.y - q.y);
+    for (const t of things) t.draw();
+
+    // 矢印：指の方（キーボードは狙っている相手の方）
+    let ex = null;
+    let ey = null;
+    if (a.pointer) { ex = a.pointer.x; ey = a.pointer.y; }
+    if (a.sel) { ex = Math.round(a.sel.x - cx); ey = Math.round(a.sel.y - 14 - cy); }
+    if (ex !== null && Math.hypot(ex - ccx, ey - ccy) > 6) {
+      const d = Math.hypot(ex - ccx, ey - ccy);
+      const ux = (ex - ccx) / d;
+      const uy = (ey - ccy) / d;
+      const off = (this.t * 20) % 6;
+      ctx.fillStyle = a.sel ? UI.pink : 'rgba(255,255,255,0.8)';
+      for (let s = 8 + off; s < d - 6; s += 6) ctx.fillRect(Math.round(ccx + ux * s) - 1, Math.round(ccy + uy * s) - 1, 2, 2);
+      if (a.sel) {
+        // 矢じり
+        const tx = ccx + ux * (d - 4);
+        const ty = ccy + uy * (d - 4);
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(tx - ux * 6 - uy * 4, ty - uy * 6 + ux * 4);
+        ctx.lineTo(tx - ux * 6 + uy * 4, ty - uy * 6 - ux * 4);
+        ctx.fill();
+      }
+    }
+
+    // 確率
+    for (const t of list) {
+      const p = Math.round(this.chance(t) * 100);
+      const sel = t === a.sel;
+      const str = `${p}%`;
+      const w = digitsWidth(str) + 6;
+      const x = Math.round(t.x - cx - w / 2);
+      const y = Math.round(t.y - cy) - 44 - (sel ? 2 : 0);
+      const blink = sel && Math.floor(this.t * 6) % 2 === 0;
+      panel(ctx, x, y, w, 12, sel ? (blink ? '#ffd0dc' : UI.white) : UI.cream);
+      const col = p >= 100 ? '#c88a10' : sel ? UI.pink : UI.ink;
+      drawDigits(ctx, str, x + 3, y + 3, { color: col });
+      if (sel) {
+        ctx.fillStyle = UI.pink;
+        ctx.fillRect(x + Math.floor(w / 2) - 2, y + 12, 5, 1);
+        ctx.fillRect(x + Math.floor(w / 2) - 1, y + 13, 3, 1);
+      }
+    }
+    // 説明
+    const msg = list.length === 0 ? 'ちかくに おねだりできる人が いない'
+      : a.pointer ? 'あいてのほうへ スライドして はなす' : '←→↑↓で えらんで はなす';
+    drawText(ctx, msg, screen.W / 2, screen.H - 40, { font: 'small', color: UI.white, outline: UI.ink, align: 'center' });
+    drawText(ctx, `TP ${this.state.tp} を ぜんぶ つかうよ`, screen.W / 2, screen.H - 30, { font: 'small', color: '#ffd0dc', outline: UI.ink, align: 'center' });
+  }
+
+  // はじめてTPが10になったとき・時間がのびたとき
+  drawOnedariHint(ctx) {
+    if (this.hintT > 0 && !this.aim) {
+      const msg = input.lastDevice === 'keyboard' ? 'けってい ながおしで おねだり！' : 'てらまるを おさえて おねだり！';
+      const a = Math.min(1, this.hintT * 2);
+      ctx.globalAlpha = a;
+      const w = textWidth(msg, 'small') + 12;
+      panel(ctx, Math.round(screen.W / 2 - w / 2), screen.H - 44, w, 14, '#ffe8f0');
+      drawText(ctx, msg, screen.W / 2, screen.H - 41, { font: 'small', color: UI.pink, align: 'center' });
+      ctx.globalAlpha = 1;
+    }
+    if (this.timeBonus > 0) {
+      const a = Math.min(1, this.timeBonus * 2);
+      ctx.globalAlpha = a;
+      const y = 26 - Math.round((1.8 - this.timeBonus) * 4);
+      const tw = digitsWidth(this.timeBonusText, 2);
+      drawDigits(ctx, this.timeBonusText, screen.W / 2 - 6, y, { color: '#2a70c0', outline: UI.white, align: 'center', scale: 2 });
+      drawText(ctx, 'びょう', screen.W / 2 - 6 + tw / 2 + 2, y + 5, { font: 'small', color: '#2a70c0', outline: UI.white });
       ctx.globalAlpha = 1;
     }
   }
