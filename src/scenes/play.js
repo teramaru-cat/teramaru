@@ -45,7 +45,7 @@ export class PlayScene {
       faints: 0,
       thirst: 0, // 最後に水を飲んでからの秒数
       lastDrink: -99, // 最後にご飯ポイントをもらった水飲みの時刻（連打よけ）
-      gaman: 0, // おなかがいっぱいになってからの秒数
+      over: 0, // おなかがいっぱいになってから食べたご飯ポイント
       scratch: 0, // 爪とぎボーナスの残り秒
       lastScratch: -99, // 最後に爪とぎした時刻
       toilet: 0, // トイレのあとのダッシュの残り秒
@@ -89,8 +89,8 @@ export class PlayScene {
 
   full() { return this.state.fp >= BAL.tummy.full; }
 
-  // がまんの重さ（0〜1）
-  gamanRate() { return this.full() ? Math.min(1, this.state.gaman / BAL.tummy.gaman) : 0; }
+  // 食べすぎの重さ（0〜1）。いっぱいのあと食べるたびに増える
+  gamanRate() { return this.full() ? Math.min(1, this.state.over / BAL.tummy.over) : 0; }
 
   speedMul() {
     const T = BAL.tummy;
@@ -116,10 +116,11 @@ export class PlayScene {
   addFp(n) {
     const st = this.state;
     const wasFull = this.full();
+    if (wasFull) st.over += n;
     st.fp = Math.min(BAL.tummy.full, st.fp + n);
     st.fpTotal += n;
     if (!wasFull && this.full()) {
-      st.gaman = 0;
+      st.over = 0;
       this.fx.add(new PopText(this.cat.x, this.cat.y - 34, 'もじもじ…', UI.pink, 1.4));
     }
   }
@@ -132,7 +133,6 @@ export class PlayScene {
     if (thirst && this.action?.kind !== 'faint') st.thirst += dt;
     if (st.scratch > 0) st.scratch = Math.max(0, st.scratch - dt);
     if (st.toilet > 0) st.toilet = Math.max(0, st.toilet - dt);
-    if (thirst && this.full()) st.gaman += dt;
   }
 
   thirsty() { return this.state.thirst >= BAL.water.limit; }
@@ -316,7 +316,7 @@ export class PlayScene {
       if (Math.random() < dt * 25) this.addSand();
     } else if (a.kind === 'toilet') {
       st.fp = 0;
-      st.gaman = 0;
+      st.over = 0;
       st.toilet = BAL.toilet.buff;
       this.feverIntro = 1.8;
       this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'すっきり！', UI.orangeD));
