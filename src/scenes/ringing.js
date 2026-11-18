@@ -203,6 +203,8 @@ export class RingingScene {
       const inBand = d >= r + BAL.ring.bandIn && d <= r + BAL.ring.bandOut;
       if (!inBand) { L.prevA = null; continue; }
       const a = Math.atan2(dy, dx);
+      // 輪の光り始め：今まで回った分だけ戻した角度（入り直したときも、光の先がてらまるの位置に来る）
+      if (L.prevA === null) L.a0 = a - L.acc;
       if (L.prevA !== null) {
         L.acc += wrap(a - L.prevA);
         if (Math.abs(L.acc) >= TAU) {
@@ -339,7 +341,7 @@ export class RingingScene {
     const lit = Math.floor(frac * N);
     const sgn = L.acc < 0 ? -1 : 1;
     for (let i = 0; i < N; i++) {
-      const a = -Math.PI / 2 + (i / N) * TAU * sgn; // 上から、回った向きに光る
+      const a = (L.a0 ?? -Math.PI / 2) + ((i + 0.5) / N) * TAU * sgn; // 回り始めた所から、回った向きに光る
       const x = Math.round(L.x + Math.cos(a) * rad);
       const y = Math.round(L.y + Math.sin(a) * rad);
       if (L.laps > 0) ctx.fillStyle = i < lit ? UI.orange : UI.pink;
