@@ -43,15 +43,37 @@ export class Cat {
     const dx = v.x * sp * dt;
     const dy = v.y * sp * dt;
     const { footW, footH } = BAL.cat;
-    // 横と縦を別々に動かして、壁に沿って滑れるようにする
-    if (!town.blocked(this.x + dx, this.y, footW, footH)) this.x += dx;
-    if (!town.blocked(this.x, this.y + dy, footW, footH)) this.y += dy;
+    const free = (x, y) => !town.blocked(x, y, footW, footH);
+    // もし何かにめり込んでいたら、出られるまでは自由に動ける（挟まって動けなくならないように）
+    if (!free(this.x, this.y)) {
+      this.x = Math.max(footW / 2, Math.min(town.w - footW / 2, this.x + dx));
+      this.y = Math.max(footH, Math.min(town.h, this.y + dy));
+    } else {
+      // 横と縦を別々に動かして、壁に沿って滑れるようにする
+      const step = Math.hypot(dx, dy);
+      if (free(this.x + dx, this.y)) this.x += dx;
+      else if (Math.abs(dx) >= Math.abs(dy)) this.y += this.cornerNudge(free, this.x + dx, this.y, 0, 1, step);
+      if (free(this.x, this.y + dy)) this.y += dy;
+      else if (Math.abs(dy) > Math.abs(dx)) this.x += this.cornerNudge(free, this.x, this.y + dy, 1, 0, step);
+    }
 
     const ax = Math.abs(v.x);
     const ay = Math.abs(v.y);
     if (ax > ay * 1.1) this.dir = v.x > 0 ? 'right' : 'left';
     else if (ay > ax * 1.1) this.dir = v.y > 0 ? 'down' : 'up';
     this.animT += dt * Math.min(1, len);
+  }
+
+  // 角に引っかかったとき：少し横（縦）にずらせば進めるなら、そちらへ寄せる（細い道に入りやすく）
+  cornerNudge(free, tx, ty, ox, oy, step) {
+    for (let d = 1; d <= 6; d++) {
+      for (const s of [1, -1]) {
+        if (free(tx + ox * d * s, ty + oy * d * s) && free(this.x + ox * Math.min(step, d) * s, this.y + oy * Math.min(step, d) * s)) {
+          return Math.min(step, d) * s;
+        }
+      }
+    }
+    return 0;
   }
 
   stop() {

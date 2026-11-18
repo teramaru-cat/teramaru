@@ -417,8 +417,21 @@ export class PlayScene {
     const dx = L.fx - t.x;
     const dy = L.fy - t.y;
     const d = Math.hypot(dx, dy) || 1;
-    const ex = t.x + (dx / d) * 12;
-    const ey = t.y + (dy / d) * 4 + 2;
+    let ex = t.x + (dx / d) * 12;
+    let ey = t.y + (dy / d) * 4 + 2;
+    // 着地点が建物などにめり込むなら、手前（飛んできた方）へずらす
+    if (L.land === undefined) {
+      const { footW, footH } = BAL.cat;
+      let land = { x: L.fx, y: L.fy };
+      for (let i = 0; i <= 10; i++) {
+        const x = ex + (L.fx - ex) * (i / 10);
+        const y = ey + (L.fy - ey) * (i / 10);
+        if (!this.town.blocked(x, y, footW, footH)) { land = { x, y }; break; }
+      }
+      L.land = land;
+    }
+    ex = L.land.x;
+    ey = L.land.y;
     this.cat.px = this.cat.x;
     this.cat.py = this.cat.y;
     this.cat.x = L.fx + (ex - L.fx) * k;
