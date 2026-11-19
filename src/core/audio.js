@@ -13,6 +13,8 @@ let master = null;
 let sfxBus = null;
 let bgmBus = null;
 let noiseBuf = null;
+let fiberBuf = null; // ガリガリ（細かく強弱のあるザラザラ）
+let sandBuf = null; // 猫砂（ぱらぱらした粒の音）
 let bgmBuf = null;
 let bgmSrc = null;
 let bgmLoading = false;
@@ -76,6 +78,18 @@ function ensure() {
   noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
   const d = noiseBuf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  // 爪が繊維に引っかかる：数ミリ秒ごとに強さが変わるザラザラ
+  fiberBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
+  const fd = fiberBuf.getChannelData(0);
+  let amp = 1;
+  for (let i = 0; i < fd.length; i++) {
+    if (i % Math.floor(ac.sampleRate * 0.003) === 0) amp = Math.random() < 0.25 ? 1 : 0.15 + Math.random() * 0.4;
+    fd[i] = (Math.random() * 2 - 1) * amp;
+  }
+  // 砂粒：ときどきプチッと鳴る粒＋うすいサー
+  sandBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
+  const sd = sandBuf.getChannelData(0);
+  for (let i = 0; i < sd.length; i++) sd[i] = (Math.random() < 0.06 ? Math.random() * 2 - 1 : 0) + (Math.random() * 2 - 1) * 0.12;
 }
 
 async function startBgm() {
@@ -137,6 +151,24 @@ function notes(t, list, step, opts) {
   list.forEach((f, i) => tone(t + i * step, f, step * 1.6, opts));
 }
 
+// こする音：ふくらんでから消える（ぶつ切りにしない）。音の高さを f0→f1 へ動かす
+function scrape(t, dur, buf, { vol = 0.4, f0 = 1000, f1 = 600, q = 1, peak = 0.35 } = {}) {
+  const s = ac.createBufferSource();
+  s.buffer = buf;
+  const f = ac.createBiquadFilter();
+  f.type = 'bandpass';
+  f.Q.value = q;
+  f.frequency.setValueAtTime(f0, t);
+  f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + dur * peak);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  s.connect(f).connect(g).connect(sfxBus);
+  s.start(t, Math.random() * 0.3);
+  s.stop(t + dur + 0.02);
+}
+
 // ド〜ドの音の高さ
 const N = { C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880, B5: 988, C6: 1047, E6: 1319, G6: 1568, C4: 262, E4: 330, G4: 392 };
 
@@ -166,8 +198,29 @@ const SFX = {
     tone(t, 400, 0.08, { type: 'sine', to: 900, vol: 0.35 });
     tone(t + 0.12, 450, 0.08, { type: 'sine', to: 1000, vol: 0.35 });
   },
-  scratch: (t) => { for (let i = 0; i < 4; i++) noise(t + i * 0.22, 0.12, { vol: 0.35, freq: 1800, q: 0.8 }); },
-  toilet: (t) => { for (let i = 0; i < 5; i++) noise(t + i * 0.28, 0.1, { vol: 0.25, freq: 3000, q: 0.6 }); },
+  // ガリガリ：左右の前足で交互に、上から下へ引っかく
+  scratch: (t) => {
+    let at = t;
+    for (let i = 0; i < 6; i++) {
+      const left = i % 2 === 0;
+      scrape(at, 0.13 + Math.random() * 0.04, fiberBuf, { vol: 0.9, f0: left ? 1400 : 1150, f1: left ? 650 : 520, q: 1.4, peak: 0.25 });
+      at += 0.15 + Math.random() * 0.03;
+    }
+  },
+  // カキカキ：砂を後ろへかく「ザッ」と、ぱらぱら落ちる粒
+  toilet: (t) => {
+    let at = t;
+    for (let i = 0; i < 5; i++) {
+      scrape(at, 0.2, sandBuf, { vol: 0.9, f0: 2600, f1: 4200, q: 0.7, peak: 0.45 });
+      scrape(at + 0.15, 0.18, sandBuf, { vol: 0.35, f0: 5000, f1: 5000, q: 1.5, peak: 0.2 });
+      at += 0.27 + Math.random() * 0.04;
+    }
+  },
+  // 足のあいだをくぐった
+  pass: (t) => {
+    scrape(t, 0.18, noiseBuf, { vol: 0.25, f0: 800, f1: 2400, q: 0.8, peak: 0.6 });
+    notes(t + 0.08, [N.E6, N.G6], 0.05, { vol: 0.18 });
+  },
   full: (t) => notes(t, [N.E5, N.D5, N.E5, N.D5], 0.08, { type: 'triangle', vol: 0.2 }),
   fever: (t) => notes(t, [N.C5, N.E5, N.G5, N.C6, N.E6, N.G6], 0.05, { vol: 0.22 }),
   warn: (t) => {

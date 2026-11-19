@@ -42,6 +42,8 @@ export class RingingScene {
     this.t = 0;
     this.legs = this.def.legs.map((b) => ({ base: b, x: 0, y: 0, vx: 0, vy: 0, lift: 0, prevLift: 0, acc: 0, prevA: null, laps: 0, ready: false }));
     this.gauge = 0;
+    this.gaps = []; // 足と足のすきま（くぐるとボーナス）
+    this.passes = 0;
     this.bx = 0;
     this.by = 0;
     this.cat = new Cat(0, 0);
@@ -109,6 +111,7 @@ export class RingingScene {
     this.cat.update(dt, mv, this.ground, BAL.ring.zoom * this.play.speedMul(), this.play.turnRate());
     this.collide();
     this.countLaps();
+    this.countPasses();
 
     const dur = this.def.durability;
     if (this.gauge >= dur && this.legs.every((L) => L.laps >= 1)) { this.startWin(); return; }
@@ -219,6 +222,32 @@ export class RingingScene {
         }
       }
       L.prevA = a;
+    }
+  }
+
+  // 足のあいだをくぐる：すきまの線を横切ったらボーナス。
+  // その場で行ったり来たりしても数えない（どちらかの足の外まで回ってきたら、また数える）
+  countPasses() {
+    const c = this.cat;
+    const legs = this.legs.filter((L) => !L.base.cane).sort((a, b) => a.base.x - b.base.x);
+    for (let i = 0; i + 1 < legs.length; i++) {
+      const a = legs[i];
+      const b = legs[i + 1];
+      const g = this.gaps[i] ?? (this.gaps[i] = { side: 0, armed: true });
+      if (c.x < a.x || c.x > b.x) { g.armed = true; g.side = 0; continue; }
+      const my = (a.y + b.y) / 2;
+      const inGap = c.x > a.x + a.base.r - 2 && c.x < b.x - b.base.r + 2 && Math.abs(c.y - my) < 24;
+      if (!inGap) continue;
+      const side = c.y < my ? -1 : 1;
+      if (g.side !== 0 && side !== g.side && g.armed) {
+        g.armed = false;
+        this.passes++;
+        const tp = BAL.ring.passTp;
+        this.play.addTp(tp);
+        audio.sfx('pass');
+        this.fx.add(new PopText((a.x + b.x) / 2, my - 40, this.passes >= 2 ? `8のじ！ +${tp}TP` : `くぐった！ +${tp}TP`, UI.pink, 0.9));
+      }
+      g.side = side;
     }
   }
 
@@ -404,6 +433,8 @@ export class RingingScene {
     if (this.phase === 'play' && this.pt < 3.5) {
       drawText(ctx, 'あしのまわりを ぐるぐる まわろう', W / 2, H - 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
       drawText(ctx, 'はしから でると やめる', W / 2, H - 12, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
+    } else if (this.phase === 'play' && this.pt < 7) {
+      drawText(ctx, 'あしのあいだを くぐると ボーナス', W / 2, H - 12, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
     }
     // メロメロにできたときだけ（時間切れ・お水切れ・途中でやめたときは出さない）
     if (this.result === 'win') {
