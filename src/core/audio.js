@@ -78,7 +78,7 @@ function ensure() {
   noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
   const d = noiseBuf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  // 爪が繊維に引っかかる：15〜45ミリ秒ごとにばらばらに「ガッ」と引っかかっては抜ける（ガリガリの粒）
+  // 爪が繊維に引っかかる：4〜11ミリ秒ごとに細かく「ガッ」と引っかかっては抜ける（ガリガリの粒）
   fiberBuf = ac.createBuffer(1, ac.sampleRate * 1, ac.sampleRate);
   const fd = fiberBuf.getChannelData(0);
   const sr = ac.sampleRate;
@@ -86,9 +86,9 @@ function ensure() {
   let k = 0;
   let amp = 0;
   for (let i = 0; i < fd.length; i++) {
-    if (i >= next) { amp = Math.random() < 0.3 ? 1 : 0.35 + Math.random() * 0.5; k = 0; next = i + Math.floor(sr * (0.016 + Math.random() * 0.028)); }
+    if (i >= next) { amp = Math.random() < 0.3 ? 1 : 0.35 + Math.random() * 0.5; k = 0; next = i + Math.floor(sr * (0.004 + Math.random() * 0.007)); }
     k++;
-    const env = amp * Math.exp(-k / (sr * 0.007)); // 引っかかった瞬間が強く、すぐ弱まる
+    const env = amp * Math.exp(-k / (sr * 0.0015)); // 引っかかった瞬間が強く、すぐ弱まる
     fd[i] = (Math.random() * 2 - 1) * (env + 0.03);
   }
   // 砂粒：ときどきプチッと鳴る粒＋うすいサー
@@ -220,15 +220,16 @@ const SFX = {
     tone(t, 400, 0.08, { type: 'sine', to: 900, vol: 0.35 });
     tone(t + 0.12, 450, 0.08, { type: 'sine', to: 1000, vol: 0.35 });
   },
-  // ガリガリ：左右の前足で交互に、上から下へ長めに引っかく（3回で約1秒）
+  // ガリガリ：1回の引っかきの中で「ガ」「リ」と2回ふくらむ。左右の前足で交互に3回（約1秒）
   scratch: (t) => {
     let at = t;
     for (let i = 0; i < 3; i++) {
-      const dur = 0.3 + Math.random() * 0.05;
       const left = i % 2 === 0;
-      scrape(at, dur, fiberBuf, { vol: 0.55, f0: left ? 1400 : 1200, f1: left ? 600 : 500, q: 0.8, peak: 0.15, drive: true });
-      scrape(at, dur, fiberBuf, { vol: 0.45, f0: 400, f1: 250, q: 1.2, peak: 0.15, drive: true }); // 板がこすれる低いところ
-      at += dur + 0.03;
+      const half = 0.15 + Math.random() * 0.02;
+      // ガ（少し低め・強め）→ リ（高め・軽め）
+      scrape(at, half, fiberBuf, { vol: 0.9, f0: left ? 2200 : 2000, f1: left ? 1500 : 1300, q: 1.2, peak: 0.12 });
+      scrape(at + half * 0.9, half, fiberBuf, { vol: 0.7, f0: left ? 3200 : 2900, f1: left ? 2400 : 2200, q: 1.4, peak: 0.12 });
+      at += half * 2 + 0.03;
     }
   },
   // カキカキ：砂を後ろへかく「ザッ」と、ぱらぱら落ちる粒
