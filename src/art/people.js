@@ -26,8 +26,7 @@ function outline(c, ctx) {
 }
 
 // 街の姿（14×26、足元が下の真ん中）。step=true で片足を上げたコマ
-// noLeftArm：向かって左の腕を描かない（なでなでで、その腕をのばして描くとき）
-export function makePerson(look, step = false, noLeftArm = false) {
+export function makePerson(look, step = false) {
   const [c, ctx] = makeCanvas(14, 26);
   const R = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, w, h); };
   const k = look.child ? 5 : 0; // 子どもは頭の位置を下げて小さく
@@ -63,9 +62,9 @@ export function makePerson(look, step = false, noLeftArm = false) {
   const top = look.child ? 12 : 9;
   const bot = look.child ? 18 : 17;
   R(2, top, 8, bot - top, look.top);
-  if (!noLeftArm) R(1, top + 1, 1, bot - top - 2, look.top);
+  R(1, top + 1, 1, bot - top - 2, look.top);
   R(10, top + 1, 1, bot - top - 2, look.top);
-  if (!noLeftArm) R(1, bot - 1, 1, 1, look.skin);
+  R(1, bot - 1, 1, 1, look.skin);
   R(10, bot - 1, 1, 1, look.skin);
   if (look.tie) {
     R(4, top, 1, 1, WHITE);
@@ -95,6 +94,73 @@ export function makePerson(look, step = false, noLeftArm = false) {
   if (look.hat === 'band') R(2, 4 + k, 8, 1, look.bandColor ?? WHITE);
 
   outline(c, ctx);
+  return c;
+}
+
+// しゃがんだ姿（なでなで用。14×26、足元が下の真ん中）。向かって左の腕は、のばした腕を別に描くので無し。
+// 返す canvas の shoulderY に、肩の高さ（ドット）を入れておく
+export function makeCrouch(look) {
+  const [c, ctx] = makeCanvas(14, 26);
+  const R = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, w, h); };
+  const child = !!look.child;
+  const d = child ? 7 : 3; // 頭を下げる量
+  const top = child ? 15 : 12;
+  const bot = child ? 19 : 17;
+
+  // 足：ひざを左右に開いてしゃがむ
+  if (look.garment === 'skirt') {
+    R(1, bot - 1, 10, 4, look.skirt);
+    R(2, bot + 3, 2, 3, look.legs);
+    R(8, bot + 3, 2, 3, look.legs);
+  } else {
+    const thigh = child ? look.legs : look.bottom;
+    if (child) {
+      R(2, bot - 1, 8, 2, look.bottom); // 半ズボン
+    }
+    R(1, bot, 4, 2, child ? look.bottom : thigh);
+    R(7, bot, 4, 2, child ? look.bottom : shade(thigh, -0.15));
+    R(1, bot + 2, 3, 4, thigh);
+    R(8, bot + 2, 3, 4, child ? thigh : shade(thigh, -0.15));
+    if (look.socks) { R(1, 22, 3, 1, look.socks); R(8, 22, 3, 1, look.socks); }
+    if (look.boots) { R(1, 20, 3, 3, look.shoes); R(8, 20, 3, 3, look.shoes); }
+  }
+  R(0, 23, 4, 1, look.shoes);
+  R(8, 23, 4, 1, look.shoes);
+
+  // 体（少し前かがみで短く）
+  R(2, top, 8, bot - top, look.top);
+  R(10, top + 1, 1, bot - top - 1, look.top); // 右腕はひざの上
+  R(10, bot, 1, 1, look.skin);
+  if (look.tie) {
+    R(4, top, 1, 1, WHITE);
+    R(7, top, 1, 1, WHITE);
+    R(5, top, 2, Math.min(5, bot - top), look.tie);
+  }
+  if (look.garment === 'apron' || look.garment === 'longApron') R(3, top + 2, 6, bot - top, look.apron);
+  if (look.cane) R(12, 14, 1, 10, look.cane);
+
+  // 頭
+  const k = (child ? 5 : 0) + d - (child ? 5 : 0);
+  R(3, 4 + k, 6, 5, look.skin);
+  R(3, 3 + k, 6, 2, look.hair);
+  R(2, 4 + k, 1, 3, look.hair);
+  R(9, 4 + k, 1, 3, look.hair);
+  R(4, 6 + k, 1, 1, INK);
+  R(7, 6 + k, 1, 1, INK);
+  R(5, 8 + k, 2, 1, '#e08080'); // にっこり
+  if (look.bun) R(5, 1 + k, 2, 2, look.hair);
+  if (look.hat === 'chef') {
+    R(2, k, 8, 2, WHITE);
+    R(3, 2 + k, 6, 2, WHITE);
+  }
+  if (look.hat === 'cap') {
+    R(3, 2 + k, 6, 2, look.capColor);
+    R(2, 4 + k, 8, 1, look.capColor);
+  }
+  if (look.hat === 'band') R(2, 4 + k, 8, 1, look.bandColor ?? WHITE);
+
+  outline(c, ctx);
+  c.shoulderY = top + 2;
   return c;
 }
 

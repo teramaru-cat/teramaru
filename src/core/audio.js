@@ -1,10 +1,14 @@
-// 音（効果音はブラウザ内で合成、BGMは audio/bgm.mp3 があれば流す）
+// 音（効果音はブラウザ内で合成、BGMは audio/ の曲ファイル）
 //
 // - スマホは最初のタップ・キーを押すまで音が出せない（ブラウザの仕様）。そのときに音の準備をする
 // - ミュートは保存データの settings.mute に入れる
-// - 外に見せるのは audio.init / audio.sfx(name) / audio.setMuted / audio.duck
+// - 外に見せるのは audio.init / audio.sfx(name) / audio.music(name) / audio.setMuted / audio.duck
+//
+// BGM：song＝てらまるの歌（タイトル・トイレフィーバー）、play＝ふだんのプレイ中（ぴこぴこ版）。
+// play の曲が無いときは song をそのまま流す。
 
-const BGM_URL = 'audio/bgm.mp3';
+const TRACKS = { song: 'audio/bgm.mp3', play: 'audio/bgm_play.mp3' };
+const FADE = 0.5; // 曲を切り替えるときのフェード（秒）
 const BGM_VOL = 0.07; // 曲は音が大きめに作られているので、かなり下げて後ろで流す（ポーズ中はさらに半分）
 const SFX_VOL = 0.5;
 
@@ -15,10 +19,9 @@ let bgmBus = null;
 let noiseBuf = null;
 let fiberBuf = null; // ガリガリ（細かく強弱のあるザラザラ）
 let sandBuf = null; // 猫砂（ぱらぱらした粒の音）
-let bgmBuf = null;
-let bgmSrc = null;
-let bgmLoading = false;
-let bgmMissing = false; // 曲のファイルが無い（何度も読みに行かない）
+const bufs = {}; // 読み込んだ曲（null＝ファイルが無い）
+let want = null; // 流したい曲 { name, restart }
+let cur = null; // 流れている曲 { name, src, gain }
 const last = {}; // 同じ音を短い間に重ねすぎないように
 
 export const audio = {
@@ -29,7 +32,7 @@ export const audio = {
     const unlock = () => {
       ensure();
       if (ac && ac.state !== 'running') ac.resume().catch(() => {});
-      startBgm();
+      applyMusic();
     };
     for (const ev of ['pointerdown', 'touchend', 'keydown']) window.addEventListener(ev, unlock, { capture: true });
     document.addEventListener('visibilitychange', () => {
@@ -42,6 +45,13 @@ export const audio = {
   setMuted(m) {
     this.muted = m;
     if (master) master.gain.setTargetAtTime(m ? 0 : 1, ac.currentTime, 0.02);
+  },
+
+  // BGM を切り替える。restart=true なら、同じ曲でも頭から
+  music(name, { restart = false } = {}) {
+    if (want && want.name === name && !restart) return;
+    want = { name, restart };
+    applyMusic();
   },
 
   // ポーズ中などは BGM を小さく
@@ -97,30 +107,58 @@ function ensure() {
   for (let i = 0; i < sd.length; i++) sd[i] = (Math.random() < 0.06 ? Math.random() * 2 - 1 : 0) + (Math.random() * 2 - 1) * 0.12;
 }
 
-async function startBgm() {
-  if (!ac || bgmSrc || bgmLoading || bgmMissing) return;
-  bgmLoading = true;
+async function loadTrack(name) {
+  if (bufs[name] !== undefined) return bufs[name];
   try {
-    if (!bgmBuf) {
-      const res = await fetch(BGM_URL);
-      if (!res.ok) { bgmMissing = true; return; } // 曲がまだ無いときは BGM なし
-      const data = await res.arrayBuffer();
-      bgmBuf = await new Promise((ok, ng) => ac.decodeAudioData(data, ok, ng));
-    }
-    bgmSrc = ac.createBufferSource();
-    bgmSrc.buffer = bgmBuf;
-    bgmSrc.loop = true;
-    // 曲の頭の無音は飛ばす（ループで戻ったときも）
-    const head = leadingSilence(bgmBuf);
-    bgmSrc.loopStart = head;
-    bgmSrc.loopEnd = bgmBuf.duration;
-    bgmSrc.connect(bgmBus);
-    bgmSrc.start(0, head);
-    audio.bgmFrom = head; // 確認用：流れ始めた位置
+    const res = await fetch(TRACKS[name]);
+    if (!res.ok) return (bufs[name] = null); // ファイルが無い（何度も読みに行かない）
+    const data = await res.arrayBuffer();
+    bufs[name] = await new Promise((ok, ng) => ac.decodeAudioData(data, ok, ng));
   } catch {
-    bgmMissing = true; // 読めなくてもゲームは続ける
+    bufs[name] = null; // 読めなくてもゲームは続ける
+  }
+  return bufs[name];
+}
+
+let applying = false;
+async function applyMusic() {
+  if (!ac || !want || applying) return;
+  applying = true;
+  try {
+    for (;;) {
+      const w = want;
+      let name = w.name;
+      let buf = await loadTrack(name);
+      if (!buf && name === 'play') { name = 'song'; buf = await loadTrack('song'); }
+      if (want !== w) continue; // 読んでいる間に変わった
+      if (cur && cur.name === name && !w.restart) break;
+      w.restart = false;
+      if (cur) {
+        const old = cur;
+        old.gain.gain.setTargetAtTime(0, ac.currentTime, FADE / 3);
+        old.src.stop(ac.currentTime + FADE * 2);
+        cur = null;
+      }
+      if (buf) {
+        const src = ac.createBufferSource();
+        src.buffer = buf;
+        src.loop = true;
+        // 曲の頭の無音は飛ばす（ループで戻ったときも）
+        const head = leadingSilence(buf);
+        src.loopStart = head;
+        src.loopEnd = buf.duration;
+        const gain = ac.createGain();
+        gain.gain.value = 0;
+        gain.gain.setTargetAtTime(1, ac.currentTime, FADE / 4);
+        src.connect(gain).connect(bgmBus);
+        src.start(0, head);
+        cur = { name, src, gain };
+        audio.bgmNow = name; // 確認用
+      }
+      if (want === w) break;
+    }
   } finally {
-    bgmLoading = false;
+    applying = false;
   }
 }
 

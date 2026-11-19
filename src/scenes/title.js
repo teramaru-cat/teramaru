@@ -6,6 +6,7 @@ import { drawText, textWidth } from '../core/text.js';
 import { drawDigits, digitsWidth } from '../art/digits.js';
 import { Menu, Button, panel } from '../core/ui.js';
 import { toggleMute } from './pause.js';
+import { audio } from '../core/audio.js';
 import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
 import { getTown } from '../game/town.js';
@@ -20,7 +21,7 @@ export class TitleScene {
     this.soundBtn = new Button('sound', '', { icon: 'sound', pad: 6 });
   }
 
-  enter() { input.releaseAll(); }
+  enter() { input.releaseAll(); audio.music('song'); }
 
   update(dt) {
     this.t += dt;

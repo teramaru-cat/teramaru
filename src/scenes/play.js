@@ -66,7 +66,7 @@ export class PlayScene {
     this.lastCam = { x: 0, y: 0 };
   }
 
-  enter() { input.releaseAll(); }
+  enter() { input.releaseAll(); audio.music('play'); this.feverMusic = false; }
   resume() { input.releaseAll(); }
 
   onHidden() { if (!this.ending) this.openPause(); }
@@ -162,6 +162,12 @@ export class PlayScene {
   update(dt) {
     this.t += dt;
     this.layoutButtons();
+    // トイレフィーバーの間は、てらまるの歌（頭から）
+    const fever = this.state.toilet > 0;
+    if (fever !== this.feverMusic) {
+      this.feverMusic = fever;
+      audio.music(fever ? 'song' : 'play', { restart: fever });
+    }
     this.fx.update(dt);
     if (this.flash > 0) this.flash -= dt;
 

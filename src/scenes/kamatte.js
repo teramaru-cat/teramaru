@@ -219,9 +219,9 @@ export class KamatteScene {
   drawPair(ctx, b) {
     const S = 3;
     const t = this.pt;
-    // なでなでは、のばす腕を別に描くので、その腕のない絵を使う
+    // なでなでは、しゃがんだ絵（のばす腕は別に描く）
     const person = SPR.people[this.target.id][this.kind === 'nade' ? 2 : 0];
-    const px = b.x + (this.kind === 'nade' ? 104 : 150); // なでなでは近くに
+    const px = b.x + (this.kind === 'nade' ? 86 : 150); // なでなでは、しゃがんですぐ横に
     const py = b.y + PH - 6 - person.height * S;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
     ctx.fillRect(px + 4, b.y + PH - 8, person.width * S - 8, 4);
@@ -250,7 +250,7 @@ export class KamatteScene {
       const hy = Math.round(cyy - 7 + squish);
       const look = this.target.def.look ?? {};
       const sx = px + 8;
-      const sy = py + 30;
+      const sy = py + (person.shoulderY + 1) * S;
       const arm = (w, col) => {
         ctx.strokeStyle = col;
         ctx.lineWidth = w;

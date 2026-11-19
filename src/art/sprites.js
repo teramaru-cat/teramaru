@@ -3,7 +3,7 @@
 
 import { CAT } from './palette.js';
 import { makeCanvas } from '../core/renderer.js';
-import { makePerson, FOOD_ROWS, FOOD_ICON } from './people.js';
+import { makePerson, makeCrouch, FOOD_ROWS, FOOD_ICON } from './people.js';
 import { TARGETS } from '../data/targets.js';
 
 function hexToRgb(hex) {
@@ -153,6 +153,6 @@ export function buildSprites() {
   SPR.foodIcon = makeSprite(FOOD_ICON.rows, FOOD_ICON.pal);
   SPR.people = {};
   for (const [id, t] of Object.entries(TARGETS)) {
-    if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true), makePerson(t.look, false, true)];
+    if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true), makeCrouch(t.look)];
   }
 }
