@@ -26,7 +26,8 @@ function outline(c, ctx) {
 }
 
 // 街の姿（14×26、足元が下の真ん中）。step=true で片足を上げたコマ
-export function makePerson(look, step = false) {
+// noLeftArm：向かって左の腕を描かない（なでなでで、その腕をのばして描くとき）
+export function makePerson(look, step = false, noLeftArm = false) {
   const [c, ctx] = makeCanvas(14, 26);
   const R = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, w, h); };
   const k = look.child ? 5 : 0; // 子どもは頭の位置を下げて小さく
@@ -62,9 +63,9 @@ export function makePerson(look, step = false) {
   const top = look.child ? 12 : 9;
   const bot = look.child ? 18 : 17;
   R(2, top, 8, bot - top, look.top);
-  R(1, top + 1, 1, bot - top - 2, look.top);
+  if (!noLeftArm) R(1, top + 1, 1, bot - top - 2, look.top);
   R(10, top + 1, 1, bot - top - 2, look.top);
-  R(1, bot - 1, 1, 1, look.skin);
+  if (!noLeftArm) R(1, bot - 1, 1, 1, look.skin);
   R(10, bot - 1, 1, 1, look.skin);
   if (look.tie) {
     R(4, top, 1, 1, WHITE);
