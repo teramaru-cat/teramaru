@@ -4,6 +4,7 @@ import { UI } from '../art/palette.js';
 import { drawText } from './text.js';
 import { input, KEY } from './input.js';
 import { fillCircle } from './renderer.js';
+import { audio } from './audio.js';
 
 // 角を1ドット落とした四角
 export function panel(ctx, x, y, w, h, fill, border = UI.ink) {
@@ -48,6 +49,8 @@ export class Button {
       const cy = y + Math.floor(h / 2);
       ctx.fillRect(cx - 3, cy - 4, 2, 8);
       ctx.fillRect(cx + 1, cy - 4, 2, 8);
+    } else if (this.icon === 'sound') {
+      drawSpeaker(ctx, x + Math.floor(w / 2) - 5, y + Math.floor(h / 2) - 4, audio.muted);
     } else {
       const th = this.font === 'small' ? 8 : 12;
       drawText(ctx, this.label, x + w / 2, y + Math.floor((h - th) / 2), { font: this.font, color: UI.ink, align: 'center' });
@@ -79,6 +82,12 @@ export class Menu {
 
   // 選ばれたら id を返す
   update() {
+    const id = this.pick();
+    if (id) audio.sfx('ui');
+    return id;
+  }
+
+  pick() {
     const n = this.buttons.length;
     if (input.hit(KEY.up) || input.hit(KEY.left)) this.focus = (this.focus + n - 1) % n;
     if (input.hit(KEY.down) || input.hit(KEY.right)) this.focus = (this.focus + 1) % n;
@@ -107,6 +116,21 @@ export class Menu {
       const pressed = input.withRole(`menu:${i}`).some((p) => b.contains(p.x, p.y));
       b.draw(ctx, { focused: i === this.focus, pressed });
     });
+  }
+}
+
+// スピーカーの絵（10×8）。muted なら ×
+function drawSpeaker(ctx, x, y, muted) {
+  ctx.fillStyle = UI.ink;
+  ctx.fillRect(x, y + 2, 2, 4);
+  ctx.fillRect(x + 2, y + 1, 1, 6);
+  ctx.fillRect(x + 3, y, 1, 8);
+  if (muted) {
+    ctx.fillStyle = UI.red;
+    for (let i = 0; i < 5; i++) { ctx.fillRect(x + 5 + i, y + 1 + i, 1, 1); ctx.fillRect(x + 9 - i, y + 1 + i, 1, 1); }
+  } else {
+    ctx.fillRect(x + 5, y + 3, 1, 2);
+    ctx.fillRect(x + 7, y + 1, 1, 1); ctx.fillRect(x + 8, y + 2, 1, 4); ctx.fillRect(x + 7, y + 6, 1, 1);
   }
 }
 

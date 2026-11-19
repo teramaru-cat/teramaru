@@ -5,6 +5,7 @@ import { input } from './core/input.js';
 import { loadFonts, drawText } from './core/text.js';
 import { SceneStack } from './core/scenes.js';
 import { load } from './core/save.js';
+import { audio } from './core/audio.js';
 import { buildSprites, SPR } from './art/sprites.js';
 import { buildProps } from './art/props.js';
 import { UI } from './art/palette.js';
@@ -30,6 +31,7 @@ async function boot() {
   const canvas = document.getElementById('screen');
   initScreen(canvas);
   input.init(canvas);
+  audio.init(game.save.settings?.mute);
   await loadFonts();
   buildSprites();
   buildProps();

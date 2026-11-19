@@ -17,6 +17,7 @@ import { Effects, PopText, Absorb, heartAbsorb } from '../game/effects.js';
 import { liveScore } from '../game/score.js';
 import { RingingScene } from './ringing.js';
 import { KamatteScene } from './kamatte.js';
+import { audio } from '../core/audio.js';
 import { ResultScene } from './result.js';
 import { PauseScene } from './pause.js';
 
@@ -115,6 +116,7 @@ export class PlayScene {
   }
 
   addTp(n) {
+    audio.sfx('heart');
     this.state.tp += n;
     this.state.tpTotal += n;
     if (!this.hintShown && this.state.tp >= BAL.onedari.minTp) {
@@ -123,7 +125,7 @@ export class PlayScene {
     }
   }
 
-  addFp(n) {
+  addFp(n, quiet = false) {
     const st = this.state;
     const wasFull = this.full();
     // フィーバー中は、おなかには半分だけたまる（点数はそのまま）
@@ -131,8 +133,10 @@ export class PlayScene {
     if (wasFull) st.over += fill;
     st.fp = Math.min(BAL.tummy.full, st.fp + fill);
     st.fpTotal += n;
+    if (!quiet) audio.sfx('eat');
     if (!wasFull && this.full()) {
       st.over = 0;
+      audio.sfx('full');
       this.fx.add(new PopText(this.cat.x, this.cat.y - 34, 'もじもじ…', UI.pink, 1.4));
     }
   }
@@ -141,8 +145,12 @@ export class PlayScene {
   // thirst=false：お水の時間は進めない（てらまりんぐ中）
   tick(dt, thirst = true) {
     const st = this.state;
+    const prevSec = Math.ceil(st.timeLeft);
+    const prevThirst = st.thirst;
     st.timeLeft = Math.max(0, st.timeLeft - dt);
     if (thirst && this.action?.kind !== 'faint') st.thirst += dt;
+    if (prevThirst < BAL.water.warn && st.thirst >= BAL.water.warn) audio.sfx('warn');
+    if (Math.ceil(st.timeLeft) < prevSec && prevSec <= BAL.hurryAt && st.timeLeft > 0) audio.sfx('tick');
     if (st.scratch > 0) st.scratch = Math.max(0, st.scratch - dt);
     if (st.toilet > 0) st.toilet = Math.max(0, st.toilet - dt);
   }
@@ -266,9 +274,10 @@ export class PlayScene {
     const award = this.t - st.lastDrink >= BAL.water.refill;
     st.thirst = 0;
     this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'ごくごく', '#2a70c0'));
+    audio.sfx('drink');
     if (award) {
       st.lastDrink = this.t;
-      this.addFp(BAL.water.fp);
+      this.addFp(BAL.water.fp, true);
       this.fx.add(new PopText(this.cat.x + 10, this.cat.y - 18, `+${BAL.water.fp}`, UI.orangeD, 0.8));
     }
   }
@@ -406,6 +415,7 @@ export class PlayScene {
     const dy = t.y - this.cat.y;
     this.cat.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
     this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'にゃーん', UI.pink, 0.8));
+    audio.sfx('meow');
   }
 
   updateLeap(dt) {
@@ -446,6 +456,7 @@ export class PlayScene {
       L.wait = 0;
       if (L.win) this.fx.add(new PopText(t.x, t.y - 34, 'しょうがないなぁ', UI.pink, 0.9));
       else this.fx.add(new PopText(t.x, t.y - 34, 'また今度ね', UI.ink, 1.2));
+      audio.sfx(L.win ? 'yes' : 'no');
     }
     L.wait += dt;
     if (L.wait < 0.5) return;
@@ -476,6 +487,7 @@ export class PlayScene {
     st.timeLeft += sec;
     this.timeBonus = 1.8;
     this.timeBonusText = `+${sec}`;
+    audio.sfx('timeBonus');
     target.leave(this.cat.x, this.cat.y);
     this.flash = 0.3;
     input.releaseAll();
@@ -493,6 +505,7 @@ export class PlayScene {
     this.action = { kind: 'scratch', t: 0 };
     this.cat.dir = 'up';
     this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'ガリガリ', UI.orangeD));
+    audio.sfx('scratch');
   }
 
   // おなかがいっぱいで猫砂に着いたら、トイレ
@@ -509,6 +522,7 @@ export class PlayScene {
     this.action = { kind: 'toilet', t: 0, sand: 0 };
     this.cat.dir = 'down';
     this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'カキカキ', UI.orangeD));
+    audio.sfx('toilet');
   }
 
   // 猫砂が飛ぶ
@@ -529,6 +543,7 @@ export class PlayScene {
     st.toilet = 0;
     this.action = { kind: 'faint', t: 0, moved: false };
     this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'バタッ', UI.red));
+    audio.sfx('faint');
   }
 
   updateAction(dt) {
@@ -547,6 +562,7 @@ export class PlayScene {
       st.toilet = BAL.toilet.buff;
       this.feverIntro = 1.8;
       this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'すっきり！', UI.orangeD));
+      audio.sfx('fever');
       this.action = null;
     } else if (a.kind === 'faint') {
       // 倒れる → 白くなって病院へ → 休んで復帰
@@ -563,6 +579,7 @@ export class PlayScene {
       if (a.t >= F.total) {
         this.action = null;
         this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'げんきになった！', UI.orangeD));
+        audio.sfx('recover');
       }
     }
   }
@@ -572,6 +589,7 @@ export class PlayScene {
     const tp = target.def.tp * mult;
     const getCat = () => ({ x: this.cat.x, y: this.cat.y - 8 });
     this.fx.add(new PopText(target.x, target.y - 34, 'メロメロ！', UI.pink));
+    audio.sfx('win');
     if (mult > 1) this.fx.add(new PopText(target.x, target.y - 44, `TP×${mult}`, UI.orangeD));
     const n = Math.max(3, Math.min(10, tp));
     for (let i = 0; i < n; i++) {
@@ -616,6 +634,7 @@ export class PlayScene {
 
   startEnding() {
     this.ending = 1.8;
+    audio.sfx('end');
     this.action = null;
     input.releaseAll();
   }

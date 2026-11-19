@@ -5,6 +5,7 @@ import { input, KEY } from '../core/input.js';
 import { drawText, textWidth } from '../core/text.js';
 import { Menu, panel } from '../core/ui.js';
 import { save } from '../core/save.js';
+import { audio } from '../core/audio.js';
 import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
 import { drawDigits, digitsWidth } from '../art/digits.js';
@@ -59,7 +60,9 @@ export class ResultScene {
   enter() { input.releaseAll(); }
 
   update(dt) {
+    const prev = this.t;
     this.t += dt;
+    this.sounds(prev, this.t);
     if (this.t < this.showAll) {
       // 押したら演出を飛ばす
       if (input.hit(KEY.confirm) || input.fresh().length) {
@@ -71,6 +74,14 @@ export class ResultScene {
     const id = this.menu.update();
     if (id === 'again') this.game.startPlay(this.stageId);
     if (id === 'title') this.game.toTitle();
+  }
+
+  // 内訳が1行出るごとにピッ、総合スコアが出たらベスト更新の音
+  sounds(a, b) {
+    const n = this.rows.length;
+    for (let i = 1; i <= n; i++) if (a < ROW_GAP * i && b >= ROW_GAP * i) audio.sfx('row');
+    const done = ROW_GAP * n + 0.6;
+    if (a < done && b >= done) audio.sfx(this.newBest ? 'best' : 'row');
   }
 
   draw(ctx) {

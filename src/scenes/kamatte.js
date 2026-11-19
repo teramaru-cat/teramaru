@@ -4,6 +4,7 @@
 
 import { screen } from '../core/renderer.js';
 import { input, KEY } from '../core/input.js';
+import { audio } from '../core/audio.js';
 import { drawText } from '../core/text.js';
 import { panel } from '../core/ui.js';
 import { UI } from '../art/palette.js';
@@ -105,6 +106,7 @@ export class KamatteScene {
     if (tap && this.punch <= 0.05 && this.punches < this.cfg.maxTaps) {
       this.punch = 0.18;
       this.punches++;
+      audio.sfx('punch');
       this.bonus += this.cfg.tapBonus;
       const s = this.scr(100 + Math.random() * 30, 46);
       this.fx.add(new PopText(s.x, s.y, `+${this.cfg.tapBonus}`, UI.orangeD, 0.6));
@@ -153,6 +155,7 @@ export class KamatteScene {
     r.flip = vx < 0;
     if (Math.hypot(r.x - c.x, r.y - c.y) < this.cfg.catchDist) {
       this.caught = true;
+      audio.sfx('catch');
       this.bonus += this.cfg.catchBonus;
       const s = this.scr(r.x, r.y - 40);
       this.fx.add(new PopText(s.x, s.y, 'つかまえた！', UI.pink, 1.2));

@@ -4,7 +4,8 @@ import { screen } from '../core/renderer.js';
 import { input } from '../core/input.js';
 import { drawText, textWidth } from '../core/text.js';
 import { drawDigits, digitsWidth } from '../art/digits.js';
-import { Menu, panel } from '../core/ui.js';
+import { Menu, Button, panel } from '../core/ui.js';
+import { toggleMute } from './pause.js';
 import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
 import { getTown } from '../game/town.js';
@@ -16,6 +17,7 @@ export class TitleScene {
     this.town = getTown(1);
     this.menu = new Menu([{ id: 'start', label: 'はじめる' }]);
     this.hearts = [];
+    this.soundBtn = new Button('sound', '', { icon: 'sound', pad: 6 });
   }
 
   enter() { input.releaseAll(); }
@@ -28,6 +30,10 @@ export class TitleScene {
     for (const h of this.hearts) { h.y += h.vy * dt; h.life -= dt; }
     this.hearts = this.hearts.filter((h) => h.life > 0);
 
+    this.soundBtn.place(screen.W - 24, 4, 20, 16);
+    for (const p of input.fresh()) {
+      if (this.soundBtn.contains(p.x, p.y)) { p.role = 'button:sound'; toggleMute(this.game); }
+    }
     const id = this.menu.update();
     if (id === 'start') this.game.startPlay(1);
   }
@@ -61,6 +67,7 @@ export class TitleScene {
 
     this.menu.layout(W / 2, 138, 96, 20, 6);
     this.menu.draw(ctx);
+    this.soundBtn.draw(ctx, { pressed: this.soundBtn.isHeld() });
 
     const coins = this.game.save.coins;
     const label = 'てらまるコイン';

@@ -5,6 +5,7 @@
 
 import { screen } from '../core/renderer.js';
 import { input, KEY } from '../core/input.js';
+import { audio } from '../core/audio.js';
 import { drawText, textWidth } from '../core/text.js';
 import { Button, panel } from '../core/ui.js';
 import { UI } from '../art/palette.js';
@@ -119,6 +120,7 @@ export class RingingScene {
     const c = this.cat;
     if (c.x < -8 || c.x > screen.W + 8 || c.y > screen.H + 14) {
       this.result = 'abort';
+      audio.sfx('lose');
       this.target.cooldown = BAL.ring.abortCooldown;
       this.setPhase('out');
     }
@@ -189,6 +191,7 @@ export class RingingScene {
     this.cat.x += nx * 8;
     this.cat.y = Math.max(TOP_LIMIT, this.cat.y + ny * 8);
     this.fx.add(new PopText(this.cat.x, this.cat.y - 44, stomped ? 'ふまれそう！' : 'ぶつかった！', UI.red));
+    audio.sfx('hit');
   }
 
   // 足ごとに、まわった角度を足していく（360°で1周）
@@ -210,6 +213,7 @@ export class RingingScene {
         if (Math.abs(L.acc) >= TAU) {
           L.acc -= Math.sign(L.acc) * TAU;
           L.laps++;
+          audio.sfx('lap', this.legs.reduce((s, l) => s + l.laps, 0));
           this.gauge = Math.min(dur, this.gauge + 1);
           this.fx.add(new PopText(L.x, L.y - 34, LAP_WORDS[Math.floor(Math.random() * LAP_WORDS.length)], UI.orangeD));
         }
@@ -223,6 +227,7 @@ export class RingingScene {
   startWin() {
     this.setPhase('win');
     this.result = 'win';
+    audio.sfx('win');
     const play = this.play;
     const mid = this.gx + this.bx;
     // ハート：TPをいくつかに分けて、てらまるへ吸い込む（爪とぎボーナスなら2倍）
