@@ -78,13 +78,18 @@ function ensure() {
   noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
   const d = noiseBuf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  // 爪が繊維に引っかかる：数ミリ秒ごとに強さが変わるザラザラ
-  fiberBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
+  // 爪が繊維に引っかかる：10〜20ミリ秒ごとに「ガッ」と引っかかっては抜ける（ガリガリの粒）
+  fiberBuf = ac.createBuffer(1, ac.sampleRate * 1, ac.sampleRate);
   const fd = fiberBuf.getChannelData(0);
-  let amp = 1;
+  const sr = ac.sampleRate;
+  let next = 0;
+  let k = 0;
+  let amp = 0;
   for (let i = 0; i < fd.length; i++) {
-    if (i % Math.floor(ac.sampleRate * 0.003) === 0) amp = Math.random() < 0.25 ? 1 : 0.15 + Math.random() * 0.4;
-    fd[i] = (Math.random() * 2 - 1) * amp;
+    if (i >= next) { amp = 0.6 + Math.random() * 0.4; k = 0; next = i + Math.floor(sr * (0.010 + Math.random() * 0.012)); }
+    k++;
+    const env = amp * Math.exp(-k / (sr * 0.004)); // 引っかかった瞬間が強く、すぐ弱まる
+    fd[i] = (Math.random() * 2 - 1) * (env + 0.08);
   }
   // 砂粒：ときどきプチッと鳴る粒＋うすいサー
   sandBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
@@ -198,13 +203,15 @@ const SFX = {
     tone(t, 400, 0.08, { type: 'sine', to: 900, vol: 0.35 });
     tone(t + 0.12, 450, 0.08, { type: 'sine', to: 1000, vol: 0.35 });
   },
-  // ガリガリ：左右の前足で交互に、上から下へ引っかく
+  // ガリガリ：左右の前足で交互に、上から下へ長めに引っかく（3回で約1秒）
   scratch: (t) => {
     let at = t;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 3; i++) {
+      const dur = 0.3 + Math.random() * 0.05;
       const left = i % 2 === 0;
-      scrape(at, 0.13 + Math.random() * 0.04, fiberBuf, { vol: 0.9, f0: left ? 1400 : 1150, f1: left ? 650 : 520, q: 1.4, peak: 0.25 });
-      at += 0.15 + Math.random() * 0.03;
+      scrape(at, dur, fiberBuf, { vol: 1.0, f0: left ? 1500 : 1300, f1: left ? 700 : 600, q: 1.1, peak: 0.15 });
+      scrape(at, dur, fiberBuf, { vol: 0.6, f0: 450, f1: 300, q: 1.5, peak: 0.15 }); // 板がこすれる低いところ
+      at += dur + 0.03;
     }
   },
   // カキカキ：砂を後ろへかく「ザッ」と、ぱらぱら落ちる粒
