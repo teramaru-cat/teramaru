@@ -5,7 +5,7 @@
 // - 外に見せるのは audio.init / audio.sfx(name) / audio.setMuted / audio.duck
 
 const BGM_URL = 'audio/bgm.mp3';
-const BGM_VOL = 0.45;
+const BGM_VOL = 0.2; // 曲は音が大きめに作られているので、効果音より下に置く
 const SFX_VOL = 0.5;
 
 let ac = null; // AudioContext
@@ -110,13 +110,25 @@ async function startBgm() {
     bgmSrc = ac.createBufferSource();
     bgmSrc.buffer = bgmBuf;
     bgmSrc.loop = true;
+    // 曲の頭の無音は飛ばす（ループで戻ったときも）
+    const head = leadingSilence(bgmBuf);
+    bgmSrc.loopStart = head;
+    bgmSrc.loopEnd = bgmBuf.duration;
     bgmSrc.connect(bgmBus);
-    bgmSrc.start();
+    bgmSrc.start(0, head);
+    audio.bgmFrom = head; // 確認用：流れ始めた位置
   } catch {
     bgmMissing = true; // 読めなくてもゲームは続ける
   } finally {
     bgmLoading = false;
   }
+}
+
+// 頭の無音の長さ（秒）
+function leadingSilence(buf) {
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) if (Math.abs(d[i]) > 0.003) return Math.max(0, i / buf.sampleRate - 0.05);
+  return 0;
 }
 
 // ---- 音の部品 ----
