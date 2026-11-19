@@ -5,7 +5,7 @@
 // - 外に見せるのは audio.init / audio.sfx(name) / audio.setMuted / audio.duck
 
 const BGM_URL = 'audio/bgm.mp3';
-const BGM_VOL = 0.2; // 曲は音が大きめに作られているので、効果音より下に置く
+const BGM_VOL = 0.07; // 曲は音が大きめに作られているので、かなり下げて後ろで流す（ポーズ中はさらに半分）
 const SFX_VOL = 0.5;
 
 let ac = null; // AudioContext
@@ -46,7 +46,7 @@ export const audio = {
 
   // ポーズ中などは BGM を小さく
   duck(on) {
-    if (bgmBus) bgmBus.gain.setTargetAtTime(on ? BGM_VOL * 0.35 : BGM_VOL, ac.currentTime, 0.1);
+    if (bgmBus) bgmBus.gain.setTargetAtTime(on ? BGM_VOL * 0.5 : BGM_VOL, ac.currentTime, 0.1);
   },
 
   sfx(name, arg) {
