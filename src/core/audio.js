@@ -78,7 +78,7 @@ function ensure() {
   noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
   const d = noiseBuf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  // 爪が繊維に引っかかる：10〜20ミリ秒ごとに「ガッ」と引っかかっては抜ける（ガリガリの粒）
+  // 爪が繊維に引っかかる：15〜45ミリ秒ごとにばらばらに「ガッ」と引っかかっては抜ける（ガリガリの粒）
   fiberBuf = ac.createBuffer(1, ac.sampleRate * 1, ac.sampleRate);
   const fd = fiberBuf.getChannelData(0);
   const sr = ac.sampleRate;
@@ -86,10 +86,10 @@ function ensure() {
   let k = 0;
   let amp = 0;
   for (let i = 0; i < fd.length; i++) {
-    if (i >= next) { amp = 0.6 + Math.random() * 0.4; k = 0; next = i + Math.floor(sr * (0.010 + Math.random() * 0.012)); }
+    if (i >= next) { amp = Math.random() < 0.3 ? 1 : 0.35 + Math.random() * 0.5; k = 0; next = i + Math.floor(sr * (0.016 + Math.random() * 0.028)); }
     k++;
-    const env = amp * Math.exp(-k / (sr * 0.004)); // 引っかかった瞬間が強く、すぐ弱まる
-    fd[i] = (Math.random() * 2 - 1) * (env + 0.08);
+    const env = amp * Math.exp(-k / (sr * 0.007)); // 引っかかった瞬間が強く、すぐ弱まる
+    fd[i] = (Math.random() * 2 - 1) * (env + 0.03);
   }
   // 砂粒：ときどきプチッと鳴る粒＋うすいサー
   sandBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
@@ -157,7 +157,18 @@ function notes(t, list, step, opts) {
 }
 
 // こする音：ふくらんでから消える（ぶつ切りにしない）。音の高さを f0→f1 へ動かす
-function scrape(t, dur, buf, { vol = 0.4, f0 = 1000, f1 = 600, q = 1, peak = 0.35 } = {}) {
+let crunch = null; // 音を割って荒くする
+function getCrunch() {
+  if (crunch) return crunch;
+  crunch = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++) {
+    const x = (i / 1023) * 2 - 1;
+    crunch[i] = Math.tanh(x * 6) * 0.8;
+  }
+  return crunch;
+}
+
+function scrape(t, dur, buf, { vol = 0.4, f0 = 1000, f1 = 600, q = 1, peak = 0.35, drive = false } = {}) {
   const s = ac.createBufferSource();
   s.buffer = buf;
   const f = ac.createBiquadFilter();
@@ -169,7 +180,13 @@ function scrape(t, dur, buf, { vol = 0.4, f0 = 1000, f1 = 600, q = 1, peak = 0.3
   g.gain.setValueAtTime(0.001, t);
   g.gain.exponentialRampToValueAtTime(vol, t + dur * peak);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  s.connect(f).connect(g).connect(sfxBus);
+  if (drive) {
+    const w = ac.createWaveShaper();
+    w.curve = getCrunch();
+    s.connect(f).connect(w).connect(g).connect(sfxBus);
+  } else {
+    s.connect(f).connect(g).connect(sfxBus);
+  }
   s.start(t, Math.random() * 0.3);
   s.stop(t + dur + 0.02);
 }
@@ -209,8 +226,8 @@ const SFX = {
     for (let i = 0; i < 3; i++) {
       const dur = 0.3 + Math.random() * 0.05;
       const left = i % 2 === 0;
-      scrape(at, dur, fiberBuf, { vol: 1.0, f0: left ? 1500 : 1300, f1: left ? 700 : 600, q: 1.1, peak: 0.15 });
-      scrape(at, dur, fiberBuf, { vol: 0.6, f0: 450, f1: 300, q: 1.5, peak: 0.15 }); // 板がこすれる低いところ
+      scrape(at, dur, fiberBuf, { vol: 0.55, f0: left ? 1400 : 1200, f1: left ? 600 : 500, q: 0.8, peak: 0.15, drive: true });
+      scrape(at, dur, fiberBuf, { vol: 0.45, f0: 400, f1: 250, q: 1.2, peak: 0.15, drive: true }); // 板がこすれる低いところ
       at += dur + 0.03;
     }
   },
