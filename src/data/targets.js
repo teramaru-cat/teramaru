@@ -107,6 +107,8 @@ export const TARGETS = {
     sway: { x: 12, y: 3, speed: 0.6 },
     legs: [{ x: -26, y: 0, r: 4 }, { x: -14, y: -6, r: 4 }, { x: 14, y: -6, r: 4 }, { x: 26, y: 0, r: 4 }],
     look: { type: 'dog', fur: '#c8904a', light: '#f4e2c4', dark: '#96643a', collar: '#d04040' },
+    // 飼い主（街ではリードでつないで一緒に歩く。てらまりんぐの相手にはならない）
+    owner: { skin: '#f2c9a0', hair: '#5a3a2a', top: '#7aa8c8', bottom: '#5a5a6a', shoes: '#3a2a20', garment: 'coat' },
     wander: 12,
     onedari: { base: 0.15, perTp: 0.007 },
   },

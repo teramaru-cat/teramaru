@@ -90,6 +90,7 @@ export class Target {
     const a = this.state === 'leaving' ? Math.max(0, 1 - this.leaveT / 1.6) : this.cooldown > 0 ? 0.55 : 1;
     ctx.globalAlpha = a;
     const bob = !this.moving && this.def.motion !== 'still' && Math.floor(this.t * 3) % 2 ? 1 : 0;
+    if (this.def.owner) this.drawOwner(ctx, x, y, hw, img);
     if (this.flip) {
       ctx.save();
       ctx.translate(x, 0);
@@ -100,6 +101,38 @@ export class Target {
       ctx.drawImage(img, x - hw, y - img.height + 1 + bob);
     }
     ctx.globalAlpha = 1;
+  }
+
+  // 犬の飼い主：犬のうしろを歩いて、リードで首輪とつながる
+  drawOwner(ctx, x, y, hw, img) {
+    const fr = SPR.owners[this.id];
+    const o = this.moving ? fr[Math.floor(this.t * 6) % 2] : fr[0];
+    const dir = this.flip ? -1 : 1; // 犬の向いている方
+    const ox = x - dir * (hw + 6);
+    const oy = y - 2;
+    ctx.fillStyle = 'rgba(40,30,20,0.25)';
+    ctx.fillRect(ox - 5, oy - 1, 10, 2);
+    if (this.flip) {
+      ctx.save();
+      ctx.translate(ox, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(o, -7, oy - o.height + 1);
+      ctx.restore();
+    } else {
+      ctx.drawImage(o, ox - 7, oy - o.height + 1);
+    }
+    // リード：飼い主の手 → 犬の首輪（1ドットの線）
+    const hx = ox + dir * 5;
+    const hy = oy - 9;
+    const cxr = x + dir * (12 - hw);
+    const cyr = y - img.height + 8;
+    const n = Math.max(Math.abs(cxr - hx), Math.abs(cyr - hy));
+    ctx.fillStyle = '#c03030';
+    for (let i = 0; i <= n; i++) {
+      const k = i / n;
+      const sag = Math.round(Math.sin(k * Math.PI) * 2); // 少したるませる
+      ctx.fillRect(Math.round(hx + (cxr - hx) * k), Math.round(hy + (cyr - hy) * k) + sag, 1, 1);
+    }
   }
 }
 
