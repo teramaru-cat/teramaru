@@ -1,16 +1,16 @@
 // チュートリアル（0-1 てらまるのいえ）の流れ
 //
-// 1. walk    … 歩いてみる（上に案内の枠）
+// 1. walk    … 歩いてみる（上に「あそびかた」の操作説明。ウィルキャッはまだ出ない）
 // 2. ring    … 飼い主2人をてらまりんぐでメロメロに（まだの人の上に▼）
-// 3. mission … ウィルキャッ（ねこたちの意志。姿のないキラキラ）があらわれて使命を伝える。「猫は家で飼おうね」
-// 4. vet     … 動物病院で予防接種（チクッ）
+// 3. mission … みごとなてらまりんぐを見た ウィルキャッ（ねこたちの意志。姿のないキラキラ）が、てらまるを見そめて使命を伝える。「猫は家で飼おうね」
+// 4. vet     … てんかい どうぶつびょういん（ねこの神の世界の病院）で予防接種（チクッ）
 // 5. after   … 「さあ、まちへ」→ 暗くなってステージ選択へ（結果発表はなし）
 //
 // セリフはここの PAGES を書きかえる。てらまるはしゃべらない。
 
 import { screen } from '../core/renderer.js';
 import { input, KEY } from '../core/input.js';
-import { drawText } from '../core/text.js';
+import { drawText, textWidth } from '../core/text.js';
 import { panel } from '../core/ui.js';
 import { audio } from '../core/audio.js';
 import { save } from '../core/save.js';
@@ -21,20 +21,22 @@ import { VOICE, drawVoiceBox, drawPresence, drawSpark, sparkSize, shownChars, to
 
 // セリフ（1ページ＝1〜3行）
 const PAGES = {
+  // 飼い主2人をメロメロにした てらまるが、ウィルキャッに見そめられる
   mission: [
-    ['……てらまる。', 'きこえるかにゃ？'],
+    ['……！'],
+    ['……みつけたにゃ。'],
+    ['なんて みごとな てらまりんぐ…', 'おまえこそ、えらばれし ねこ だにゃ'],
     [`われらは ${VOICE.fullName}。`, 'せかいじゅうの ねこの いし だにゃ'],
     [`${VOICE.name} って よんでほしいにゃ`],
-    ['いまの てらまりんぐ、', 'みごと だったにゃ'],
     ['まちには まだ ねこの かわいさを', 'しらない にんげんが いっぱい いるにゃ'],
     ['まちじゅうを てらまりんぐで', 'メロメロに するにゃ！', 'それが てらまるの しめい だにゃ'],
     ['……でも ほんとうは、', 'ねこは いえの なかで かうのが', 'いちばん だにゃ'],
     ['おそとに でるのは', 'この ゲームの なか だけ。', 'やくそく だにゃ'],
-    ['そのまえに、どうぶつびょういんで', 'よぼうせっしゅを うけるにゃ'],
+    ['そのまえに、われらの せかいの', 'てんかい どうぶつびょういんで', 'よぼうせっしゅを うけるにゃ'],
   ],
   after: [
     ['よく がまん したにゃ！'],
-    ['これで びょうきも', 'へっちゃら だにゃ'],
+    ['てんかいの ワクチンは', 'ききめ ばつぐん。', 'これで びょうきも へっちゃら だにゃ'],
     ['さあ、まちへ でかけるにゃ！'],
   ],
 };
@@ -159,8 +161,8 @@ export class Tutorial {
     const P = this.play;
     if (this.step === 'walk' || this.step === 'ring') {
       if (P.banner > 0.6) return;
-      this.drawHint(ctx);
       if (this.step === 'ring') this.drawOwnerMarks(ctx);
+      this.drawHint(ctx); // 操作説明は▼より手前
       return;
     }
     if (this.step === 'mission' || this.step === 'toVet') {
@@ -186,26 +188,28 @@ export class Tutorial {
     }
   }
 
-  // 上の案内（ウィルキャッの声。操作のやり方も）
+  // 上の操作説明（ウィルキャッではなく、ふつうの「あそびかた」の枠。ウィルキャッはまだ出てこない）
   drawHint(ctx) {
     const W = screen.W;
     const touch = input.lastDevice !== 'keyboard';
     let lines;
-    let sub;
     if (this.step === 'walk') {
-      lines = ['てらまる、まずは', 'おうちを あるいてみるにゃ'];
-      sub = touch ? 'がめんを なぞると あるくよ' : 'やじるしキー で あるくよ';
+      lines = [touch ? 'がめんを なぞって あるこう' : 'やじるしキーで あるこう'];
     } else if (this.charmed === 0) {
-      lines = ['かいぬしの あしもとに さわって', 'てらまりんぐ するにゃ！'];
-      sub = 'さわると てらまりんぐ が はじまるよ';
+      lines = ['かいぬしの あしもとに さわると てらまりんぐ！', 'あしのまわりを ぐるぐる まわって メロメロに しよう'];
     } else {
-      lines = ['その ちょうし だにゃ！', 'あと ひとり だにゃ'];
-      sub = null;
+      lines = ['あと ひとり！', 'もう ひとりの かいぬしも メロメロに しよう'];
     }
-    const w = Math.min(W - 70, 210);
+    const w = Math.min(W - 70, Math.max(...lines.map((l) => textWidth(l, 'small'))) + 16);
+    const h = lines.length * 10 + 7;
     const x = Math.round(W / 2 - w / 2);
-    const h = drawVoiceBox(ctx, lines, { x, y: 10, w, t: this.t, now: this.now });
-    if (sub) drawText(ctx, sub, W / 2, 10 + h + 3, { font: 'small', color: UI.white, outline: UI.ink, align: 'center' });
+    const y = 12;
+    panel(ctx, x, y, w, h, UI.cream);
+    lines.forEach((l, i) => drawText(ctx, l, W / 2, y + 4 + i * 10, { font: 'small', color: UI.ink, align: 'center' }));
+    const tag = 'あそびかた';
+    const tw = textWidth(tag, 'small') + 8;
+    panel(ctx, x + 6, y - 7, tw, 11, UI.orange);
+    drawText(ctx, tag, x + 10, y - 5, { font: 'small', color: UI.white });
   }
 
   // まだメロメロにしていない飼い主の上に、ピンクの▼
@@ -239,37 +243,82 @@ export class Tutorial {
     drawVoiceBox(ctx, lines, { x: 8, y: H - h - 8, w, t: d.t, now: this.now, align: 'left', more: true });
   }
 
-  // 動物病院：診察台のてらまる（3倍）に、白衣の手が注射をする
+  // てんかい どうぶつびょういん（ねこの神の世界のレベチな病院）：
+  // 金の柱と虹、上から光、雲の上の金の診察台。雲から光る金の手が、虹色のワクチンを打つ。打ったら光があふれて、てらまるに天使の輪
   drawVet(ctx) {
     const W = screen.W;
     const H = screen.H;
     const t = this.step === 'out' ? VET.end + 1 : this.t;
-    // 部屋
-    ctx.fillStyle = '#e4f2ea';
-    ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#d2e6dc';
-    for (let x = 0; x < W; x += 24) ctx.fillRect(x, 0, 12, 112);
-    ctx.fillStyle = '#c8d8cc';
-    ctx.fillRect(0, 112, W, H - 112);
-    ctx.fillStyle = '#a8bcb0';
-    ctx.fillRect(0, 112, W, 2);
-    // 看板
-    const sign = 'どうぶつびょういん';
-    panel(ctx, 8, 8, 92, 15, '#ffffff');
-    ctx.fillStyle = '#e04848';
-    ctx.fillRect(13, 13, 5, 1);
-    ctx.fillRect(15, 11, 1, 5);
-    drawText(ctx, sign, 21, 11, { font: 'small', color: UI.ink });
-    // 診察台
+    const now = this.now;
     const cx = Math.round(W / 2);
-    const top = 104;
-    ctx.fillStyle = '#7a8a92';
-    ctx.fillRect(cx - 44, top, 88, 8);
-    ctx.fillStyle = '#c8d4d8';
-    ctx.fillRect(cx - 43, top + 1, 86, 4);
-    ctx.fillStyle = '#7a8a92';
-    ctx.fillRect(cx - 4, top + 8, 8, 26);
-    ctx.fillRect(cx - 20, top + 32, 40, 4);
+    const top = 112; // 診察台の上
+
+    // 空（金色から、うす紫へ）
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#fff2c8');
+    sky.addColorStop(0.55, '#fde4f0');
+    sky.addColorStop(1, '#e4d8ff');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+    // 上からの光（ゆっくり回る）
+    ctx.save();
+    ctx.translate(cx, -10);
+    for (let i = 0; i < 12; i++) {
+      const a = now * 0.15 + (i / 12) * Math.PI * 2;
+      ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.22)' : 'rgba(255,236,150,0.18)';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(a - 0.09) * 400, Math.sin(a - 0.09) * 400);
+      ctx.lineTo(Math.cos(a + 0.09) * 400, Math.sin(a + 0.09) * 400);
+      ctx.fill();
+    }
+    ctx.restore();
+    // 虹
+    const rainbow = ['#ff8aa8', '#ffb870', '#ffe070', '#9ae08a', '#8ac8ff', '#b89aff'];
+    rainbow.forEach((col, i) => {
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx, top + 30, 118 - i * 3, Math.PI, 0);
+      ctx.stroke();
+    });
+    // 金の柱（左右に2本ずつ）
+    for (const px of [24, 58, W - 58, W - 24]) drawPillar(ctx, px, 30, top + 22);
+    // 浮かぶ天使の輪とハート（背景）
+    for (let i = 0; i < 6; i++) {
+      const fx = (i * 67 + 30) % W;
+      const fy = 40 + ((i * 37) % 50) + Math.sin(now * 1.3 + i) * 4;
+      if (i % 2) drawHalo(ctx, fx, fy, 6, 0.7);
+      else { ctx.globalAlpha = 0.6; ctx.drawImage(SPR.heart, Math.round(fx), Math.round(fy)); ctx.globalAlpha = 1; }
+    }
+    // 雲の床
+    drawClouds(ctx, W, top + 20, now);
+    // 看板（金のわく、肉球の十字）
+    const sign = 'てんかい どうぶつびょういん';
+    const sw = textWidth(sign, 'small') + 26;
+    const sx = Math.round(cx - sw / 2);
+    panel(ctx, sx - 1, 5, sw + 2, 17, '#c89018', '#8a5a10');
+    panel(ctx, sx + 1, 7, sw - 2, 13, '#fffaf0', '#f0c040');
+    ctx.fillStyle = '#e04868';
+    ctx.fillRect(sx + 6, 13, 7, 1);
+    ctx.fillRect(sx + 9, 10, 1, 7);
+    drawText(ctx, sign, sx + 17, 10, { font: 'small', color: '#8a5a10' });
+    drawSpark(ctx, sx - 2, 6, sparkSize(now));
+    drawSpark(ctx, sx + sw + 1, 20, sparkSize(now + 0.5));
+
+    // 雲の上の、金の診察台（ふわふわ浮く）
+    const fl = Math.round(Math.sin(now * 2) * 1.5);
+    ctx.fillStyle = 'rgba(255,240,170,0.5)';
+    ctx.fillRect(cx - 50, top + 9 + fl, 100, 3);
+    ctx.fillStyle = '#8a5a10';
+    ctx.fillRect(cx - 46, top + fl, 92, 9);
+    ctx.fillStyle = '#f0c040';
+    ctx.fillRect(cx - 45, top + 1 + fl, 90, 3);
+    ctx.fillStyle = '#ffe890';
+    ctx.fillRect(cx - 45, top + 1 + fl, 90, 1);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 44, top + 5 + fl, 88, 3); // 白いシーツ
+    for (let i = 0; i < 5; i++) drawSpark(ctx, cx - 40 + i * 20, top + 6 + fl, i === Math.floor(now * 4) % 5 ? 2 : 0);
 
     // てらまる
     const k = 3;
@@ -277,18 +326,25 @@ export class Tutorial {
     const w = img.width * k;
     const h = img.height * k;
     let x = cx - w / 2;
-    let y = top + 2 - h;
+    let y = top + fl + 1 - h;
     const shaking = t >= VET.poke && t < VET.poke + 0.7;
     if (shaking) x += Math.floor(t * 30) % 2 ? 2 : -2;
     if (t >= VET.happy) y -= Math.abs(Math.round(Math.sin((t - VET.happy) * 7) * 4)); // ぴょんぴょん
+    if (t >= VET.poke + 0.3) {
+      // ワクチンが効いて、体のまわりが光る
+      ctx.fillStyle = `rgba(255,240,160,${0.35 + Math.sin(now * 6) * 0.1})`;
+      ctx.beginPath();
+      ctx.ellipse(cx, y + h / 2, w / 2 + 8, h / 2 + 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.drawImage(img, Math.round(x), Math.round(y), w, h);
     if (shaking) {
-      // 毛が逆立つ
       ctx.fillStyle = UI.red;
       for (const [dx, dy] of [[-28, 6], [-22, -4], [22, -4], [28, 6]]) ctx.fillRect(cx + dx, y + dy + 10, 2, 5);
     }
+    if (t >= VET.happy) drawHalo(ctx, cx, Math.round(y) - 6, 12, 1); // 天使の輪
 
-    // 白衣の手と注射（右から入って、出ていく）
+    // 雲から、光る金の手（虹色のワクチン）
     let armK = 0;
     if (t >= VET.armIn - 0.6 && t < VET.armIn) armK = (t - (VET.armIn - 0.6)) / 0.6;
     else if (t >= VET.armIn && t < VET.armOut) armK = 1;
@@ -297,41 +353,129 @@ export class Tutorial {
       const push = t >= VET.poke - 0.2 && t < VET.poke + 0.3 ? 4 : 0;
       const tipX = Math.round(W + 10 - (W / 2 - 4) * armK) - push; // 針の先
       const ay = top - 22;
-      // 腕（白衣）と手
-      ctx.fillStyle = '#9aa8ae';
+      // 光の腕（まわりに光）
+      ctx.fillStyle = 'rgba(255,240,170,0.45)';
+      ctx.fillRect(tipX + 36, ay - 10, W, 24);
+      ctx.fillStyle = '#c89018';
       ctx.fillRect(tipX + 40, ay - 6, W, 16);
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(tipX + 41, ay - 5, W, 14);
-      ctx.fillStyle = '#f2c9a0';
-      ctx.fillRect(tipX + 32, ay - 3, 10, 9);
-      // 注射
-      ctx.fillStyle = '#5a6a72';
+      ctx.fillStyle = '#f0c040';
+      ctx.fillRect(tipX + 41, ay - 5, 4, 14); // 金のそで口
+      ctx.fillStyle = '#ffe8b8';
+      ctx.fillRect(tipX + 32, ay - 3, 10, 9); // 手
+      ctx.fillStyle = '#c89018';
+      ctx.fillRect(tipX + 32, ay - 3, 10, 1);
+      // 雲（腕の出どころ）
+      drawCloudPuff(ctx, Math.min(W - 10, tipX + 80), ay + 2, 1.2);
+      // ワクチン（金のつつに虹色の中身）
+      ctx.fillStyle = '#8a5a10';
       ctx.fillRect(tipX + 12, ay - 2, 22, 7);
-      ctx.fillStyle = '#eef6fa';
+      ctx.fillStyle = '#fffaf0';
       ctx.fillRect(tipX + 13, ay - 1, 20, 5);
-      ctx.fillStyle = '#7ac0ec';
-      ctx.fillRect(tipX + 13, ay, t >= VET.poke ? 6 : 14, 3);
-      ctx.fillStyle = '#5a6a72';
+      const fill = t >= VET.poke ? 6 : 18;
+      for (let i = 0; i < fill; i++) {
+        ctx.fillStyle = rainbow[(i + Math.floor(now * 10)) % rainbow.length];
+        ctx.fillRect(tipX + 14 + i, ay, 1, 3);
+      }
+      ctx.fillStyle = '#f0c040';
       ctx.fillRect(tipX + 34, ay - 4, 2, 11);
-      ctx.fillStyle = '#a8b0b4';
+      ctx.fillStyle = '#d8dce0';
       ctx.fillRect(tipX, ay + 1, 12, 1); // 針
+      drawSpark(ctx, tipX, ay + 1, sparkSize(now * 2));
     }
-    if (t >= VET.poke && t < VET.poke + 0.9) {
+    // 打った瞬間：光の輪が広がって、画面が白く光る
+    if (t >= VET.poke && t < VET.poke + 0.8) {
+      const k2 = (t - VET.poke) / 0.8;
+      ctx.strokeStyle = `rgba(255,220,100,${1 - k2})`;
+      ctx.lineWidth = 3;
+      for (const r of [k2 * 90, k2 * 60]) {
+        ctx.beginPath();
+        ctx.arc(cx, top - 24, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (k2 < 0.25) {
+        ctx.fillStyle = `rgba(255,255,255,${0.7 - k2 * 2.8})`;
+        ctx.fillRect(0, 0, W, H);
+      }
       const pop = t < VET.poke + 0.1 ? -3 : 0;
-      drawText(ctx, 'チクッ！', cx + 30, top - 64 + pop, { scale: 2, color: UI.red, outline: UI.white, align: 'center' });
+      drawText(ctx, 'チクッ！', cx + 34, top - 70 + pop, { scale: 2, color: UI.red, outline: UI.white, align: 'center' });
     }
-    if (t >= VET.poke + 0.9 && t < VET.happy) {
+    if (t >= VET.poke + 0.8 && t < VET.happy) {
       drawText(ctx, 'ぷるぷる…', cx, top - h - 14, { font: 'small', color: '#4a5a7a', align: 'center' });
     }
     if (t >= VET.happy) {
-      // ハートとキラキラ
+      // 虹色の「むてき！」とハート・キラキラ
+      const word = 'むてき！';
+      [...word].forEach((ch, i) => {
+        const bob = Math.round(Math.sin(now * 8 + i) * 2);
+        drawText(ctx, ch, cx + 44 + i * 13, top - 66 + bob, { scale: 2, color: rainbow[(i + Math.floor(now * 6)) % rainbow.length], outline: UI.white });
+      });
       for (let i = 0; i < 5; i++) {
-        const ph = (this.now * 0.6 + i / 5) % 1;
+        const ph = (now * 0.6 + i / 5) % 1;
         ctx.globalAlpha = 1 - ph;
-        ctx.drawImage(SPR.heart, Math.round(cx - 30 + i * 14), Math.round(top - h - 4 - ph * 26));
+        ctx.drawImage(SPR.heart, Math.round(cx - 30 + i * 14), Math.round(top - h - 10 - ph * 26));
       }
       ctx.globalAlpha = 1;
-      [[-44, -50], [42, -58], [-36, -14], [46, -20]].forEach(([dx, dy], i) => drawSpark(ctx, cx + dx, top + dy, sparkSize(this.now + i * 0.25)));
+      [[-48, -50], [-60, -20], [-36, -76], [46, -20], [62, -44]].forEach(([dx, dy], i) => drawSpark(ctx, cx + dx, top + dy, sparkSize(now + i * 0.2)));
     }
   }
+}
+
+// 金の柱（x：まん中、y0：上、y1：下）
+function drawPillar(ctx, x, y0, y1) {
+  ctx.fillStyle = '#8a5a10';
+  ctx.fillRect(x - 9, y0 - 2, 18, 6); // 柱頭
+  ctx.fillRect(x - 9, y1 - 4, 18, 6); // 台
+  ctx.fillRect(x - 6, y0 + 4, 12, y1 - y0 - 8);
+  ctx.fillStyle = '#f0c040';
+  ctx.fillRect(x - 8, y0 - 1, 16, 4);
+  ctx.fillRect(x - 8, y1 - 3, 16, 4);
+  ctx.fillStyle = '#fff6d0';
+  ctx.fillRect(x - 5, y0 + 4, 10, y1 - y0 - 8);
+  ctx.fillStyle = '#e8d090'; // みぞ
+  for (const dx of [-3, 0, 3]) ctx.fillRect(x + dx, y0 + 5, 1, y1 - y0 - 10);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x - 4, y0 + 4, 1, y1 - y0 - 8);
+}
+
+// 天使の輪（だ円）
+function drawHalo(ctx, x, y, r, a) {
+  ctx.globalAlpha = a;
+  ctx.strokeStyle = '#c89018';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * 0.35, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = '#ffe870';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+// 雲の床（ゆっくり流れる）
+function drawClouds(ctx, W, y, now) {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, y + 6, W, 200);
+  for (let i = -1; i < W / 28 + 2; i++) {
+    const x = ((i * 28 + now * 6) % (W + 56)) - 28;
+    drawCloudPuff(ctx, x, y + 6 + (i % 2) * 3, 1);
+  }
+  ctx.fillStyle = '#efe8ff';
+  for (let i = 0; i < W; i += 37) ctx.fillRect((i + Math.floor(now * 6)) % W, y + 30 + (i % 3) * 8, 14, 2);
+}
+
+function drawCloudPuff(ctx, x, y, s) {
+  ctx.fillStyle = '#e8e0f8';
+  ctx.beginPath();
+  ctx.arc(x, y + 2, 12 * s, 0, Math.PI * 2);
+  ctx.arc(x + 14 * s, y + 3, 9 * s, 0, Math.PI * 2);
+  ctx.arc(x - 14 * s, y + 3, 9 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x, y, 11 * s, 0, Math.PI * 2);
+  ctx.arc(x + 13 * s, y + 2, 8 * s, 0, Math.PI * 2);
+  ctx.arc(x - 13 * s, y + 2, 8 * s, 0, Math.PI * 2);
+  ctx.fill();
 }

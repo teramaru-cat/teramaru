@@ -26,29 +26,89 @@ function outline(c, ctx) {
   for (const [x, y] of add) ctx.fillRect(x, y, 1, 1);
 }
 
-// 頭のオプション：glasses（メガネ）・longHair（肩までおろした長い髪）
-function headExtras(R, look, k) {
+// ---- 頭（顔がわかる大きさ：はば10・高さ10。目は2×2で光が入る、口・ほっぺ） ----
+// y0 は髪のいちばん上。mood：'smile'（ふつう、にこっ）| 'happy'（口をあけて笑う。なでなで）
+// look のオプション：glasses（メガネのふちの色。目のまわりに丸いふち）・longHair（肩までの髪）・
+//   ponytail（ポニーテール）・bun（おだんご）・hat（chef | cap | band）
+const CHEEK = '#f4a8a0';
+const MOUTH = '#b84848';
+function drawHead(R, look, y0, mood = 'smile') {
+  const H = look.hair;
+  // うしろ髪（顔より先に描く）
   if (look.longHair) {
-    R(2, 4 + k, 1, 8, look.hair);
-    R(9, 4 + k, 1, 8, look.hair);
-    R(1, 6 + k, 1, 6, look.hair);
-    R(10, 6 + k, 1, 6, look.hair);
+    R(0, y0 + 5, 1, 6, H);
+    R(11, y0 + 5, 1, 6, H);
+    R(1, y0 + 4, 1, 8, H);
+    R(10, y0 + 4, 1, 8, H);
   }
+  if (look.ponytail) {
+    R(10, y0 + 1, 2, 3, H);
+    R(11, y0 + 4, 1, 5, H);
+  }
+  // 髪
+  R(3, y0, 6, 1, H);
+  R(2, y0 + 1, 8, 1, H);
+  R(1, y0 + 2, 10, 1, H);
+  R(1, y0 + 3, 3, 1, H); // 前髪（まん中で分ける）
+  R(8, y0 + 3, 3, 1, H);
+  R(1, y0 + 4, 1, 2, H);
+  R(10, y0 + 4, 1, 2, H);
+  // 顔
+  R(4, y0 + 3, 4, 1, look.skin);
+  R(2, y0 + 4, 8, 4, look.skin);
+  R(1, y0 + 6, 1, 1, look.skin); // 耳
+  R(10, y0 + 6, 1, 1, look.skin);
+  R(3, y0 + 8, 6, 1, look.skin); // あご
+  R(5, y0 + 9, 2, 1, look.skin); // 首
+  if (look.longHair) { R(1, y0 + 6, 1, 1, H); R(10, y0 + 6, 1, 1, H); }
+  // 目（2×2、左上に光）
+  for (const ex of [3, 7]) {
+    R(ex, y0 + 5, 2, 2, INK);
+    R(ex, y0 + 5, 1, 1, '#ffffff');
+  }
+  // ほっぺと口
+  R(2, y0 + 7, 1, 1, CHEEK);
+  R(9, y0 + 7, 1, 1, CHEEK);
+  if (mood === 'happy') {
+    R(4, y0 + 7, 1, 1, MOUTH);
+    R(7, y0 + 7, 1, 1, MOUTH);
+    R(5, y0 + 8, 2, 1, MOUTH);
+  } else {
+    R(5, y0 + 8, 2, 1, MOUTH);
+  }
+  // メガネ：目のまわりに丸いふち（左右の四角の角を落とす）
   if (look.glasses) {
-    // 色つきのふち（目のよこと、まん中のつなぎ）
-    R(3, 6 + k, 6, 1, look.glasses);
-    R(4, 6 + k, 1, 1, INK);
-    R(7, 6 + k, 1, 1, INK);
-    R(4, 5 + k, 1, 1, '#ffffff'); // レンズの光
-    R(7, 5 + k, 1, 1, '#ffffff');
+    const G = look.glasses;
+    for (const gx of [2, 6]) {
+      R(gx + 1, y0 + 4, 2, 1, G);
+      R(gx + 1, y0 + 7, 2, 1, G);
+      R(gx, y0 + 5, 1, 2, G);
+      R(gx + 3, y0 + 5, 1, 2, G);
+    }
+    R(1, y0 + 5, 1, 1, G); // つる
+    R(10, y0 + 5, 1, 1, G);
   }
+  if (look.bun) R(5, y0 - 2, 2, 2, H);
+  if (look.hat === 'chef') {
+    R(2, y0 - 2, 8, 2, WHITE);
+    R(3, y0, 6, 2, WHITE);
+  }
+  if (look.hat === 'cap') {
+    R(2, y0, 8, 2, look.capColor);
+    R(1, y0 + 2, 10, 1, look.capColor);
+  }
+  if (look.hat === 'band') R(1, y0 + 2, 10, 1, look.bandColor ?? WHITE);
 }
 
-// 街の姿（14×26、足元が下の真ん中）。step=true で片足を上げたコマ
+export const PERSON_W = 14;
+export const PERSON_H = 29;
+const DY = 3; // 頭を大きくした分、体と足を下げる
+
+// 街の姿（14×29、足元が下の真ん中）。step=true で片足を上げたコマ
 export function makePerson(look, step = false) {
-  const [c, ctx] = makeCanvas(14, 26);
-  const R = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, w, h); };
-  const k = look.child ? 5 : 0; // 子どもは頭の位置を下げて小さく
+  const [c, ctx] = makeCanvas(PERSON_W, PERSON_H);
+  const R0 = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, w, h); };
+  const R = (x, y, w, h, col) => R0(x, y + DY, w, h, col); // 体と足
   const lift = step ? 1 : 0;
 
   // 足
@@ -94,36 +154,20 @@ export function makePerson(look, step = false) {
   if (look.garment === 'longApron') R(3, top + 2, 6, 12, look.apron);
   if (look.cane) R(11, 15, 1, 9, look.cane);
 
-  // 頭
-  R(3, 4 + k, 6, 5, look.skin);
-  R(3, 3 + k, 6, 2, look.hair);
-  R(2, 4 + k, 1, 3, look.hair);
-  R(9, 4 + k, 1, 3, look.hair);
-  R(4, 6 + k, 1, 1, INK);
-  R(7, 6 + k, 1, 1, INK);
-  headExtras(R, look, k);
-  if (look.bun) R(5, 1 + k, 2, 2, look.hair);
-  if (look.hat === 'chef') {
-    R(2, 0, 8, 2, WHITE);
-    R(3, 2, 6, 2, WHITE);
-  }
-  if (look.hat === 'cap') {
-    R(3, 2 + k, 6, 2, look.capColor);
-    R(2, 4 + k, 8, 1, look.capColor);
-  }
-  if (look.hat === 'band') R(2, 4 + k, 8, 1, look.bandColor ?? WHITE);
+  // 頭（首が体のいちばん上に付く）
+  drawHead(R0, look, top + DY - 10);
 
   outline(c, ctx);
   return c;
 }
 
-// しゃがんだ姿（なでなで用。14×26、足元が下の真ん中）。向かって左の腕は、のばした腕を別に描くので無し。
+// しゃがんだ姿（なでなで用。14×29、足元が下の真ん中）。向かって左の腕は、のばした腕を別に描くので無し。
 // 返す canvas の shoulderY に、肩の高さ（ドット）を入れておく
 export function makeCrouch(look) {
-  const [c, ctx] = makeCanvas(14, 26);
-  const R = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, w, h); };
+  const [c, ctx] = makeCanvas(PERSON_W, PERSON_H);
+  const R0 = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, w, h); };
+  const R = (x, y, w, h, col) => R0(x, y + DY, w, h, col);
   const child = !!look.child;
-  const d = child ? 7 : 3; // 頭を下げる量
   const top = child ? 15 : 12;
   const bot = child ? 19 : 17;
 
@@ -159,29 +203,11 @@ export function makeCrouch(look) {
   if (look.garment === 'apron' || look.garment === 'longApron') R(3, top + 2, 6, bot - top, look.apron);
   if (look.cane) R(12, 14, 1, 10, look.cane);
 
-  // 頭
-  const k = (child ? 5 : 0) + d - (child ? 5 : 0);
-  R(3, 4 + k, 6, 5, look.skin);
-  R(3, 3 + k, 6, 2, look.hair);
-  R(2, 4 + k, 1, 3, look.hair);
-  R(9, 4 + k, 1, 3, look.hair);
-  R(4, 6 + k, 1, 1, INK);
-  R(7, 6 + k, 1, 1, INK);
-  R(5, 8 + k, 2, 1, '#e08080'); // にっこり
-  headExtras(R, look, k);
-  if (look.bun) R(5, 1 + k, 2, 2, look.hair);
-  if (look.hat === 'chef') {
-    R(2, k, 8, 2, WHITE);
-    R(3, 2 + k, 6, 2, WHITE);
-  }
-  if (look.hat === 'cap') {
-    R(3, 2 + k, 6, 2, look.capColor);
-    R(2, 4 + k, 8, 1, look.capColor);
-  }
-  if (look.hat === 'band') R(2, 4 + k, 8, 1, look.bandColor ?? WHITE);
+  // 頭（にっこり口をあけて笑う）
+  drawHead(R0, look, top + DY - 10, 'happy');
 
   outline(c, ctx);
-  c.shoulderY = top + 2;
+  c.shoulderY = top + DY + 2;
   return c;
 }
 

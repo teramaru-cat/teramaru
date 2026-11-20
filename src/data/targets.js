@@ -9,7 +9,7 @@
 //   drops       … 落とすご飯 { item: ITEMS の id, count: 個数 }。なければ null
 //   motion      … still（棒立ち）| stomp（足踏み、period 秒ごとに左右交互）| lively（よく動く。sway で揺れの大きさと速さ）
 //   legs        … てらまりんぐ画面での足の位置（足元の地面の真ん中からのずれ、画面ドット）と太さ r。cane: true は杖
-//   look        … 見た目。人は服などの色（glasses: メガネのふちの色、longHair: 長い髪）、動物・ベンチは type（dog | pigeons | bench、絵は art/animals.js）
+//   look        … 見た目。人は服などの色（glasses: メガネのふちの色、longHair: 長い髪、ponytail: ポニーテール、bun: おだんご）、動物・ベンチは type（dog | pigeons | bench、絵は art/animals.js）
 //   wander      … 街でうろうろする速さ（ドット/秒）。なければ立ち止まったまま
 //   fixed       … true なら地図の決まった場所にずっといる（地図の fixedTargets に置く）
 //   owner       … 一緒に歩く飼い主の見た目（犬）
@@ -62,7 +62,7 @@ export const TARGETS = {
     drops: { item: 'onigiri', count: 3 },
     motion: 'still',
     legs: [{ x: -16, y: 0, r: 6 }, { x: 10, y: 0, r: 6 }, { x: 36, y: 8, r: 3, cane: true }],
-    look: { skin: '#f0cfae', hair: '#c8c8d0', bun: true, top: '#8a6aa0', skirt: '#5a4a70', legs: '#c8b098', shoes: '#4a3a30', cane: '#7a5030', garment: 'skirt' },
+    look: { skin: '#f0cfae', hair: '#c8c8d0', bun: true, glasses: '#c8a040', top: '#8a6aa0', skirt: '#5a4a70', legs: '#c8b098', shoes: '#4a3a30', cane: '#7a5030', garment: 'skirt' },
     onedari: { base: 0.35, perTp: 0.010 },
   },
   child: {
