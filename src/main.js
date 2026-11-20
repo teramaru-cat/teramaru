@@ -34,7 +34,16 @@ async function boot() {
   await loadFonts();
   buildSprites();
   // 「よこにしてね」の画面に、寝そべったてらまる
-  document.getElementById('rotate-cat')?.getContext('2d').drawImage(SPR.catLying, 0, 0);
+  // （絵の大きさはここで合わせる。HTML と絵が食い違っても切れないように）
+  const rc = document.getElementById('rotate-cat');
+  if (rc) {
+    const img = SPR.catLying;
+    rc.width = img.width;
+    rc.height = img.height;
+    rc.style.width = `${img.width * 8}px`;
+    rc.style.height = `${img.height * 8}px`;
+    rc.getContext('2d').drawImage(img, 0, 0);
+  }
   buildProps();
   game.toTitle();
 
