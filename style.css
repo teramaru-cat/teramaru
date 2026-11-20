@@ -36,8 +36,8 @@ html, body {
 }
 #rotate p { margin: 0; letter-spacing: 2px; }
 #rotate-cat {
-  width: 182px;
-  height: 70px;
+  width: 176px;
+  height: 88px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
