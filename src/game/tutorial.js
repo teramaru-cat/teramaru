@@ -213,7 +213,7 @@ export class Tutorial {
   }
 
   // 予防接種の場面（神の世界のようなレベチな場所）：
-  // 金の柱と虹、上から光、雲の上の金の診察台。雲から光る金の手が、虹色のワクチンを打つ。打ったら光があふれて、てらまるに天使の輪
+  // 金の柱と虹、上から光、雲の上の金の診察台。雲から光る金の手が、虹色のワクチンを打つ。打ったら光があふれて「えらい！」
   drawVet(ctx) {
     const W = screen.W;
     const H = screen.H;
@@ -253,11 +253,11 @@ export class Tutorial {
     });
     // 金の柱（左右に2本ずつ）
     for (const px of [24, 58, W - 58, W - 24]) drawPillar(ctx, px, 30, top + 22);
-    // 浮かぶ天使の輪とハート（背景）
+    // 浮かぶハートとキラキラ（背景）
     for (let i = 0; i < 6; i++) {
       const fx = (i * 67 + 30) % W;
       const fy = 40 + ((i * 37) % 50) + Math.sin(now * 1.3 + i) * 4;
-      if (i % 2) drawHalo(ctx, fx, fy, 6, 0.7);
+      if (i % 2) drawSpark(ctx, fx, fy, sparkSize(now * 0.7 + i * 0.3));
       else { ctx.globalAlpha = 0.6; ctx.drawImage(SPR.heart, Math.round(fx), Math.round(fy)); ctx.globalAlpha = 1; }
     }
     // 雲の床
@@ -311,7 +311,6 @@ export class Tutorial {
       ctx.fillStyle = UI.red;
       for (const [dx, dy] of [[-28, 6], [-22, -4], [22, -4], [28, 6]]) ctx.fillRect(cx + dx, y + dy + 10, 2, 5);
     }
-    if (t >= VET.happy) drawHalo(ctx, cx, Math.round(y) - 6, 12, 1); // 天使の輪
 
     // 雲から、光る金の手（虹色のワクチン）
     let armK = 0;
@@ -409,20 +408,6 @@ function drawPillar(ctx, x, y0, y1) {
   for (const dx of [-3, 0, 3]) ctx.fillRect(x + dx, y0 + 5, 1, y1 - y0 - 10);
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(x - 4, y0 + 4, 1, y1 - y0 - 8);
-}
-
-// 天使の輪（だ円）
-function drawHalo(ctx, x, y, r, a) {
-  ctx.globalAlpha = a;
-  ctx.strokeStyle = '#c89018';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.ellipse(x, y, r, r * 0.35, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.strokeStyle = '#ffe870';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.globalAlpha = 1;
 }
 
 // 雲の床（ゆっくり流れる）

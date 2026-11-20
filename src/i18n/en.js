@@ -154,7 +154,7 @@ export default {
     ],
     poke: 'POKE!',
     shiver: '*shiver*',
-    mighty: 'MIGHTY!',
+    mighty: 'GOOD KITTY!',
   },
 
   area: { tutorial: 'Tutorial', kinjo: 'Neighborhood' },

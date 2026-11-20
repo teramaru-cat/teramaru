@@ -156,7 +156,7 @@ export default {
     ],
     poke: 'チクッ！',
     shiver: 'ぷるぷる…',
-    mighty: 'むてき！',
+    mighty: 'えらい！',
   },
 
   area: { tutorial: 'チュートリアル', kinjo: 'きんじょ' },
