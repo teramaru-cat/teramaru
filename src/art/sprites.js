@@ -173,10 +173,6 @@ export function buildSprites() {
       left: frames(SIDE_TOP, SIDE_LEGS, side, true),
     };
   }
-  // 結果発表で評価する白猫（しんさいん）。首に赤い蝶ネクタイ
-  const JUDGE_TOP = FRONT_TOP.map((r, i) => (i === 8 ? '....orrkkrro....' : i === 9 ? '...ocrwwwwrbo...' : r));
-  const JUDGE = { ...CAT, c: '#f4f0ea', b: '#cfc8c0', w: '#ffffff', e: '#4a90d8', g: '#4a90d8', r: '#d03040', k: '#8a1828' };
-  SPR.judge = frames(JUDGE_TOP, FB_LEGS, JUDGE);
   // おしりを前へ寄せたコマ：後ろ足の先より右の1列を抜いて、左を1つ空ける（ドットはくずさない）
   SPR.catLyingIn = makeSprite(LYING.map((r) => `.${r.slice(0, 7)}${r.slice(8)}`), CAT);
   SPR.heart = makeSprite(HEART, { o: '#8a2040', h: '#f06080', w: '#ffd0dc' });

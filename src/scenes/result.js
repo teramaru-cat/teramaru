@@ -15,18 +15,19 @@ import { getTown } from '../game/town.js';
 import { newlyOpened } from '../data/areas.js';
 
 const ROW_GAP = 0.35; // 内訳を1行ずつ出す間隔（秒）
-const PW = 216; // 結果のパネルの幅（左に、しんさいんとてらまるが出る）
+const PW = 216; // 結果のパネルの幅（左にてらまると、評価の枠が出る）
 
-// しんさいん（蝶ネクタイの白猫）の評価。てらまるはしゃべらない。
+// キラキラ（姿のない、てらまるに語りかける声。チュートリアルで使命を伝えるのと同じ）の評価。
+// てらまるはしゃべらない。評価は四角い枠に出す（ふきだしにしない）。
 // スコアで評価が変わる（同じ評価の中からランダム）。mood はてらまるの様子（ぴょんぴょん・しょんぼりなど）
 const COMMENTS = {
-  best: [['ベストこうしん！', 'きょうの てらまるは', 'さいこう だにゃ'], ['ベストこうしん！', 'みごとな', 'てらまりんぐ だにゃ']],
-  great: [['まちじゅう メロメロ！', 'おみごと だにゃ'], ['かわいさ', 'まんてん だにゃ！'], ['きょうの てらまるは', 'むてき だったにゃ']],
-  good: [['なかなか', 'やるにゃ'], ['すりすり じょうず', 'だったにゃ'], ['いい ちょうし', 'だにゃ']],
-  ok: [['まあまあ', 'だにゃ'], ['もっと すりすり', 'できるはず だにゃ']],
-  low: [['まだまだ', 'だにゃ…'], ['あいきょうが', 'たりないにゃ…']],
-  faint: [['おみずは', 'こまめに のむにゃ'], ['たおれちゃ', 'だめ だにゃ…']],
-  kamatte: [['かまってもらえて', 'よかったにゃ'], ['あまえじょうず', 'だにゃ']],
+  best: [['ベストこうしん！', 'きょうの てらまるは', 'さいこうでした'], ['ベストこうしん！', 'みごとな', 'てらまりんぐでした']],
+  great: [['まちじゅう メロメロ！', 'おみごとです'], ['かわいさ', 'まんてんです！'], ['きょうの てらまるは', 'むてきでした']],
+  good: [['なかなか', 'やりますね'], ['すりすり', 'じょうずでした'], ['いい ちょうしです']],
+  ok: [['まあまあ', 'ですね'], ['もっと すりすり', 'できるはずです']],
+  low: [['まだまだ', 'ですね…'], ['あいきょうが', 'たりないようです…']],
+  faint: [['おみずは', 'こまめに のみましょう'], ['たおれては', 'いけません…']],
+  kamatte: [['かまってもらえて', 'よかったですね'], ['あまえじょうず', 'ですね']],
 };
 
 function pickComment(sc, st, newBest) {
@@ -189,29 +190,11 @@ export class ResultScene {
       this.menu.draw(ctx);
     }
 
-    this.judgeTop = this.drawJudge(ctx, this.t >= this.catIn + 0.6);
     this.drawCat(ctx);
   }
 
-  // パネルの左の空き：左にしんさいん、右にてらまる
-  midX() { return Math.round((screen.W - PW - 6) / 2); }
-  catX() { return this.midX() + 16; }
-  judgeX() { return this.midX() - 20; }
-
-  // しんさいん：はじめから座っていて、てらまるが来たら評価を言う（言っている間は少しうなずく）
-  drawJudge(ctx, talking) {
-    const k = 2;
-    const feet = screen.H - 14;
-    const img = SPR.judge[0];
-    const w = img.width * k;
-    const h = img.height * k;
-    const x = this.judgeX();
-    const y = feet - (talking && Math.floor(this.t * 3) % 2 ? 1 : 0);
-    ctx.fillStyle = 'rgba(40,30,20,0.25)';
-    ctx.fillRect(x - 12, feet - 2, 24, 4);
-    ctx.drawImage(img, x - w / 2, y - h, w, h);
-    return feet - h;
-  }
+  // てらまるの立つ場所（パネルの左の空き）
+  catX() { return Math.round((screen.W - PW - 6) / 2); }
 
   // てらまるが左から歩いてきて、正面を向く（しゃべらない。気分は動きとハート・汗で見せる）
   drawCat(ctx) {
@@ -252,21 +235,42 @@ export class ResultScene {
       const k2 = (this.t * 0.8) % 1;
       ctx.drawImage(SPR.drop, x + 9, Math.round(y - h + 6 + k2 * 6));
     }
-    // ふきだし（しんさいんの評価）
-    const jx = this.judgeX();
+    // 評価の枠（四角。左上の空きに出し、まわりにキラキラ）
     const lines = this.comment.lines;
-    const bw = Math.max(...lines.map((l) => textWidth(l, 'small'))) + 10;
-    const bh = lines.length * 10 + 6;
-    const bx = Math.max(3, Math.min(screen.W - PW - 9 - bw, jx - Math.round(bw / 2)));
-    const by = Math.min(feet - h, this.judgeTop) - 12 - bh;
-    panel(ctx, bx, by, bw, bh, UI.white);
-    ctx.fillStyle = UI.ink;
-    ctx.fillRect(jx - 3, by + bh - 1, 7, 1);
-    ctx.fillRect(jx - 2, by + bh, 5, 2);
-    ctx.fillRect(jx - 1, by + bh + 2, 3, 2);
-    ctx.fillStyle = UI.white;
-    ctx.fillRect(jx - 2, by + bh - 1, 5, 1);
-    ctx.fillRect(jx - 1, by + bh, 3, 2);
-    lines.forEach((l, i) => drawText(ctx, l, bx + 5, by + 4 + i * 10, { font: 'small', color: this.comment.mood === 'low' ? '#4a5a7a' : UI.ink }));
+    const fw = screen.W - PW - 6 - 8;
+    const fh = lines.length * 10 + 8;
+    const fx = 4;
+    const fy = Math.round((feet - h - 6 - fh) / 2) + 4;
+    const tt = this.t - this.catIn - 0.6;
+    const ink = this.comment.mood === 'low' ? '#4a5a7a' : UI.ink;
+    panel(ctx, fx, fy, fw, fh, '#fffaf0');
+    // 1文字ずつ出す
+    let n = Math.floor(tt * 18);
+    lines.forEach((l, i) => {
+      const s = [...l].slice(0, Math.max(0, n)).join('');
+      n -= l.length;
+      drawText(ctx, s, fx + Math.round(fw / 2), fy + 5 + i * 10, { font: 'small', color: ink, align: 'center' });
+    });
+    drawSparkles(ctx, fx, fy, fw, fh, this.t);
+  }
+}
+
+// キラキラ（枠の角のまわりで、4つが順にまたたく。小→大→小）
+const SPARK_AT = [[-1, -1, 0], [1, -1, 0.25], [1, 1, 0.5], [-1, 1, 0.75]];
+function drawSparkles(ctx, x, y, w, h, t) {
+  for (const [sx, sy, ph] of SPARK_AT) {
+    const k = (t * 0.9 + ph) % 1;
+    const r = [1, 2, 3, 4, 3, 2, 1, 0][Math.floor(k * 8)];
+    if (!r) continue;
+    const cx = sx < 0 ? x + 2 : x + w - 3;
+    const cy = sy < 0 ? y + 1 : y + h - 2;
+    ctx.fillStyle = '#c89018'; // ふち
+    ctx.fillRect(cx - r - 1, cy - 1, r * 2 + 3, 3);
+    ctx.fillRect(cx - 1, cy - r - 1, 3, r * 2 + 3);
+    ctx.fillStyle = '#ffe870';
+    ctx.fillRect(cx - r, cy, r * 2 + 1, 1);
+    ctx.fillRect(cx, cy - r, 1, r * 2 + 1);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx, cy, 1, 1);
   }
 }
