@@ -44,20 +44,9 @@ function scratchPole() {
   return { img: c, ox: 7, oy: 43, solid: { w: 6, h: 4 } };
 }
 
-// 水飲みのお皿（ねこの絵がついた白い器に、たっぷりの水。上でしずくがはねる）
+// 水飲みのお皿（青い肉球のもようの白い器に、たっぷりの水）
 function waterBowl() {
   const [c, x] = makeCanvas(18, 16);
-  // しずくのマーク（水だとわかるように）
-  x.fillStyle = '#1f4f9a';
-  x.fillRect(8, 0, 2, 1);
-  x.fillRect(7, 1, 4, 1);
-  x.fillRect(6, 2, 6, 3);
-  x.fillRect(7, 5, 4, 1);
-  x.fillStyle = '#4aa0e0';
-  x.fillRect(8, 1, 2, 1);
-  x.fillRect(7, 2, 4, 3);
-  x.fillStyle = '#ffffff';
-  x.fillRect(7, 3, 1, 1);
   // 器（白い陶器、下がすぼまる）
   x.fillStyle = '#3a2a20';
   x.fillRect(1, 8, 16, 1);
