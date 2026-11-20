@@ -100,7 +100,7 @@ export class Tutorial {
     if (spawn && Math.random() < dt * (3 + Math.random() * 6)) {
       const big = Math.random() < 0.3;
       this.vetHearts.push({
-        x: screen.W / 2 + (Math.random() - 0.5) * 110,
+        x: screen.W / 2 + (Math.random() < 0.5 ? -1 : 1) * (30 + Math.random() * 34) - 4, // てらまるの左右（体の上は通らない）
         y: 70 + Math.random() * 40,
         vx: (Math.random() - 0.5) * 12,
         vy: -(10 + Math.random() * 28),
@@ -311,6 +311,16 @@ export class Tutorial {
     ctx.fillRect(cx - 44, top + 5 + fl, 88, 3); // 白いシーツ
     for (let i = 0; i < 5; i++) drawSpark(ctx, cx - 40 + i * 20, top + 6 + fl, i === Math.floor(now * 4) % 5 ? 2 : 0);
 
+    // 注射のあとのハート（てらまるより奥に描く。てらまるの前にはかぶせない）
+    for (const hh of this.vetHearts ?? []) {
+      const hk = hh.age / hh.life;
+      ctx.globalAlpha = Math.min(1, (1 - hk) * 2);
+      const hs = hh.big ? 2 : 1;
+      const hx = Math.round(hh.x + Math.sin(hh.ph + hh.age * 5) * hh.wob);
+      ctx.drawImage(SPR.heart, hx, Math.round(hh.y), SPR.heart.width * hs, SPR.heart.height * hs);
+    }
+    ctx.globalAlpha = 1;
+
     // てらまる
     const k = 3;
     const img = SPR.cat.down[0];
@@ -394,14 +404,6 @@ export class Tutorial {
         drawText(ctx, ch, wx, top - 66 + bob, { font: 'small', scale: 2, color: rainbow[(i + Math.floor(now * 6)) % rainbow.length], outline: UI.white });
         wx += textWidth(ch, 'small') * 2 + 1;
       });
-      for (const hh of this.vetHearts ?? []) {
-        const k = hh.age / hh.life;
-        ctx.globalAlpha = Math.min(1, (1 - k) * 2);
-        const s = hh.big ? 2 : 1;
-        const hx = Math.round(hh.x + Math.sin(hh.ph + hh.age * 5) * hh.wob);
-        ctx.drawImage(SPR.heart, hx, Math.round(hh.y), SPR.heart.width * s, SPR.heart.height * s);
-      }
-      ctx.globalAlpha = 1;
       [[-48, -50], [-60, -20], [-36, -76], [46, -20], [62, -44]].forEach(([dx, dy], i) => drawSpark(ctx, cx + dx, top + dy, sparkSize(now + i * 0.2)));
     }
   }
