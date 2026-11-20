@@ -1,18 +1,18 @@
-// 「よこにしてね」の画面のてらまる：獲物をねらって、おしりをフリフリ → ちょっと止まる、をくり返す
+// 「よこにしてにゃ〜」の画面のてらまる：獲物をねらって、おしりを左右にフリフリ → ちょっと止まる、をくり返す
+// 絵はゆがめず、「ふつう」と「おしりを1ドット前へ寄せた」2コマを切り替える
 
 import { SPR } from './sprites.js';
 import { CAT } from './palette.js';
 
 const PAD_L = 3; // しっぽの分
-const PAD_T = 4; // おしりを上げる分＋しっぽの分
+const PAD_T = 3;
 const K = 8; // 画面での拡大率
 const LOOP = 2.6; // フリフリ 1.8秒 → 止まる 0.8秒
-const REAR = 11; // おしり側（この列より左）を持ち上げる
+const STEP = 0.12; // フリフリ1回の速さ（秒）
 
 export function startRotateCat(canvas) {
-  const img = SPR.catLying;
-  const w = img.width + PAD_L;
-  const h = img.height + PAD_T;
+  const w = SPR.catLying.width + PAD_L;
+  const h = SPR.catLying.height + PAD_T;
   canvas.width = w;
   canvas.height = h;
   canvas.style.width = `${w * K}px`;
@@ -24,18 +24,12 @@ export function startRotateCat(canvas) {
     if (!document.body.classList.contains('portrait')) return; // 縦のときだけ動かす
     const t = (now / 1000) % LOOP;
     const wiggle = t < 1.8;
-    // おしりの高さ：フリフリ中はすばやく 1⇔2、止まっている間は 1
-    const lift = wiggle ? 1 + (Math.floor(t * 9) % 2) : 1;
-    // しっぽ：フリフリ中は速く、止まると先だけゆっくり
-    const sway = wiggle ? (Math.floor(t * 9) % 2 ? 1 : -1) : Math.round(Math.sin(t * 4));
+    const inFrame = wiggle && Math.floor(t / STEP) % 2 === 1;
+    // しっぽ：フリフリ中はおしりと一緒に左右へ、止まると先だけゆっくり
+    const sway = wiggle ? (inFrame ? 1 : -1) : Math.round(Math.sin(t * 4));
     ctx.clearRect(0, 0, w, h);
-    drawTail(ctx, PAD_L, PAD_T - lift, sway);
-    // 体：おしり側ほど高く（1列ずつずらして、なめらかに曲げる）
-    for (let x = 0; x < img.width; x++) {
-      const k = Math.max(0, (REAR - x) / REAR);
-      const dy = -Math.round(lift * k);
-      ctx.drawImage(img, x, 0, 1, img.height, PAD_L + x, PAD_T + dy, 1, img.height);
-    }
+    drawTail(ctx, PAD_L + (inFrame ? 1 : 0), PAD_T, sway);
+    ctx.drawImage(inFrame ? SPR.catLyingIn : SPR.catLying, PAD_L, PAD_T);
   };
   requestAnimationFrame(frame);
 }

@@ -156,6 +156,8 @@ export function buildSprites() {
     left: frames(SIDE_TOP, SIDE_LEGS, LEFT_PAL, true),
   };
   SPR.catLying = makeSprite(LYING, CAT);
+  // おしりを前へ寄せたコマ：体の真ん中の1列を抜いて、左を1つ空ける（ドットはくずさない）
+  SPR.catLyingIn = makeSprite(LYING.map((r) => `.${r.slice(0, 5)}${r.slice(6)}`), CAT);
   SPR.heart = makeSprite(HEART, { o: '#8a2040', h: '#f06080', w: '#ffd0dc' });
   SPR.drop = makeSprite(DROP, { o: '#1f4f9a', b: '#4aa0e0', w: '#ffffff' });
   SPR.dropEmpty = makeSprite(DROP, { o: '#8a8a90', b: '#d8d4cc', w: '#eeeae2' });
