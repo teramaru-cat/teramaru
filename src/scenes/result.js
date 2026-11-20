@@ -217,12 +217,9 @@ export class ResultScene {
 
     if (walk < 1) return;
     if (this.comment.mood === 'low') {
-      // しょんぼり：汗
-      ctx.fillStyle = '#4aa0e0';
-      const sx = x + 14;
-      const sy = y - h + 6 + (Math.floor(this.t * 2) % 2);
-      ctx.fillRect(sx, sy, 2, 3);
-      ctx.fillRect(sx - 1, sy + 1, 4, 2);
+      // しょんぼり：頭の横に汗（縁取りのあるしずく。ゆっくり垂れてはくり返す）
+      const k2 = (this.t * 0.8) % 1;
+      ctx.drawImage(SPR.drop, x + 9, Math.round(y - h + 6 + k2 * 6));
     }
     // ふきだし
     const lines = this.comment.lines;
