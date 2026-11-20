@@ -192,28 +192,14 @@ export class Tutorial {
   }
 
   // 上の操作説明（ウィルキャッではなく、ふつうの「あそびかた」の枠。ウィルキャッはまだ出てこない）
+  // てらまりんぐのやり方は、ズームインしたあと（ringing.js が howToRing を出す）
   drawHint(ctx) {
-    const W = screen.W;
     const touch = input.lastDevice !== 'keyboard';
     let lines;
-    if (this.step === 'walk') {
-      lines = [touch ? 'がめんを なぞって あるこう' : 'やじるしキーで あるこう'];
-    } else if (this.charmed === 0) {
-      lines = ['かいぬしの あしもとに さわると てらまりんぐ！', 'あしのまわりを ぐるぐる まわって メロメロに しよう'];
-    } else {
-      lines = ['あと ひとり！', 'もう ひとりの かいぬしも メロメロに しよう'];
-    }
-    const w = Math.min(W - 70, Math.max(...lines.map((l) => textWidth(l, 'small'))) + 16);
-    const h = lines.length * 10 + 10;
-    const x = Math.round(W / 2 - w / 2);
-    const y = 12;
-    panel(ctx, x, y, w, h, UI.cream);
-    // 文字は「あそびかた」の札より下から
-    lines.forEach((l, i) => drawText(ctx, l, W / 2, y + 7 + i * 10, { font: 'small', color: UI.ink, align: 'center' }));
-    const tag = 'あそびかた';
-    const tw = textWidth(tag, 'small') + 8;
-    panel(ctx, x + 6, y - 7, tw, 11, UI.orange);
-    drawText(ctx, tag, x + 10, y - 5, { font: 'small', color: UI.white });
+    if (this.step === 'walk') lines = [touch ? 'がめんを なぞって あるこう' : 'やじるしキーで あるこう'];
+    else if (this.charmed === 0) lines = ['かいぬしの あしもとに さわろう'];
+    else lines = ['あと ひとり！', 'もう ひとりの かいぬしの あしもとにも さわろう'];
+    drawHowTo(ctx, lines, 12);
   }
 
   // まだメロメロにしていない飼い主の上に、ピンクの▼
@@ -483,3 +469,25 @@ function drawCloudPuff(ctx, x, y, s) {
   ctx.arc(x - 13 * s, y + 2, 8 * s, 0, Math.PI * 2);
   ctx.fill();
 }
+
+// 「あそびかた」の枠（上のまん中）。y：枠の上
+export function drawHowTo(ctx, lines, y) {
+  const W = screen.W;
+  const w = Math.min(W - 16, Math.max(...lines.map((l) => textWidth(l, 'small'))) + 16);
+  const h = lines.length * 10 + 10;
+  const x = Math.round(W / 2 - w / 2);
+  panel(ctx, x, y, w, h, UI.cream);
+  // 文字は「あそびかた」の札より下から
+  lines.forEach((l, i) => drawText(ctx, l, W / 2, y + 7 + i * 10, { font: 'small', color: UI.ink, align: 'center' }));
+  const tag = 'あそびかた';
+  const tw = textWidth(tag, 'small') + 8;
+  panel(ctx, x + 6, y - 7, tw, 11, UI.orange);
+  drawText(ctx, tag, x + 10, y - 5, { font: 'small', color: UI.white });
+}
+
+// てらまりんぐのやり方（チュートリアルで、ズームインしたあと）
+export const HOW_TO_RING = [
+  'あしの まわりを ぐるぐる まわろう！',
+  'まわるたびに ハートが たまって、ぜんぶで メロメロ',
+  'あしの あいだを くぐると ボーナス',
+];

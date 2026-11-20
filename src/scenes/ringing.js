@@ -17,6 +17,7 @@ import { Cat } from '../game/cat.js';
 import { claimMove, moveVector, drawSticks } from '../game/control.js';
 import { Effects, PopText, Absorb, heartAbsorb } from '../game/effects.js';
 import { PauseScene } from './pause.js';
+import { drawHowTo, HOW_TO_RING } from '../game/tutorial.js';
 
 const TAU = Math.PI * 2;
 const GROUND_Y = 112; // 足が地面に着いている高さ（画面）
@@ -431,7 +432,10 @@ export class RingingScene {
     this.play.drawTimer(ctx);
     this.pauseBtn.draw(ctx, { pressed: this.pauseBtn.isHeld() });
 
-    if (this.phase === 'play' && this.pt < 3.5) {
+    if (this.play.tutorial && (this.phase === 'play' || this.phase === 'in')) {
+      // チュートリアル：ズームインしたら、てらまりんぐのやり方を上に出しつづける
+      drawHowTo(ctx, HOW_TO_RING, 44);
+    } else if (this.phase === 'play' && this.pt < 3.5) {
       drawText(ctx, 'あしのまわりを ぐるぐる まわろう', W / 2, H - 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
       drawText(ctx, 'はしから でると やめる', W / 2, H - 12, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
     } else if (this.phase === 'play' && this.pt < 7) {
