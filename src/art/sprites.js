@@ -113,7 +113,7 @@ function frames(top, legs, pal, flip = false) {
 }
 
 // 寝そべったてらまる（22×11。「よこにしてね」の画面用）：獲物をねらう低い姿勢、顔は正面、前足2本を顔の下に出す。
-// 後ろ足は、おしりの横に縁取りで折りたたんだ形を描く（前足が3本に見えないように）。
+// 後ろ足は、おしりの下に足先だけ出す（体の途中から足が生えて見えないように）。
 // しっぽは動かすので別に描く（rotateCat.js）
 const LYING = [
   '............o......o..',
@@ -123,9 +123,9 @@ const LYING = [
   '..occbccbccbbbwwcbbo..',
   '.ocbbccbccobebwwbgbo..',
   '.ocbccbcccobbwppwbwo..',
-  '.owwcoooowoowcwwcwo...',
-  '.owwowwwwowowwwwwwoo..',
-  '.owwowwwwwowwwwowwwo..',
+  '.owwccwwwwoowcwwcwo...',
+  '.owwwwwwwwwowwwwwwoo..',
+  'oowwwowwwwwowwwowwwo..',
   '.oooooooooooooooooo...',
 ];
 
@@ -157,8 +157,8 @@ export function buildSprites() {
     left: frames(SIDE_TOP, SIDE_LEGS, LEFT_PAL, true),
   };
   SPR.catLying = makeSprite(LYING, CAT);
-  // おしりを前へ寄せたコマ：後ろ足より左の1列を抜いて、左を1つ空ける（ドットはくずさない）
-  SPR.catLyingIn = makeSprite(LYING.map((r) => `.${r.slice(0, 3)}${r.slice(4)}`), CAT);
+  // おしりを前へ寄せたコマ：後ろ足の先より右の1列を抜いて、左を1つ空ける（ドットはくずさない）
+  SPR.catLyingIn = makeSprite(LYING.map((r) => `.${r.slice(0, 7)}${r.slice(8)}`), CAT);
   SPR.heart = makeSprite(HEART, { o: '#8a2040', h: '#f06080', w: '#ffd0dc' });
   SPR.drop = makeSprite(DROP, { o: '#1f4f9a', b: '#4aa0e0', w: '#ffffff' });
   SPR.dropEmpty = makeSprite(DROP, { o: '#8a8a90', b: '#d8d4cc', w: '#eeeae2' });
