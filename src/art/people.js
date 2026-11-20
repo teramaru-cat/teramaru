@@ -346,6 +346,20 @@ FOOD_ROWS.jerky = {
   pal: { o: INK, j: '#a0522d', l: '#c87850' },
 };
 
+// 鳩：パンくず（小さなかけらが3つ）
+FOOD_ROWS.crumbs = {
+  rows: [
+    '.oo......',
+    'occo..oo.',
+    'olco.occo',
+    '.oo..oclo',
+    '..oo..oo.',
+    '.occo....',
+    '.oooo....',
+  ],
+  pal: { o: INK, c: '#d8a868', l: '#f4dca8' },
+};
+
 // HUD の「ご飯」アイコン（猫のごはん皿）
 export const FOOD_ICON = {
   rows: ['..c.c.c..', '.ccccccc.', 'ooooooooo', 'orrrrrrro', '.orrrrro.', '..ooooo..'],

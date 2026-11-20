@@ -76,9 +76,9 @@ export function drawAnimalLeg(ctx, look, leg, x, y, lift) {
   }
   const far = (leg.y ?? 0) < 0; // 奥の足は少し暗く
   if (look.type === 'dog') {
-    const top = gy - 32;
-    box(ctx, x - 4, top, 8, fy - top - 6, far ? shade(look.fur, -0.2) : look.fur);
-    box(ctx, x - 5, fy - 6, 10, 6, look.light);
+    const top = gy - 22;
+    box(ctx, x - 3, top, 6, fy - top - 4, far ? shade(look.fur, -0.2) : look.fur);
+    box(ctx, x - 4, fy - 4, 8, 4, look.light);
   } else if (look.type === 'pigeons') {
     ctx.fillStyle = shade(look.leg, far ? -0.15 : 0);
     ctx.fillRect(E(x) - 1, E(fy - 12), 2, 12);
@@ -95,20 +95,21 @@ export function drawAnimalBody(ctx, look, cx, bx, by, GROUND) {
   const gy = GROUND + by;
   const t = performance.now() / 1000;
   if (look.type === 'dog') {
-    const wag = Math.round(Math.sin(t * 14) * 3);
-    box(ctx, x - 62 + wag, gy - 78, 8, 26, look.dark); // しっぽ
-    box(ctx, x - 48, gy - 58, 92, 28, look.fur); // 胴
+    // 小型の犬（てらまるより少し大きいくらい）
+    const wag = Math.round(Math.sin(t * 14) * 2);
+    box(ctx, x - 42 + wag, gy - 54, 6, 18, look.dark); // しっぽ
+    box(ctx, x - 34, gy - 40, 64, 20, look.fur); // 胴
     ctx.fillStyle = look.light;
-    ctx.fillRect(E(x - 40), E(gy - 36), 76, 6);
-    box(ctx, x + 32, gy - 60, 10, 26, look.collar); // 首輪
-    box(ctx, x + 38, gy - 84, 30, 30, look.fur); // 頭
-    box(ctx, x + 40, gy - 96, 10, 14, look.dark); // 耳
-    box(ctx, x + 60, gy - 68, 14, 12, look.light); // 口まわり
+    ctx.fillRect(E(x - 28), E(gy - 24), 52, 4);
+    box(ctx, x + 22, gy - 42, 8, 18, look.collar); // 首輪
+    box(ctx, x + 26, gy - 58, 22, 22, look.fur); // 頭
+    box(ctx, x + 28, gy - 66, 8, 10, look.dark); // 耳
+    box(ctx, x + 42, gy - 46, 10, 8, look.light); // 口まわり
     ctx.fillStyle = INK;
-    ctx.fillRect(E(x + 70), E(gy - 68), 4, 4); // 鼻
-    ctx.fillRect(E(x + 50), E(gy - 76), 4, 4); // 目
+    ctx.fillRect(E(x + 50), E(gy - 46), 2, 2); // 鼻
+    ctx.fillRect(E(x + 36), E(gy - 52), 2, 2); // 目
     ctx.fillStyle = '#ec8c96';
-    if (Math.floor(t * 3) % 2) ctx.fillRect(E(x + 64), E(gy - 56), 4, 6); // ベロ
+    if (Math.floor(t * 3) % 2) ctx.fillRect(E(x + 44), E(gy - 38), 2, 4); // ベロ
   } else if (look.type === 'pigeons') {
     [-44, 0, 44].forEach((off, i) => {
       const k = i === 1 ? -6 : 0; // 真ん中は少し奥

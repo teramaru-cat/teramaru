@@ -105,7 +105,7 @@ export const TARGETS = {
     stages: [2, 3, 4],
     motion: 'lively',
     sway: { x: 12, y: 3, speed: 0.6 },
-    legs: [{ x: -34, y: 0, r: 5 }, { x: -20, y: -8, r: 5 }, { x: 22, y: -8, r: 5 }, { x: 36, y: 0, r: 5 }],
+    legs: [{ x: -26, y: 0, r: 4 }, { x: -14, y: -6, r: 4 }, { x: 14, y: -6, r: 4 }, { x: 26, y: 0, r: 4 }],
     look: { type: 'dog', fur: '#c8904a', light: '#f4e2c4', dark: '#96643a', collar: '#d04040' },
     wander: 12,
     onedari: { base: 0.15, perTp: 0.007 },
@@ -115,7 +115,7 @@ export const TARGETS = {
     kind: 'animal',
     durability: 3,
     tp: 12,
-    drops: null,
+    drops: { item: 'crumbs', count: 3 }, // 食べ残しのパンくず
     stages: [2, 3, 4],
     motion: 'lively',
     sway: { x: 20, y: 4, speed: 1.6 },
@@ -148,4 +148,5 @@ export const ITEMS = {
   meat: { name: 'ほねつき肉', fp: 2 },
   tomato: { name: 'トマト', fp: 2 },
   jerky: { name: 'ジャーキー', fp: 2 },
+  crumbs: { name: 'パンくず', fp: 2 },
 };
