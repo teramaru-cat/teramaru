@@ -49,6 +49,15 @@ export class Button {
       const cy = y + Math.floor(h / 2);
       ctx.fillRect(cx - 3, cy - 4, 2, 8);
       ctx.fillRect(cx + 1, cy - 4, 2, 8);
+    } else if (this.icon === 'left' || this.icon === 'right') {
+      // 三角の矢印
+      ctx.fillStyle = UI.ink;
+      const cx = x + Math.floor(w / 2);
+      const cy = y + Math.floor(h / 2);
+      for (let i = 0; i < 4; i++) {
+        const xx = this.icon === 'left' ? cx - 2 + i : cx + 1 - i;
+        ctx.fillRect(xx, cy - i, 1, i * 2 + 1);
+      }
     } else if (this.icon === 'sound') {
       drawSpeaker(ctx, x + Math.floor(w / 2) - 5, y + Math.floor(h / 2) - 4, audio.muted);
     } else {

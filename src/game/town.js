@@ -1,6 +1,6 @@
 // 街のマップ：地面と建物を1枚の画像に描いておき、当たり判定も持つ
 
-import { STAGES } from '../data/stages.js';
+import { STAGES } from '../data/areas.js';
 import { PROPS } from '../art/props.js';
 import { makeCanvas, shade } from '../core/renderer.js';
 import { drawText, textWidth } from '../core/text.js';
@@ -18,8 +18,9 @@ const GROUND = {
 
 const towns = new Map();
 
+// ステージの id → その地図の街（作るのは1回だけ）
 export function getTown(stageId) {
-  if (!towns.has(stageId)) towns.set(stageId, new Town(STAGES[stageId]));
+  if (!towns.has(stageId)) towns.set(stageId, new Town(STAGES[stageId].map));
   return towns.get(stageId);
 }
 

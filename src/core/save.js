@@ -4,19 +4,32 @@
 const KEY = 'teramaru.save.v1';
 
 const DEFAULT = () => ({
-  version: 1,
+  version: 2,
   coins: 0,
-  bestScore: {},
-  unlockedStages: [1],
+  bestScore: {}, // ステージの id（'park' など）→ ベストスコア
+  unlocked: [], // 点数で開いたステージの id
+  learned: {}, // 覚えたこと（トイレフィーバーなど。ボス戦で覚える）
   archive: {},
   settings: { mute: false },
 });
+
+// 古い保存データ（ステージを番号で持っていた版）を、ステージの id に直す。1＝商店街、2＝公園
+const OLD_IDS = { 1: 'shotengai', 2: 'park' };
+function migrate(d) {
+  if ((d.version ?? 1) >= 2) return d;
+  const best = {};
+  for (const [k, v] of Object.entries(d.bestScore ?? {})) best[OLD_IDS[k] ?? k] = v;
+  const unlocked = (d.unlockedStages ?? []).map((n) => OLD_IDS[n]).filter(Boolean);
+  const { unlockedStages, ...rest } = d;
+  void unlockedStages;
+  return { ...rest, version: 2, bestScore: best, unlocked };
+}
 
 export function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return DEFAULT();
-    return { ...DEFAULT(), ...JSON.parse(raw) };
+    return { ...DEFAULT(), ...migrate(JSON.parse(raw)) };
   } catch {
     return DEFAULT();
   }

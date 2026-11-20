@@ -10,6 +10,7 @@ import { drawDigits, digitsWidth } from '../art/digits.js';
 import { BAL } from '../data/balance.js';
 import { ITEMS } from '../data/targets.js';
 import { getTown } from '../game/town.js';
+import { STAGES, FIRST_STAGE } from '../data/areas.js';
 import { Cat } from '../game/cat.js';
 import { Spawner } from '../game/target.js';
 import { Strays } from '../game/othercat.js';
@@ -23,9 +24,11 @@ import { ResultScene } from './result.js';
 import { PauseScene } from './pause.js';
 
 export class PlayScene {
-  constructor(game, stageId = 1) {
+  constructor(game, stageId = FIRST_STAGE) {
     this.game = game;
     this.stageId = stageId;
+    this.stage = STAGES[stageId];
+    this.rules = this.stage.rules; // このステージで使えるしくみ（areas.js）
     this.town = getTown(stageId);
     const s = this.town.stage.start;
     this.cat = new Cat(s.x, s.y);
@@ -130,6 +133,8 @@ export class PlayScene {
 
   addFp(n, quiet = false) {
     const st = this.state;
+    // ご飯のしくみがないステージ：点数だけ（おなかはたまらない）
+    if (!this.rules.food) { st.fpTotal += n; return; }
     const wasFull = this.full();
     // フィーバー中は、おなかには半分だけたまる（点数はそのまま）
     const fill = st.toilet > 0 ? n * BAL.toilet.feverTummy : n;
@@ -151,14 +156,14 @@ export class PlayScene {
     const prevSec = Math.ceil(st.timeLeft);
     const prevThirst = st.thirst;
     st.timeLeft = Math.max(0, st.timeLeft - dt);
-    if (thirst && this.action?.kind !== 'faint') st.thirst += dt;
+    if (thirst && this.rules.water && this.action?.kind !== 'faint') st.thirst += dt;
     if (prevThirst < BAL.water.warn && st.thirst >= BAL.water.warn) audio.sfx('warn');
     if (Math.ceil(st.timeLeft) < prevSec && prevSec <= BAL.hurryAt && st.timeLeft > 0) audio.sfx('tick');
     if (st.scratch > 0) st.scratch = Math.max(0, st.scratch - dt);
     if (st.toilet > 0) st.toilet = Math.max(0, st.toilet - dt);
   }
 
-  thirsty() { return this.state.thirst >= BAL.water.limit; }
+  thirsty() { return this.rules.water && this.state.thirst >= BAL.water.limit; }
 
   // ---- 更新 ----
 
@@ -287,6 +292,7 @@ export class PlayScene {
   }
 
   checkWater() {
+    if (!this.rules.water) return;
     // 水飲み・噴水、それと池のふち
     const p = this.findProp(['water', 'fountain'], 8) ?? (this.town.nearPond(this.cat.x, this.cat.y, 13) ? 'pond' : null);
     if (!p) return;
@@ -314,7 +320,7 @@ export class PlayScene {
 
   // ---- おねだり ----
 
-  canOnedari() { return !this.action && this.state.tp >= BAL.onedari.minTp; }
+  canOnedari() { return this.rules.onedari && !this.action && this.state.tp >= BAL.onedari.minTp; }
 
   grabsCat(p) {
     const cs = this.catScreen();
@@ -516,6 +522,7 @@ export class PlayScene {
 
   // 爪とぎスポットに触れたら、勝手にガリガリ（ボーナス中・したばかりのときはしない）
   checkScratch() {
+    if (!this.rules.scratch) return;
     const st = this.state;
     if (st.scratch > 0 || this.t - st.lastScratch < BAL.scratch.again) return;
     if (this.findProp(['scratch'], 6)) this.startScratch();
@@ -531,7 +538,7 @@ export class PlayScene {
 
   // おなかがいっぱいで猫砂に着いたら、トイレ
   checkLitter() {
-    if (!this.full()) return;
+    if (!this.rules.food || !this.full()) return;
     const p = this.findProp(['litter'], BAL.toilet.reach);
     if (!p) return;
     this.cat.x = this.cat.px = p.x;
@@ -581,10 +588,15 @@ export class PlayScene {
     } else if (a.kind === 'toilet') {
       st.fp = 0;
       st.over = 0;
-      st.toilet = BAL.toilet.buff;
-      this.feverIntro = 1.8;
       this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'すっきり！', UI.orangeD));
-      audio.sfx('fever');
+      // トイレフィーバーは、使えるステージだけ（ボス猫戦で覚える）
+      if (this.rules.fever) {
+        st.toilet = BAL.toilet.buff;
+        this.feverIntro = 1.8;
+        audio.sfx('fever');
+      } else {
+        audio.sfx('recover');
+      }
       this.action = null;
     } else if (a.kind === 'faint') {
       // 倒れる → 白くなって病院へ → 休んで復帰
@@ -618,7 +630,7 @@ export class PlayScene {
       const v = Math.floor(tp / n) + (i < tp % n ? 1 : 0);
       this.fx.add(heartAbsorb(target.x + (Math.random() - 0.5) * 12, target.y - 16, getCat, () => { if (v > 0) this.addTp(v); }));
     }
-    const drop = target.def.drops;
+    const drop = this.rules.food ? target.def.drops : null; // ご飯を落とすのは、ご飯のしくみがあるステージだけ
     if (drop) {
       const fp = ITEMS[drop.item].fp;
       for (let i = 0; i < drop.count; i++) {
@@ -900,39 +912,50 @@ export class PlayScene {
   // お水・体重・ボーナス（2段目）。てらまりんぐ画面でも使う
   drawStatus(ctx, x, y, right = false) {
     const st = this.state;
+    const R = this.rules;
     const parts = [];
-    // お水：残り時間を4つのしずくで
+    // お水：残り時間を4つのしずくで（お水のしくみがあるステージだけ）
     const left = Math.max(0, BAL.water.limit - st.thirst);
-    const warn = st.thirst >= BAL.water.warn;
+    const warn = R.water && st.thirst >= BAL.water.warn;
     const blink = warn && Math.floor(this.t * 6) % 2 === 0;
     const wW = 4 * 6 - 1;
-    // おなか：6つの目盛り（いっぱいで赤く点滅）
+    // おなか：6つの目盛り（いっぱいで赤く点滅。ご飯のしくみがあるステージだけ）
     const SEG = 6;
     const wl = this.tummyLevel();
     const weightCol = ['#7ab050', '#e0a030', UI.red][wl];
-    const fullBlink = wl === 2 && Math.floor(this.t * 4) % 2 === 0;
+    const fullBlink = R.food && wl === 2 && Math.floor(this.t * 4) % 2 === 0;
     const lab = 'おなか';
     const lw = textWidth(lab, 'small');
     if (st.scratch > 0) parts.push({ img: SPR.paw, sec: Math.ceil(st.scratch) });
     if (st.toilet > 0) parts.push({ img: SPR.bolt, sec: Math.ceil(st.toilet) });
-    let w = 4 + wW + 6 + lw + 2 + SEG * 3 + 3;
+    let w = 4;
+    if (R.water) w += wW + 6;
+    if (R.food) w += lw + 2 + SEG * 3 + 3;
     for (const p of parts) w += 6 + 9 + digitsWidth(String(p.sec));
+    if (w <= 4) return; // 出すものがない
+    if (!R.food) w -= 3; // 右の余白をそろえる
     if (right) x -= w;
     panel(ctx, x, y, w, 13, warn || fullBlink ? '#ffe0d8' : UI.cream);
     let cx = x + 4;
-    for (let i = 0; i < 4; i++) {
-      const full = left > i * (BAL.water.limit / 4);
-      if (blink && full) continue;
-      ctx.drawImage(full ? SPR.drop : SPR.dropEmpty, cx + i * 6, y + 3);
+    if (R.water) {
+      for (let i = 0; i < 4; i++) {
+        const full = left > i * (BAL.water.limit / 4);
+        if (blink && full) continue;
+        ctx.drawImage(full ? SPR.drop : SPR.dropEmpty, cx + i * 6, y + 3);
+      }
+      cx += wW + 6;
     }
-    cx += wW + 6;
-    drawText(ctx, lab, cx, y + 3, { font: 'small', color: UI.ink });
-    cx += lw + 2;
-    for (let i = 0; i < SEG; i++) {
-      ctx.fillStyle = st.fp >= ((i + 1) * BAL.tummy.full) / SEG ? weightCol : '#d8d0c0';
-      ctx.fillRect(cx + i * 3, y + 4, 2, 5);
+    if (R.food) {
+      drawText(ctx, lab, cx, y + 3, { font: 'small', color: UI.ink });
+      cx += lw + 2;
+      for (let i = 0; i < SEG; i++) {
+        ctx.fillStyle = st.fp >= ((i + 1) * BAL.tummy.full) / SEG ? weightCol : '#d8d0c0';
+        ctx.fillRect(cx + i * 3, y + 4, 2, 5);
+      }
+      cx += SEG * 3;
+    } else {
+      cx -= 6;
     }
-    cx += SEG * 3;
     for (const p of parts) {
       cx += 6;
       ctx.drawImage(p.img, cx, y + 3);
@@ -1024,8 +1047,8 @@ export class PlayScene {
       const a = Math.min(1, this.banner * 2, (2.6 - this.banner) * 4);
       const slide = Math.round((1 - a) * -60);
       panel(ctx, 6 + slide, 40, 112, 30, UI.cream);
-      drawText(ctx, `ステージ${this.stageId}`, 12 + slide, 43, { font: 'small', color: UI.orangeD });
-      drawText(ctx, this.town.stage.name, 12 + slide, 53, { color: UI.ink });
+      drawText(ctx, `ステージ${this.stage.label}`, 12 + slide, 43, { font: 'small', color: UI.orangeD });
+      drawText(ctx, this.stage.name, 12 + slide, 53, { color: UI.ink });
     }
 
     this.drawOnedariHint(ctx);

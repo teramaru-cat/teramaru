@@ -15,7 +15,7 @@ export class TitleScene {
   constructor(game) {
     this.game = game;
     this.t = 0;
-    this.town = getTown(1);
+    this.town = getTown('shotengai');
     this.menu = new Menu([{ id: 'start', label: 'はじめる' }]);
     this.hearts = [];
     this.soundBtn = new Button('sound', '', { icon: 'sound', pad: 6 });

@@ -4,6 +4,7 @@
 //       cane: true は杖（細い）
 // motion: still（棒立ち）| stomp（足踏み、period 秒ごとに左右交互）| lively（よく動く）
 // look: 街での見た目と、てらまりんぐ画面での足の見た目
+// どのステージに何人出るかは areas.js の targets で決める
 
 export const TARGETS = {
   salaryman: {
@@ -12,7 +13,6 @@ export const TARGETS = {
     durability: 2,
     tp: 4,
     drops: null,
-    stages: [1, 2, 3, 4],
     motion: 'still',
     legs: [{ x: -18, y: 0, r: 7 }, { x: 18, y: 0, r: 7 }],
     look: { skin: '#f2c9a0', hair: '#2a2a30', top: '#3c4a6a', bottom: '#34405e', shoes: '#2a1d17', tie: '#c84040', garment: 'coat' },
@@ -24,7 +24,6 @@ export const TARGETS = {
     durability: 3,
     tp: 8,
     drops: { item: 'bread', count: 4 },
-    stages: [1, 2, 3, 4],
     motion: 'stomp',
     period: 1.8,
     legs: [{ x: -18, y: 0, r: 7 }, { x: 18, y: 0, r: 7 }],
@@ -37,7 +36,6 @@ export const TARGETS = {
     durability: 3,
     tp: 10,
     drops: { item: 'onigiri', count: 3 },
-    stages: [1, 2, 3, 4],
     motion: 'still',
     legs: [{ x: -16, y: 0, r: 6 }, { x: 10, y: 0, r: 6 }, { x: 36, y: 8, r: 3, cane: true }],
     look: { skin: '#f0cfae', hair: '#c8c8d0', bun: true, top: '#8a6aa0', skirt: '#5a4a70', legs: '#c8b098', shoes: '#4a3a30', cane: '#7a5030', garment: 'skirt' },
@@ -49,7 +47,6 @@ export const TARGETS = {
     durability: 2,
     tp: 12,
     drops: { item: 'candy', count: 3 },
-    stages: [1, 2, 3, 4],
     motion: 'lively',
     legs: [{ x: -13, y: 0, r: 6 }, { x: 13, y: 0, r: 6 }],
     sway: { x: 17, y: 7, speed: 0.95 }, // 体ごと動く大きさと速さ（lively 用）
@@ -63,7 +60,6 @@ export const TARGETS = {
     durability: 4,
     tp: 12,
     drops: { item: 'fish', count: 5 },
-    stages: [1, 2, 3, 4],
     motion: 'stomp',
     period: 1.1,
     legs: [{ x: -18, y: 0, r: 7 }, { x: 18, y: 0, r: 7 }],
@@ -76,7 +72,6 @@ export const TARGETS = {
     durability: 4,
     tp: 10,
     drops: { item: 'meat', count: 4 },
-    stages: [1, 2, 3, 4],
     motion: 'stomp',
     period: 1.4,
     legs: [{ x: -18, y: 0, r: 7 }, { x: 18, y: 0, r: 7 }],
@@ -89,7 +84,6 @@ export const TARGETS = {
     durability: 3,
     tp: 8,
     drops: { item: 'tomato', count: 4 },
-    stages: [1, 2, 3, 4],
     motion: 'stomp',
     period: 2.2,
     legs: [{ x: -18, y: 0, r: 7 }, { x: 18, y: 0, r: 7 }],
@@ -102,7 +96,6 @@ export const TARGETS = {
     durability: 4,
     tp: 10,
     drops: { item: 'jerky', count: 3 },
-    stages: [2, 3, 4],
     motion: 'lively',
     sway: { x: 12, y: 3, speed: 0.6 },
     legs: [{ x: -26, y: 0, r: 4 }, { x: -14, y: -6, r: 4 }, { x: 14, y: -6, r: 4 }, { x: 26, y: 0, r: 4 }],
@@ -118,7 +111,6 @@ export const TARGETS = {
     durability: 3,
     tp: 12,
     drops: { item: 'crumbs', count: 3 }, // 食べ残しのパンくず
-    stages: [2, 3, 4],
     motion: 'lively',
     sway: { x: 20, y: 4, speed: 1.6 },
     legs: [{ x: -48, y: 0, r: 2 }, { x: -40, y: 0, r: 2 }, { x: -4, y: -6, r: 2 }, { x: 4, y: -6, r: 2 }, { x: 40, y: 0, r: 2 }, { x: 48, y: 0, r: 2 }],
@@ -133,7 +125,6 @@ export const TARGETS = {
     durability: 5,
     tp: 8,
     drops: null,
-    stages: [2],
     fixed: true,
     motion: 'still',
     legs: [{ x: -44, y: 0, r: 4 }, { x: -36, y: -12, r: 4 }, { x: 36, y: -12, r: 4 }, { x: 44, y: 0, r: 4 }],

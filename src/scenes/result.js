@@ -12,6 +12,7 @@ import { drawDigits, digitsWidth } from '../art/digits.js';
 import { BAL } from '../data/balance.js';
 import { finalScore } from '../game/score.js';
 import { getTown } from '../game/town.js';
+import { newlyOpened } from '../data/areas.js';
 
 const ROW_GAP = 0.35; // 内訳を1行ずつ出す間隔（秒）
 const PW = 216; // 結果のパネルの幅（左にてらまるが出る）
@@ -65,12 +66,11 @@ export class ResultScene {
     this.prevBest = best;
     this.newBest = this.sc.total > best;
     if (this.newBest) sv.bestScore[stageId] = this.sc.total;
-    const next = stageId + 1;
-    const need = BAL.unlock[next];
+    // この点数で開くステージ（areas.js の unlock）
     this.unlocked = null;
-    if (need && this.sc.total >= need && !sv.unlockedStages.includes(next)) {
-      sv.unlockedStages.push(next);
-      this.unlocked = next;
+    for (const st of newlyOpened(stageId, this.sc.total, sv)) {
+      sv.unlocked.push(st.id);
+      this.unlocked = st;
     }
     save(sv);
 
@@ -163,7 +163,7 @@ export class ResultScene {
         drawMixed(ctx, ['てらまるコイン', `+${this.sc.coins}`, 'まい'], lx + 10, py + 107, UI.ink);
         if (this.unlocked) {
           // 新しいステージが開いた
-          const msg = `ステージ${this.unlocked}が ひらいた！`;
+          const msg = `「${this.unlocked.name}」が ひらいた！`;
           const mw = textWidth(msg, 'small') + 10;
           const mx = px + Math.round((pw - mw) / 2);
           panel(ctx, mx, py + 119, mw, 13, Math.floor(this.t * 3) % 2 ? '#ffe8b8' : '#fff6e0');

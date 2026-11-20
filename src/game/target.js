@@ -1,6 +1,7 @@
 // 街にいるターゲット（人など）と、出現・補充
 
 import { TARGETS } from '../data/targets.js';
+import { STAGES } from '../data/areas.js';
 import { BAL } from '../data/balance.js';
 import { SPR } from '../art/sprites.js';
 import { TILE } from './town.js';
@@ -140,7 +141,9 @@ export class Target {
 export class Spawner {
   constructor(town, stageId) {
     this.town = town;
-    this.ids = Object.keys(TARGETS).filter((id) => TARGETS[id].stages.includes(stageId) && SPR.people[id] && !TARGETS[id].fixed);
+    // 出てくるターゲットと人数は、ステージの表（areas.js）の targets
+    this.quota = Object.fromEntries(Object.entries(STAGES[stageId].targets).filter(([id]) => SPR.people[id] && !TARGETS[id].fixed));
+    this.ids = Object.keys(this.quota);
     // 決まった場所にずっといるターゲット（ベンチなど）
     this.fixed = (town.stage.fixedTargets ?? []).map((f) => { const t = new Target(f.id, f.x, f.y); t.flip = false; return t; });
     this.targets = [];
@@ -161,7 +164,8 @@ export class Spawner {
 
   fill(cat) {
     for (const t of this.fixed) if (!this.targets.includes(t)) this.targets.push(t);
-    while (this.roaming() + this.timers.length < this.ids.length * BAL.town.perKind) {
+    const total = Object.values(this.quota).reduce((a, b) => a + b, 0);
+    while (this.roaming() + this.timers.length < total) {
       const t = this.spawn(cat, true);
       if (!t) break;
     }
@@ -175,11 +179,12 @@ export class Spawner {
       const dc = Math.hypot(s.x - cat.x, s.y - cat.y);
       if (dc < (initial ? 60 : 110)) continue;
       if (this.targets.some((t) => Math.hypot(t.x - s.x, t.y - s.y) < 56)) continue;
-      // 同じ種類ばかりにならないよう、少ないものを優先
+      // 決まった人数より少ない種類を優先（足りない割合が大きいものから）
       const counts = Object.fromEntries(this.ids.map((id) => [id, 0]));
       for (const t of this.targets) if (t.id in counts) counts[t.id] += 1;
-      const min = Math.min(...Object.values(counts));
-      const pool = this.ids.filter((id) => counts[id] === min);
+      const lack = (id) => counts[id] / this.quota[id];
+      const min = Math.min(...this.ids.map(lack));
+      const pool = this.ids.filter((id) => lack(id) === min);
       const id = pool[Math.floor(Math.random() * pool.length)];
       const t = new Target(id, s.x + (Math.random() - 0.5) * 6, s.y);
       this.targets.push(t);

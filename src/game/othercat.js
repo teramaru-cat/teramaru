@@ -5,6 +5,7 @@
 
 import { BAL } from '../data/balance.js';
 import { SPR } from '../art/sprites.js';
+import { STAGES } from '../data/areas.js';
 
 const FOOT_W = 10;
 const FOOT_H = 4;
@@ -94,7 +95,7 @@ class Stray {
 export class Strays {
   constructor(town, stageId, cat) {
     this.list = [];
-    const n = BAL.strays.count[stageId] ?? 0;
+    const n = STAGES[stageId].rules.strays; // 数はステージの表（areas.js）の rules.strays
     const kinds = ['black', 'tabby'];
     for (let i = 0; i < n; i++) {
       for (let tries = 0; tries < 60; tries++) {

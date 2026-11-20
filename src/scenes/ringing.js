@@ -273,7 +273,7 @@ export class RingingScene {
       }));
     }
     // ご飯：近くに軽く散らばって、ハートと一緒に吸い込まれる（1個 +2）
-    const drop = this.def.drops;
+    const drop = play.rules.food ? this.def.drops : null; // ご飯のしくみがあるステージだけ
     if (drop) {
       const fp = ITEMS[drop.item].fp;
       for (let i = 0; i < drop.count; i++) {
