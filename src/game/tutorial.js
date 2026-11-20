@@ -77,6 +77,7 @@ export class Tutorial {
       const t = this.t;
       if (t - dt < VET.poke && t >= VET.poke) { audio.sfx('poke'); audio.buzz(40); }
       if (t - dt < VET.happy && t >= VET.happy) audio.sfx('yes');
+      this.updateVetHearts(dt, t >= VET.happy);
       if (t >= VET.end && !this.dialog && !this.afterSaid) {
         this.afterSaid = true;
         this.say(PAGES('after'), () => { this.go('out'); });
@@ -91,6 +92,27 @@ export class Tutorial {
     // mission
     this.updateDialog(dt);
     return true;
+  }
+
+  // 注射のあとのハート：ばらばらの場所・速さ・大きさで、ふわふわ上がる
+  updateVetHearts(dt, spawn) {
+    this.vetHearts ??= [];
+    if (spawn && Math.random() < dt * (3 + Math.random() * 6)) {
+      const big = Math.random() < 0.3;
+      this.vetHearts.push({
+        x: screen.W / 2 + (Math.random() - 0.5) * 110,
+        y: 70 + Math.random() * 40,
+        vx: (Math.random() - 0.5) * 12,
+        vy: -(10 + Math.random() * 28),
+        wob: 1 + Math.random() * 4, // 左右のゆれ
+        ph: Math.random() * 6,
+        life: 0.8 + Math.random() * 1.4,
+        age: 0,
+        big,
+      });
+    }
+    for (const h of this.vetHearts) { h.age += dt; h.x += h.vx * dt; h.y += h.vy * dt; }
+    this.vetHearts = this.vetHearts.filter((h) => h.age < h.life);
   }
 
   updateDialog(dt) {
@@ -382,10 +404,12 @@ export class Tutorial {
         drawText(ctx, ch, wx, top - 66 + bob, { font: 'small', scale: 2, color: rainbow[(i + Math.floor(now * 6)) % rainbow.length], outline: UI.white });
         wx += textWidth(ch, 'small') * 2 + 1;
       });
-      for (let i = 0; i < 5; i++) {
-        const ph = (now * 0.6 + i / 5) % 1;
-        ctx.globalAlpha = 1 - ph;
-        ctx.drawImage(SPR.heart, Math.round(cx - 30 + i * 14), Math.round(top - h - 10 - ph * 26));
+      for (const hh of this.vetHearts ?? []) {
+        const k = hh.age / hh.life;
+        ctx.globalAlpha = Math.min(1, (1 - k) * 2);
+        const s = hh.big ? 2 : 1;
+        const hx = Math.round(hh.x + Math.sin(hh.ph + hh.age * 5) * hh.wob);
+        ctx.drawImage(SPR.heart, hx, Math.round(hh.y), SPR.heart.width * s, SPR.heart.height * s);
       }
       ctx.globalAlpha = 1;
       [[-48, -50], [-60, -20], [-36, -76], [46, -20], [62, -44]].forEach(([dx, dy], i) => drawSpark(ctx, cx + dx, top + dy, sparkSize(now + i * 0.2)));

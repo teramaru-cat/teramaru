@@ -3,6 +3,7 @@
 // できた文字画像はキャッシュして使い回す。
 
 import { makeCanvas } from './renderer.js';
+import { hasLatin, latinWidth, drawLatin, LATIN_H } from './latin.js';
 
 export const FONTS = {
   small: { family: 'Misaki', size: 8 }, // 美咲ゴシック 8×8
@@ -21,16 +22,67 @@ export async function loadFonts() {
 const cache = new Map();
 const [, mctx] = makeCanvas(1, 1);
 
+// 日本語以外の言語のとき：半角の英数字・記号は latin.js のドット文字で描く（読みやすい横5ドット）
+let latin = false;
+export function useLatinFont(on) {
+  if (latin === on) return;
+  latin = on;
+  cache.clear();
+}
+const LATIN_TOP = { small: 0, body: 2 }; // 大文字の上の位置（ほかの文字とならべたときにそろうように）
+
 function rgb(hex) {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
 function glyphs(str, fontKey, color) {
-  const key = `${fontKey}|${color}|${str}`;
+  const key = `${latin ? 'L' : ''}${fontKey}|${color}|${str}`;
   const hit = cache.get(key);
   if (hit) return hit;
+  const c = latin && [...str].some(hasLatin) ? mixed(str, fontKey, color) : fontGlyphs(str, fontKey, color);
+  if (cache.size > 600) cache.clear();
+  cache.set(key, c);
+  return c;
+}
 
+// ラテン文字はドット文字、それ以外（かな・記号など）はフォントで、左からならべた1枚の絵
+function mixed(str, fontKey, color) {
+  const runs = [];
+  for (const ch of str) {
+    const isL = hasLatin(ch);
+    const last = runs[runs.length - 1];
+    if (last && last.latin === isL) last.text += ch;
+    else runs.push({ latin: isL, text: ch });
+  }
+  const top = LATIN_TOP[fontKey] ?? 0;
+  let w = 0;
+  let h = top + LATIN_H;
+  for (const r of runs) {
+    if (r.latin) {
+      r.w = [...r.text].reduce((n, ch) => n + latinWidth(ch) + 1, 0);
+    } else {
+      r.img = fontGlyphs(r.text, fontKey, color);
+      r.w = r.img.width;
+      h = Math.max(h, r.img.height);
+    }
+    w += r.w;
+  }
+  const [c, ctx] = makeCanvas(Math.max(1, w - (runs[runs.length - 1].latin ? 1 : 0)), h);
+  ctx.fillStyle = color;
+  let x = 0;
+  for (const r of runs) {
+    if (r.latin) {
+      for (const ch of r.text) { drawLatin(ctx, ch, x, top); x += latinWidth(ch) + 1; }
+    } else {
+      ctx.drawImage(r.img, x, 0);
+      x += r.w;
+    }
+  }
+  return c;
+}
+
+function fontGlyphs(str, fontKey, color) {
   const f = FONTS[fontKey];
   const font = `${f.size}px ${f.family}`;
   mctx.font = font;
@@ -59,9 +111,6 @@ function glyphs(str, fontKey, color) {
     }
   }
   ctx.putImageData(img, 0, 0);
-
-  if (cache.size > 600) cache.clear();
-  cache.set(key, c);
   return c;
 }
 

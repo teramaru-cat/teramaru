@@ -44,17 +44,46 @@ function scratchPole() {
   return { img: c, ox: 7, oy: 43, solid: { w: 6, h: 4 } };
 }
 
+// 水飲みのお皿（ねこの絵がついた白い器に、たっぷりの水。上でしずくがはねる）
 function waterBowl() {
-  const [c, x] = makeCanvas(14, 8);
+  const [c, x] = makeCanvas(18, 16);
+  // しずくのマーク（水だとわかるように）
   x.fillStyle = '#1f4f9a';
-  fillEllipse(x, 7, 4, 6, 3);
-  x.fillStyle = '#3a7ad0';
-  fillEllipse(x, 7, 4, 5, 2);
-  x.fillStyle = '#9ad4f4';
-  fillEllipse(x, 7, 3, 4, 1);
+  x.fillRect(8, 0, 2, 1);
+  x.fillRect(7, 1, 4, 1);
+  x.fillRect(6, 2, 6, 3);
+  x.fillRect(7, 5, 4, 1);
+  x.fillStyle = '#4aa0e0';
+  x.fillRect(8, 1, 2, 1);
+  x.fillRect(7, 2, 4, 3);
   x.fillStyle = '#ffffff';
-  x.fillRect(5, 3, 2, 1);
-  return { img: c, ox: 7, oy: 7, solid: null };
+  x.fillRect(7, 3, 1, 1);
+  // 器（白い陶器、下がすぼまる）
+  x.fillStyle = '#3a2a20';
+  x.fillRect(1, 8, 16, 1);
+  x.fillRect(0, 9, 18, 3);
+  x.fillRect(1, 12, 16, 2);
+  x.fillRect(3, 14, 12, 2);
+  x.fillStyle = '#f6f2ea';
+  x.fillRect(1, 11, 16, 1);
+  x.fillRect(2, 12, 14, 2);
+  x.fillRect(4, 14, 10, 1);
+  x.fillStyle = '#d8d0c4';
+  x.fillRect(4, 13, 10, 1); // かげ
+  // 器のふちと、水
+  x.fillStyle = '#e8e0d4';
+  x.fillRect(1, 9, 16, 2);
+  x.fillStyle = '#3a8ad0';
+  x.fillRect(2, 9, 14, 2);
+  x.fillStyle = '#9ad4f4';
+  x.fillRect(4, 9, 4, 1);
+  x.fillRect(11, 10, 3, 1);
+  // 器のもよう（青い肉球）
+  x.fillStyle = '#4aa0e0';
+  x.fillRect(8, 12, 2, 2);
+  x.fillRect(7, 12, 1, 1);
+  x.fillRect(10, 12, 1, 1);
+  return { img: c, ox: 9, oy: 15, solid: null };
 }
 
 // 猫砂のトイレ（水色の箱に砂）

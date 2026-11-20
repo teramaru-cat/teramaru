@@ -2,7 +2,7 @@
 
 import { initScreen, screen } from './core/renderer.js';
 import { input } from './core/input.js';
-import { loadFonts } from './core/text.js';
+import { loadFonts, useLatinFont } from './core/text.js';
 import { SceneStack } from './core/scenes.js';
 import { load } from './core/save.js';
 import { audio } from './core/audio.js';
@@ -37,7 +37,10 @@ async function boot() {
   audio.init(game.save.settings?.mute);
   // ことば：保存してあればそれ、なければブラウザの言語から
   const rotateText = document.querySelector('#rotate p');
-  onLangChange(() => { if (rotateText) rotateText.textContent = tr('rotate'); });
+  onLangChange((id) => {
+    if (rotateText) rotateText.textContent = tr('rotate');
+    useLatinFont(id !== 'ja'); // 日本語以外は、英数字を読みやすいドット文字で
+  });
   setLang(game.save.settings?.lang ?? detectLang());
   await loadFonts();
   buildSprites();

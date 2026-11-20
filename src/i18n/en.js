@@ -101,14 +101,15 @@ export default {
     best: 'Best',
     again: 'Again',
     select: 'Stages',
+    // keep each line under ~14 letters (the box is narrow)
     comments: {
-      best: [['NEW BEST!', "Today's Teramaru", 'was the best, nya'], ['NEW BEST!', 'Purr-fect', 'Teramaring, nya']],
-      great: [['The whole town', 'is smitten! Bravo, nya'], ['Cuteness:', '100 points, nya!'], ['Teramaru was', 'unstoppable, nya']],
+      best: [['NEW BEST!', "Today's best", 'Teramaru, nya'], ['NEW BEST!', 'Purr-fect', 'Teramaring!']],
+      great: [['Whole town', 'smitten! Bravo'], ['Cuteness:', '100 pts, nya!'], ['Teramaru was', 'unstoppable!']],
       good: [['Not bad', 'at all, nya'], ['Great rubbing', 'today, nya'], ['Nice work,', 'nya']],
       ok: [['So-so,', 'nya'], ['You can rub', 'way more, nya']],
-      low: [['Still a long', 'way to go, nya…'], ['Needs more', 'charm, nya…']],
+      low: [['Still a long', 'way to go…'], ['Needs more', 'charm, nya…']],
       faint: [['Drink water', 'often, nya'], ["Don't faint", 'on us, nya…']],
-      kamatte: [['So nice to get', 'attention, nya'], ['A master of', 'begging, nya']],
+      kamatte: [['So nice to be', 'petted, nya'], ['A master of', 'begging, nya']],
     },
   },
 

@@ -317,13 +317,18 @@ export class PlayScene {
   }
 
   // flavor＝true：まだそのしくみがないステージ（動きと音だけ。ゲームには何も影響しない）
+  // 小物のほうを向く
+  faceTo(p) {
+    if (!p || p === 'pond') return;
+    const c = this.cat;
+    const dx = p.x - c.x;
+    const dy = (p.y - (p.def?.solid?.h ?? 0) / 2) - c.y; // 小物のまん中（足元より少し奥）
+    c.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
+  }
+
   startDrink(p, flavor) {
     const c = this.cat;
-    if (p && p !== 'pond') {
-      const dx = p.x - c.x;
-      const dy = p.y - c.y;
-      c.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
-    }
+    this.faceTo(p);
     this.action = { kind: 'drink', t: 0, flavor, award: !flavor && this.t - this.state.lastDrink >= BAL.water.refill };
     this.fx.add(new PopText(c.x, c.y - 26, tr('play.drink'), '#2a70c0'));
     audio.sfx('drink');
@@ -584,13 +589,14 @@ export class PlayScene {
     if (!this.rules.scratch) return;
     const st = this.state;
     if (st.scratch > 0 || this.t - st.lastScratch < BAL.scratch.again) return;
-    if (this.findProp(['scratch'], 6)) this.startScratch();
+    const p = this.findProp(['scratch'], 6);
+    if (p) this.startScratch(false);
   }
 
   startScratch(flavor = false) {
     if (!flavor) this.state.lastScratch = this.t;
     this.action = { kind: 'scratch', t: 0, flavor };
-    this.cat.dir = 'up';
+    // 向きは、歩いてきた向きのまま（前から来たら前向き、横から来たら横向き）
     this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.scratch'), UI.orangeD));
     audio.sfx('scratch');
   }
@@ -1085,7 +1091,7 @@ export class PlayScene {
     let yy = y;
     const step = (fps) => 1 + (Math.floor((a?.t ?? 0) * fps) % 2); // 前足を交互に（a・b のコマ）
     if (a?.kind === 'drink') img = SPR.cat[this.cat.dir][0];
-    if (a?.kind === 'scratch') img = SPR.cat.up[step(10)]; // 柱に向かって、前足でバリバリ
+    if (a?.kind === 'scratch') img = SPR.cat[this.cat.dir][step(10)]; // 柱に向かって、前足でバリバリ
     if (a?.kind === 'toilet') img = SPR.cat.down[step(8)]; // 前足で砂をカキカキ
     // 太ると横に広がる
     const w = img.width + this.tummyLevel() * 2;
