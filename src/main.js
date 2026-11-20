@@ -11,6 +11,7 @@ import { buildProps } from './art/props.js';
 import { startRotateCat } from './art/rotateCat.js';
 import { TitleScene } from './scenes/title.js';
 import { PlayScene } from './scenes/play.js';
+import { StageSelectScene } from './scenes/stageselect.js';
 
 const STEP = 1 / 60;
 const MAX_STEPS = 5;
@@ -23,6 +24,7 @@ const game = {
   alpha: 0, // 前回の更新から次の更新までの割合（描画の補間用）
   startPlay(stageId) { this.scenes.replace(new PlayScene(this, stageId)); },
   toTitle() { this.scenes.replace(new TitleScene(this)); },
+  toStageSelect() { this.scenes.replace(new StageSelectScene(this)); },
 };
 window.teramaru = game; // ブラウザのコンソールから確認できるように
 game.SPR = SPR;

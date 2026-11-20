@@ -13,6 +13,7 @@ const GROUND = {
   R: { base: '#63626b', line: null, dot: ['#6d6c75', '#5a5961'] },
   G: { base: '#7fb65a', line: null, dot: ['#6aa24a', '#93c96a'] },
   P: { base: '#c99a76', line: '#b0805c', dot: ['#d4a884'] },
+  W: { base: '#5aa8d8', line: null, dot: ['#6ab8e4', '#4e9acb'] }, // 池（入れない）
 };
 
 const towns = new Map();
@@ -36,6 +37,7 @@ export class Town {
       },
     });
     this.solid = Array.from({ length: this.rows }, () => Array(this.cols).fill(false));
+    for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) if (this.grid[r][c] === 'W') this.solid[r][c] = true;
     for (const b of stage.buildings) {
       for (let r = b.r; r < b.r + b.h; r++) for (let c = b.c; c < b.c + b.w; c++) this.solid[r][c] = true;
     }
@@ -95,6 +97,17 @@ export class Town {
           x.fillRect(gx, gy + 1, 1, 2);
           x.fillRect(gx + 2, gy, 1, 3);
           x.fillRect(gx + 4, gy + 1, 1, 2);
+        }
+        // 池：さざなみと、岸の石
+        if (this.grid[r][col] === 'W') {
+          x.fillStyle = '#9ad4f0';
+          if (rng() < 0.5) x.fillRect(px + rng.int(10), py + rng.int(14), 5, 1);
+          const g = (rr, cc) => this.grid[rr]?.[cc];
+          x.fillStyle = '#b8b0a0';
+          if (g(r - 1, col) && g(r - 1, col) !== 'W') { x.fillRect(px, py, TILE, 3); x.fillStyle = '#8a8478'; x.fillRect(px, py + 3, TILE, 1); x.fillStyle = '#b8b0a0'; }
+          if (g(r + 1, col) && g(r + 1, col) !== 'W') x.fillRect(px, py + TILE - 3, TILE, 3);
+          if (g(r, col - 1) && g(r, col - 1) !== 'W') x.fillRect(px, py, 3, TILE);
+          if (g(r, col + 1) && g(r, col + 1) !== 'W') x.fillRect(px + TILE - 3, py, 3, TILE);
         }
         // 道路のふち（縁石）
         if (this.grid[r][col] === 'R') {

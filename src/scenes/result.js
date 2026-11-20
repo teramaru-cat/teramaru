@@ -67,7 +67,11 @@ export class ResultScene {
     if (this.newBest) sv.bestScore[stageId] = this.sc.total;
     const next = stageId + 1;
     const need = BAL.unlock[next];
-    if (need && this.sc.total >= need && !sv.unlockedStages.includes(next)) sv.unlockedStages.push(next);
+    this.unlocked = null;
+    if (need && this.sc.total >= need && !sv.unlockedStages.includes(next)) {
+      sv.unlockedStages.push(next);
+      this.unlocked = next;
+    }
     save(sv);
 
     this.rows = [
@@ -80,7 +84,7 @@ export class ResultScene {
     this.comment = pickComment(this.sc, state, this.newBest);
     this.catIn = ROW_GAP * this.rows.length; // てらまるが歩いてくる（0.6秒）
     this.hearts = [];
-    this.menu = new Menu([{ id: 'again', label: 'もういちど' }, { id: 'title', label: 'タイトルへ' }]);
+    this.menu = new Menu([{ id: 'again', label: 'もういちど' }, { id: 'select', label: 'ステージへ' }]);
   }
 
   enter() { input.releaseAll(); }
@@ -106,7 +110,7 @@ export class ResultScene {
     }
     const id = this.menu.update();
     if (id === 'again') this.game.startPlay(this.stageId);
-    if (id === 'title') this.game.toTitle();
+    if (id === 'select') this.game.toStageSelect();
   }
 
   // 内訳が1行出るごとにピッ、総合スコアが出たらベスト更新の音
@@ -157,6 +161,14 @@ export class ResultScene {
         // コイン
         ctx.drawImage(SPR.coin, lx, py + 108);
         drawMixed(ctx, ['てらまるコイン', `+${this.sc.coins}`, 'まい'], lx + 10, py + 107, UI.ink);
+        if (this.unlocked) {
+          // 新しいステージが開いた
+          const msg = `ステージ${this.unlocked}が ひらいた！`;
+          const mw = textWidth(msg, 'small') + 10;
+          const mx = px + Math.round((pw - mw) / 2);
+          panel(ctx, mx, py + 119, mw, 13, Math.floor(this.t * 3) % 2 ? '#ffe8b8' : '#fff6e0');
+          drawText(ctx, msg, mx + 5, py + 122, { font: 'small', color: UI.orangeD });
+        }
         if (this.newBest && Math.floor(this.t * 3) % 2 === 0) {
           drawText(ctx, 'ベストこうしん！', rx, py + 107, { font: 'small', color: UI.pink, align: 'right' });
         } else if (!this.newBest) {

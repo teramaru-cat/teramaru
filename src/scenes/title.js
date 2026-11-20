@@ -36,7 +36,7 @@ export class TitleScene {
       if (this.soundBtn.contains(p.x, p.y)) { p.role = 'button:sound'; toggleMute(this.game); }
     }
     const id = this.menu.update();
-    if (id === 'start') this.game.startPlay(1);
+    if (id === 'start') this.game.toStageSelect();
   }
 
   draw(ctx) {
