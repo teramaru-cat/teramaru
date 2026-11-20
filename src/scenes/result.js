@@ -19,7 +19,7 @@ import { tr } from '../i18n/index.js';
 const ROW_GAP = 0.35; // 内訳を1行ずつ出す間隔（秒）
 const PW = 216; // 結果のパネルの幅（左にてらまると、評価の枠が出る）
 
-// ウィルキャッ（ねこたちの意志。姿のないキラキラ。game/voice.js）の評価。てらまるはしゃべらない。
+// ウィルニャ（ねこたちの意志。姿のないキラキラ。game/voice.js）の評価。てらまるはしゃべらない。
 // 言葉は i18n の result.comments。スコアで評価が変わる（同じ評価の中からランダム）。mood はてらまるの様子（ぴょんぴょん・しょんぼりなど）
 function pickComment(sc, st, newBest) {
   const pick = (k) => {
@@ -229,7 +229,7 @@ export class ResultScene {
       const k2 = (this.t * 0.8) % 1;
       ctx.drawImage(SPR.drop, x + 9, Math.round(y - h + 6 + k2 * 6));
     }
-    // 評価の枠（ウィルキャッの声。四角い枠に1文字ずつ）
+    // 評価の枠（ウィルニャの声。四角い枠に1文字ずつ）
     const lines = this.comment.lines;
     const fw = screen.W - PW - 6 - 8;
     const fh = lines.length * 10 + 8;

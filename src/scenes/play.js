@@ -158,8 +158,10 @@ export class PlayScene {
     const st = this.state;
     const prevSec = Math.ceil(st.timeLeft);
     const prevThirst = st.thirst;
-    if (this.rules.timer) st.timeLeft = Math.max(0, st.timeLeft - dt); // 時間なし（チュートリアル）なら減らない
-    if (thirst && this.rules.water && this.action?.kind !== 'faint') st.thirst += dt;
+    // 水飲み・爪とぎ・トイレの動きの間は、時間もお水も止める
+    const busy = ['drink', 'scratch', 'toilet'].includes(this.action?.kind);
+    if (this.rules.timer && !busy) st.timeLeft = Math.max(0, st.timeLeft - dt); // 時間なし（チュートリアル）なら減らない
+    if (thirst && this.rules.water && this.action?.kind !== 'faint' && !busy) st.thirst += dt;
     if (prevThirst < BAL.water.warn && st.thirst >= BAL.water.warn) audio.sfx('warn');
     if (Math.ceil(st.timeLeft) < prevSec && prevSec <= BAL.hurryAt && st.timeLeft > 0) audio.sfx('tick');
     if (st.scratch > 0) st.scratch = Math.max(0, st.scratch - dt);
@@ -296,47 +298,65 @@ export class PlayScene {
     return null;
   }
 
+  // 水飲み・噴水・池のふち。近づいたとき（はなれてから、また来たとき）に、ぺろぺろ飲む
+  waterNear() {
+    return this.findProp(['water', 'fountain'], 8) ?? (this.town.nearPond(this.cat.x, this.cat.y, 13) ? 'pond' : null);
+  }
+
   checkWater() {
-    if (!this.rules.water) return;
-    // 水飲み・噴水、それと池のふち
-    const p = this.findProp(['water', 'fountain'], 8) ?? (this.town.nearPond(this.cat.x, this.cat.y, 13) ? 'pond' : null);
-    if (!p) return;
-    const st = this.state;
-    if (st.thirst < 0.5) return; // 飲んだばかり
-    const award = this.t - st.lastDrink >= BAL.water.refill;
-    st.thirst = 0;
-    this.fx.add(new PopText(this.cat.x, this.cat.y - 26, tr('play.drink'), '#2a70c0'));
-    audio.sfx('drink');
-    if (award) {
-      st.lastDrink = this.t;
-      this.addFp(BAL.water.fp, true);
-      this.fx.add(new PopText(this.cat.x + 10, this.cat.y - 18, `+${BAL.water.fp}`, UI.orangeD, 0.8));
+    const p = this.waterNear();
+    const entered = p && !this.atWater;
+    this.atWater = !!p;
+    if (!entered) return;
+    if (this.rules.water) {
+      if (this.state.thirst < 0.5) return; // 飲んだばかり
+      this.startDrink(p, false);
+    } else if (this.flavorReady('water')) {
+      this.startDrink(p, true); // まだお水のしくみがないステージ：飲む動きだけ
     }
   }
 
-  // まだこのステージで使えないしくみ（お水・トイレ・爪とぎ）：さわると見た目と音だけ出る。ゲームには何も影響しない
+  // flavor＝true：まだそのしくみがないステージ（動きと音だけ。ゲームには何も影響しない）
+  startDrink(p, flavor) {
+    const c = this.cat;
+    if (p && p !== 'pond') {
+      const dx = p.x - c.x;
+      const dy = p.y - c.y;
+      c.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
+    }
+    this.action = { kind: 'drink', t: 0, flavor, award: !flavor && this.t - this.state.lastDrink >= BAL.water.refill };
+    this.fx.add(new PopText(c.x, c.y - 26, tr('play.drink'), '#2a70c0'));
+    audio.sfx('drink');
+  }
+
+  // まだこのステージで使えないしくみ（トイレ・爪とぎ）：近づくと動きと音だけ出る。ゲームには何も影響しない（時間も止まる）
+  flavorReady(k) {
+    this.flavor ??= {};
+    if (this.flavor[k] > this.t) return false;
+    this.flavor[k] = this.t + 3;
+    return true;
+  }
+
   checkFlavor() {
     const R = this.rules;
-    this.flavor ??= {};
-    const ready = (k) => !(this.flavor[k] > this.t);
+    const litter = !R.food && this.findProp(['litter'], 4);
+    const enteredLitter = litter && !this.atLitter;
+    this.atLitter = !!litter;
+    if (enteredLitter && this.flavorReady('litter')) { this.startToilet(true); return; }
+    const pole = !R.scratch && this.findProp(['scratch', 'catTower'], 6);
+    const enteredPole = pole && !this.atPole;
+    this.atPole = !!pole;
+    if (enteredPole && this.flavorReady('scratch')) this.startScratch(true);
+  }
+
+  // 爪とぎのくず（麻ひもの毛がとぶ）
+  addFiber() {
     const c = this.cat;
-    if (!R.water && ready('water') && (this.findProp(['water', 'fountain'], 8) || this.town.nearPond(c.x, c.y, 13))) {
-      this.flavor.water = this.t + 3;
-      this.fx.add(new PopText(c.x, c.y - 26, tr('play.drink'), '#2a70c0'));
-      audio.sfx('drink');
-      for (let i = 0; i < 4; i++) this.addDrop(c.x + (Math.random() - 0.5) * 10, c.y - 4, '#7ac0ec');
-    }
-    if (!R.food && ready('litter') && this.findProp(['litter'], 4)) {
-      this.flavor.litter = this.t + 3;
-      this.fx.add(new PopText(c.x, c.y - 30, tr('play.litter'), UI.orangeD));
-      audio.sfx('toilet');
-      for (let i = 0; i < 10; i++) this.addSand();
-    }
-    if (!R.scratch && ready('scratch') && this.findProp(['scratch', 'catTower'], 6)) {
-      this.flavor.scratch = this.t + 3;
-      this.fx.add(new PopText(c.x, c.y - 30, tr('play.scratch'), UI.orangeD));
-      audio.sfx('scratch');
-    }
+    const sp = { x: c.x + (Math.random() - 0.5) * 8, y: c.y - 14 - Math.random() * 6, vx: (Math.random() - 0.5) * 40, vy: -10 - Math.random() * 20, t: 0 };
+    this.fx.add({
+      update(dt) { sp.t += dt; sp.x += sp.vx * dt; sp.y += sp.vy * dt; sp.vy += 90 * dt; return sp.t < 0.45; },
+      draw(ctx) { ctx.fillStyle = '#c8a868'; ctx.fillRect(Math.round(sp.x), Math.round(sp.y), 1, 1); },
+    });
   }
 
   // 小さな水しぶき
@@ -567,9 +587,9 @@ export class PlayScene {
     if (this.findProp(['scratch'], 6)) this.startScratch();
   }
 
-  startScratch() {
-    this.state.lastScratch = this.t;
-    this.action = { kind: 'scratch', t: 0 };
+  startScratch(flavor = false) {
+    if (!flavor) this.state.lastScratch = this.t;
+    this.action = { kind: 'scratch', t: 0, flavor };
     this.cat.dir = 'up';
     this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.scratch'), UI.orangeD));
     audio.sfx('scratch');
@@ -585,8 +605,8 @@ export class PlayScene {
     this.startToilet();
   }
 
-  startToilet() {
-    this.action = { kind: 'toilet', t: 0, sand: 0 };
+  startToilet(flavor = false) {
+    this.action = { kind: 'toilet', t: 0, sand: 0, flavor };
     this.cat.dir = 'down';
     this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.litter'), UI.orangeD));
     audio.sfx('toilet');
@@ -618,12 +638,33 @@ export class PlayScene {
     const a = this.action;
     a.t += dt;
     const st = this.state;
-    if (a.kind === 'scratch' && a.t >= BAL.scratch.motion) {
-      st.scratch = BAL.scratch.window;
-      this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.scratchDone'), UI.orangeD));
+    if (a.kind === 'drink') {
+      // ぺろぺろ：ときどき水しぶき
+      if (Math.random() < dt * 8) this.addDrop(this.cat.x + (Math.random() - 0.5) * 8, this.cat.y - 2, '#7ac0ec');
+      if (a.t >= BAL.water.drink) {
+        if (!a.flavor) {
+          st.thirst = 0;
+          if (a.award) {
+            st.lastDrink = this.t;
+            this.addFp(BAL.water.fp, true);
+            this.fx.add(new PopText(this.cat.x + 10, this.cat.y - 18, `+${BAL.water.fp}`, UI.orangeD, 0.8));
+          }
+        }
+        this.action = null;
+      }
+    } else if (a.kind === 'scratch' && a.t < BAL.scratch.motion) {
+      if (Math.random() < dt * 14) this.addFiber();
+    } else if (a.kind === 'scratch') {
+      if (!a.flavor) {
+        st.scratch = BAL.scratch.window;
+        this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.scratchDone'), UI.orangeD));
+      }
       this.action = null;
     } else if (a.kind === 'toilet' && a.t < BAL.toilet.motion) {
       if (Math.random() < dt * 25) this.addSand();
+    } else if (a.kind === 'toilet' && a.flavor) {
+      this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.toiletDone'), UI.orangeD));
+      this.action = null;
     } else if (a.kind === 'toilet') {
       st.fp = 0;
       st.over = 0;
@@ -1039,15 +1080,22 @@ export class PlayScene {
       return;
     }
 
-    const img = this.cat.sprite();
+    let img = this.cat.sprite();
     const lz = Math.round(this.leap?.z ?? 0); // おねだりで飛びつく高さ
+    let yy = y;
+    const step = (fps) => 1 + (Math.floor((a?.t ?? 0) * fps) % 2); // 前足を交互に（a・b のコマ）
+    if (a?.kind === 'drink') img = SPR.cat[this.cat.dir][0];
+    if (a?.kind === 'scratch') img = SPR.cat.up[step(10)]; // 柱に向かって、前足でバリバリ
+    if (a?.kind === 'toilet') img = SPR.cat.down[step(8)]; // 前足で砂をカキカキ
     // 太ると横に広がる
     const w = img.width + this.tummyLevel() * 2;
     let h = img.height;
-    if (a?.kind === 'scratch' || this.hiss > 0) x += Math.floor(this.t * 20) % 2 ? 1 : -1;
+    if (this.hiss > 0) x += Math.floor(this.t * 20) % 2 ? 1 : -1;
+    if (a?.kind === 'scratch') { h += 3; yy -= Math.floor(a.t * 10) % 2; } // のびあがって、上下にバリバリ
+    if (a?.kind === 'drink') { h -= 3; yy += Math.floor(a.t * 7) % 2; } // 頭を下げて、ぺろぺろ
     if (a?.kind === 'toilet') { h -= 2; x += Math.floor(this.t * 12) % 2 ? 1 : 0; } // しゃがんでカキカキ
     else if (!a && this.full() && !this.cat.moving) x += Math.floor(this.t * 3) % 2; // 止まっているときだけ、ゆっくりもじもじ
-    ctx.drawImage(img, x - w / 2, y - h - lz, w, h);
+    ctx.drawImage(img, x - w / 2, yy - h - lz, w, h);
 
     // おなかいっぱい：頭の横にピンクの線（体は揺らさない）
     if (!a && this.full() && Math.floor(this.t * 2) % 2 === 0) {

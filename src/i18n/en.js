@@ -1,5 +1,5 @@
 // English
-// "てらまりんぐ" is "Teramaring". Cats (Willcat) end lines with "nya".
+// "てらまりんぐ" is "Teramaring". Cats (Wilnya) end lines with "nya".
 // Keep lines short: the pixel font is small and the screen is 320 dots wide.
 
 export default {
@@ -121,7 +121,7 @@ export default {
     soundOff: 'Sound: off',
   },
 
-  voice: { name: 'Willcat', fullName: 'Will of Cats' },
+  voice: { name: 'Wilnya', fullName: 'Will of Nyanko' },
 
   tutorial: {
     vaccine: 'GCS: God Cat Shot',

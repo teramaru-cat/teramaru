@@ -39,7 +39,7 @@ export const AREAS = [
     stages: [
       {
         id: 'home',
-        // てらまるの1フロアの家。飼い主2人をメロメロ → ウィルキャッが使命を伝える（猫は家で飼おうね）→ 予防接種 → 街へ
+        // てらまるの1フロアの家。飼い主2人をメロメロ → ウィルニャが使命を伝える（猫は家で飼おうね）→ 予防接種 → 街へ
         // 流れは src/game/tutorial.js
         tutorial: true,
         map: HOME,
