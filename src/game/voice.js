@@ -50,19 +50,53 @@ export function drawVoiceBox(ctx, lines, { x, y, w, t = 99, now = 0, name = true
   return h;
 }
 
-// キラキラ1つ（中心 cx, cy、大きさ r＝0〜4）
-export function drawSpark(ctx, cx, cy, r) {
+// キラキラ1つ（✦ の形：細く長い4本の腕と、ふくらんだまん中）。中心 cx, cy、大きさ r＝0〜4。
+// hollow＝true なら中が抜けた ✧（ふちだけ）
+const SPARK_SHAPES = {};
+function sparkShape(r) {
+  if (SPARK_SHAPES[r]) return SPARK_SHAPES[r];
+  const core = Math.floor((r + 1) / 2); // まん中のひし形の大きさ
+  const inS = (x, y) => (y === 0 && Math.abs(x) <= r) || (x === 0 && Math.abs(y) <= r) || Math.abs(x) + Math.abs(y) <= core;
+  const fill = [];
+  const edge = [];
+  for (let y = -r - 1; y <= r + 1; y++) {
+    for (let x = -r - 1; x <= r + 1; x++) {
+      if (inS(x, y)) fill.push([x, y]);
+      else if (inS(x + 1, y) || inS(x - 1, y) || inS(x, y + 1) || inS(x, y - 1)) edge.push([x, y]);
+    }
+  }
+  SPARK_SHAPES[r] = { fill, edge };
+  return SPARK_SHAPES[r];
+}
+
+export function drawSpark(ctx, cx, cy, r, hollow = false) {
   if (r <= 0) return;
   cx = Math.round(cx);
   cy = Math.round(cy);
-  ctx.fillStyle = '#c89018'; // ふち
-  ctx.fillRect(cx - r - 1, cy - 1, r * 2 + 3, 3);
-  ctx.fillRect(cx - 1, cy - r - 1, 3, r * 2 + 3);
+  const { fill, edge } = sparkShape(r);
+  if (hollow && r >= 3) {
+    // ✧：金のふちだけ（中はうすい光）
+    ctx.fillStyle = '#e8b028';
+    for (const [x, y] of edge) ctx.fillRect(cx + x, cy + y, 1, 1);
+    ctx.fillStyle = 'rgba(255,250,220,0.7)';
+    for (const [x, y] of fill) ctx.fillRect(cx + x, cy + y, 1, 1);
+    return;
+  }
+  // ✦：金のふちに、黄色の中身、まん中が白く光る
+  ctx.fillStyle = '#c89018';
+  for (const [x, y] of edge) ctx.fillRect(cx + x, cy + y, 1, 1);
   ctx.fillStyle = '#ffe870';
-  ctx.fillRect(cx - r, cy, r * 2 + 1, 1);
-  ctx.fillRect(cx, cy - r, 1, r * 2 + 1);
+  for (const [x, y] of fill) ctx.fillRect(cx + x, cy + y, 1, 1);
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(cx, cy, 1, 1);
+  if (r >= 3) { ctx.fillRect(cx - 1, cy, 1, 1); ctx.fillRect(cx, cy - 1, 1, 1); }
+}
+
+// ✨：大きいキラキラに、小さいのが2つ寄りそう
+export function drawSparkle3(ctx, cx, cy, t) {
+  drawSpark(ctx, cx, cy, sparkSize(t) ? 4 : 3);
+  drawSpark(ctx, cx + 7, cy - 6, sparkSize(t + 0.3) ? 2 : 1);
+  drawSpark(ctx, cx - 6, cy + 5, sparkSize(t + 0.6) ? 2 : 1);
 }
 
 // 小→大→小の大きさ（k＝0〜1）
@@ -89,7 +123,7 @@ export function drawPresence(ctx, cx, cy, t, a = 1) {
   for (let i = 0; i < 9; i++) {
     const ang = t * 0.8 + (i / 9) * Math.PI * 2;
     const rr = 8 + (i % 3) * 7 + Math.sin(t * 1.7 + i) * 2;
-    drawSpark(ctx, cx + Math.cos(ang) * rr, cy + Math.sin(ang) * rr * 0.7, sparkSize(t * 0.8 + i * 0.37));
+    drawSpark(ctx, cx + Math.cos(ang) * rr, cy + Math.sin(ang) * rr * 0.7, sparkSize(t * 0.8 + i * 0.37), i % 3 === 0);
   }
   drawPaw(ctx, cx, cy - Math.round(Math.sin(t * 2) * 1.5));
   ctx.globalAlpha = 1;
