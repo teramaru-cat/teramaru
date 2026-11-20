@@ -195,6 +195,7 @@ export class RingingScene {
     this.cat.y = Math.max(TOP_LIMIT, this.cat.y + ny * 8);
     this.fx.add(new PopText(this.cat.x, this.cat.y - 44, stomped ? 'ふまれそう！' : 'ぶつかった！', UI.red));
     audio.sfx('hit');
+    audio.buzz(40);
   }
 
   // 足ごとに、まわった角度を足していく（360°で1周）

@@ -550,6 +550,7 @@ export class PlayScene {
     this.action = { kind: 'faint', t: 0, moved: false };
     this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'バタッ', UI.red));
     audio.sfx('faint');
+    audio.buzz([60, 60, 120]);
   }
 
   updateAction(dt) {

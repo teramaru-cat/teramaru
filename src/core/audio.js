@@ -59,6 +59,12 @@ export const audio = {
     if (bgmBus) bgmBus.gain.setTargetAtTime(on ? BGM_VOL * 0.5 : BGM_VOL, ac.currentTime, 0.1);
   },
 
+  // スマホをブルッとさせる（Android など。iPhone のブラウザは非対応）。音を消しているときはしない
+  buzz(ms) {
+    if (this.muted) return;
+    try { navigator.vibrate?.(ms); } catch { /* 非対応 */ }
+  },
+
   sfx(name, arg) {
     if (!ac || ac.state !== 'running' || this.muted) return;
     const f = SFX[name];

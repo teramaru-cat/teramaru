@@ -67,6 +67,7 @@ function resize() {
   screen.dpr = dpr;
   const coarse = window.matchMedia('(pointer: coarse)').matches;
   screen.portrait = coarse && window.innerHeight > window.innerWidth;
+  document.body.classList.toggle('portrait', screen.portrait);
 }
 
 // 画面上の位置（clientX/Y）→ 内部のドット座標
