@@ -64,6 +64,14 @@ export class Town {
     return false;
   }
 
+  // 足元のまわり（pad ドット）に池があるか（池のふちで水を飲める）
+  nearPond(x, y, pad) {
+    for (const [dx, dy] of [[-pad, 0], [pad, 0], [0, -pad - 3], [0, pad], [-pad, -pad], [pad, -pad], [-pad, pad], [pad, pad]]) {
+      if (this.grid[Math.floor((y + dy) / TILE)]?.[Math.floor((x + dx) / TILE)] === 'W') return true;
+    }
+    return false;
+  }
+
   render() {
     const [c, x] = makeCanvas(this.w, this.h);
     const rng = makeRng(this.stage.seed);

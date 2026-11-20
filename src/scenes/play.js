@@ -273,7 +273,8 @@ export class PlayScene {
   }
 
   checkWater() {
-    const p = this.findProp(['water', 'fountain'], 8);
+    // 水飲み・噴水、それと池のふち
+    const p = this.findProp(['water', 'fountain'], 8) ?? (this.town.nearPond(this.cat.x, this.cat.y, 13) ? 'pond' : null);
     if (!p) return;
     const st = this.state;
     if (st.thirst < 0.5) return; // 飲んだばかり
