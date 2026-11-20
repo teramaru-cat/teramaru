@@ -127,17 +127,12 @@ export const STAGES = {
       { type: 'litter', ...at(2, 30) },
       // 噴水・ベンチ・花・自販機
       { type: 'fountain', x: 29 * T + 8, y: 16 * T + 18 },
-      { type: 'bench', ...at(24, 13) },
-      { type: 'bench', ...at(34, 13) },
-      { type: 'bench', ...at(44, 21) },
-      { type: 'bench', ...at(46, 29) },
-      { type: 'bench', ...at(14, 8) },
       { type: 'flowerpot', ...at(26, 21) },
       { type: 'flowerpot', ...at(32, 21) },
       { type: 'vending', ...at(40, 1), y: T * 2 + 6 },
     ],
-    // ベンチ（ランドマーク）：ずっとここにいる。てらまりんぐできる
-    fixedTargets: [{ id: 'bench', ...at(14, 16) }, { id: 'bench', ...at(45, 29) }],
+    // ベンチ（ランドマーク）：ずっとここにある。てらまりんぐ（マーキング）できる。飾りのベンチは置かない（見分けがつかないので）
+    fixedTargets: [[24, 13], [34, 13], [44, 21], [46, 29], [14, 8], [14, 16]].map(([c, r]) => ({ id: 'bench', ...at(c, r) })),
     start: at(29, 21),
     hospital: at(5, 15),
   },

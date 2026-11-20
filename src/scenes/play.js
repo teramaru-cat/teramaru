@@ -595,7 +595,7 @@ export class PlayScene {
   autoRing(target, mult) {
     const tp = target.def.tp * mult;
     const getCat = () => ({ x: this.cat.x, y: this.cat.y - 8 });
-    this.fx.add(new PopText(target.x, target.y - 34, 'メロメロ！', UI.pink));
+    this.fx.add(new PopText(target.x, target.y - 34, target.def.kind === 'landmark' ? 'マーキング！' : 'メロメロ！', UI.pink));
     audio.sfx('win');
     if (mult > 1) this.fx.add(new PopText(target.x, target.y - 44, `TP×${mult}`, UI.orangeD));
     const n = Math.max(3, Math.min(10, tp));

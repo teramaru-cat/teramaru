@@ -24,8 +24,9 @@ const DOG_TOP = [
   '..ollllllllllllo....',
 ];
 const DOG_LEGS = [
-  ['..ofo.ofo..ofo.ofo..', '..olo.olo..olo.olo..', '..ooo.ooo..ooo.ooo..'],
-  ['..ofo..ofo.ofo..ofo.', '..olo..olo.olo..olo.', '..ooo..ooo.ooo..ooo.'],
+  // 足は胴の下におさめる（前足が胸より前に出ないように）
+  ['..ofoofo..ofoofo....', '..oloolo..oloolo....', '..oooooo..oooooo....'],
+  ['..ofo.ofoofo.ofo....', '..olo.oloolo.olo....', '..ooo.oooooo.ooo....'],
 ];
 
 const PIGEON_PAL = { o: INK, g: '#969cab', h: '#7a7e8e', r: '#5a968c', n: '#e6aa6e', p: '#e6828c', w: '#cdd2dc' };

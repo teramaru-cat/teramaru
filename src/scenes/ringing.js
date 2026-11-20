@@ -440,7 +440,8 @@ export class RingingScene {
     // メロメロにできたときだけ（時間切れ・お水切れ・途中でやめたときは出さない）
     if (this.result === 'win') {
       const bob = Math.round(Math.sin(this.pt * 8) * 1);
-      drawText(ctx, 'メロメロ！', W / 2, 40 + bob, { scale: 2, color: UI.pink, outline: UI.ink, align: 'center' });
+      // ベンチなど（ランドマーク）は、すりすりして においを付ける＝マーキング
+      drawText(ctx, this.def.kind === 'landmark' ? 'マーキング！' : 'メロメロ！', W / 2, 40 + bob, { scale: 2, color: UI.pink, outline: UI.ink, align: 'center' });
     }
     drawSticks(ctx);
   }
