@@ -90,6 +90,32 @@ export function drawPresence(ctx, cx, cy, t, a = 1) {
     const rr = 8 + (i % 3) * 7 + Math.sin(t * 1.7 + i) * 2;
     drawSpark(ctx, cx + Math.cos(ang) * rr, cy + Math.sin(ang) * rr * 0.7, sparkSize(t * 0.8 + i * 0.37));
   }
-  drawSpark(ctx, cx, cy, 2 + (Math.floor(t * 4) % 2));
+  drawPaw(ctx, cx, cy - Math.round(Math.sin(t * 2) * 1.5));
   ctx.globalAlpha = 1;
+}
+
+// まん中の肉球（ピンクの指4つと大きい肉球に、金色のふち）
+const PAW = [
+  '....oo.oo....',
+  '...oppoppo...',
+  '.oooppoppooo.',
+  'oppoooooooppo',
+  '.oo.ooooo.oo.',
+  '...opppppo...',
+  '..opppppppo..',
+  '..opppppppo..',
+  '...opppppo...',
+  '....ooooo....',
+];
+const PAW_COL = { o: '#c89018', p: '#ffb0c0', w: '#ffffff' };
+function drawPaw(ctx, cx, cy) {
+  const x0 = Math.round(cx - PAW[0].length / 2);
+  const y0 = Math.round(cy - PAW.length / 2);
+  PAW.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (!PAW_COL[ch]) return;
+    ctx.fillStyle = PAW_COL[ch];
+    ctx.fillRect(x0 + x, y0 + y, 1, 1);
+  }));
+  ctx.fillStyle = PAW_COL.w; // 光
+  ctx.fillRect(x0 + 4, y0 + 6, 1, 1);
 }

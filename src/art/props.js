@@ -1,4 +1,4 @@
-// 街の小物（木・爪とぎ電柱・水皿・猫砂・ベンチ・自販機・噴水・植木鉢）と、家の家具（ソファ・テレビ・テーブル・台所・冷蔵庫・三段ケージ）
+// 街の小物（木・爪とぎ電柱・水皿・猫砂・ベンチ・自販機・噴水・植木鉢）と、家の家具（ソファ・テレビ・テーブル・台所・冷蔵庫・三段ケージ・キャットタワー）
 // それぞれ画像と「足元の位置（ox, oy）」「ぶつかる箱（solid）」を返す。
 
 import { makeCanvas, fillCircle, fillEllipse } from '../core/renderer.js';
@@ -351,6 +351,28 @@ function cage() {
   return { img: c, ox: 15, oy: 53, solid: { w: 30, h: 8 } };
 }
 
+// キャットタワー（麻ひもの柱、3つの台、ぶら下がるボール）
+function catTower() {
+  const [c, x] = makeCanvas(22, 44);
+  x.fillStyle = '#dcc488';
+  x.fillRect(9, 6, 4, 36); // 柱（麻ひも）
+  x.fillStyle = '#b89a5c';
+  for (let y = 7; y < 42; y += 2) x.fillRect(9, y, 4, 1);
+  x.fillStyle = '#8a5a3a';
+  x.fillRect(1, 2, 20, 5); // 上の台
+  x.fillRect(0, 22, 14, 4); // 中の台
+  x.fillRect(2, 40, 18, 4); // 土台
+  x.fillStyle = '#c87850';
+  x.fillRect(2, 2, 18, 3);
+  x.fillRect(1, 22, 12, 2);
+  x.fillRect(3, 40, 16, 2);
+  x.fillStyle = '#f6f2ea'; // ぶら下がるボール
+  x.fillRect(17, 26, 1, 4);
+  x.fillStyle = '#f07890';
+  x.fillRect(16, 30, 3, 3);
+  return { img: c, ox: 11, oy: 43, solid: { w: 18, h: 5 } };
+}
+
 export const PROPS = {};
 
 export function buildProps() {
@@ -370,5 +392,6 @@ export function buildProps() {
     fridge: fridge(),
     diningTable: diningTable(),
     cage: cage(),
+    catTower: catTower(),
   });
 }

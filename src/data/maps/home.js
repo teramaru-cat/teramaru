@@ -22,14 +22,15 @@ export const HOME = {
   centerLines: [],
   buildings: [],
   props: [
-    // リビング：上の壁にテレビ、じゅうたんにちゃぶ台、下にテレビを向いたソファ（うしろ姿）
+    // リビング：上の壁に（左から）ケージ・テレビ・猫砂・キャットタワー。じゅうたんにちゃぶ台、下にテレビを向いたソファ（うしろ姿）
+    { type: 'cage', x: 2 * T + 12, y: 4 * T + 6 }, // てらまるの三段ケージ
     { type: 'tv', x: 6 * T + 8, y: 4 * T + 2 },
+    { type: 'litter', x: 9 * T + 6, y: 3 * T + 12 }, // てらまるのトイレ（キャットタワーのそば）
+    { type: 'catTower', x: 11 * T + 4, y: 4 * T + 2 },
     { type: 'lowTable', x: 6 * T + 8, y: 9 * T + 6 },
     { type: 'sofaBack', x: 6 * T + 8, y: 12 * T + 14 },
-    { type: 'cage', x: 11 * T + 2, y: 4 * T + 6 }, // てらまるの三段ケージ
-    { type: 'flowerpot', ...at(1, 3) },
+    { type: 'flowerpot', ...at(1, 13) },
     { type: 'water', ...at(2, 12) }, // てらまるの水皿（チュートリアルではかざり）
-    { type: 'litter', x: 4 * T + 8, y: 13 * T + 4 }, // てらまるのトイレ
     // 台所・ダイニング
     { type: 'counter', x: 18 * T, y: 3 * T + 12 },
     { type: 'fridge', x: 22 * T + 8, y: 3 * T + 12 },
