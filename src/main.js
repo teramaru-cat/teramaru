@@ -33,6 +33,8 @@ async function boot() {
   audio.init(game.save.settings?.mute);
   await loadFonts();
   buildSprites();
+  // 「よこにしてね」の画面に、寝そべったてらまる
+  document.getElementById('rotate-cat')?.getContext('2d').drawImage(SPR.catLying, 0, 0);
   buildProps();
   game.toTitle();
 

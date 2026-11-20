@@ -112,6 +112,20 @@ function frames(top, legs, pal, flip = false) {
   return ['idle', 'a', 'b'].map((k) => makeSprite([...top, ...legs[k]], pal, { flip }));
 }
 
+// 寝そべったてらまる（26×10。「よこにしてね」の画面用）：体は左へのびて、顔は正面で目を閉じている
+const LYING = [
+  '.................o......o.',
+  '................obo....obo',
+  '................opcoooocbo',
+  '....ooooooooooooobbcwwccbo',
+  '...occbccbbccbccobbbwwcbbo',
+  '..ocbbccbccbbcccobobwwbobo',
+  '....ocbbccbccccwobbwppwbwo',
+  '.ooooowwwwwwwwwwoowcwwcwo.',
+  'occcowwwwwwwwwwwoowwwwwwo.',
+  '.ooooooooooooooooooooooo..',
+];
+
 // ---- ハート ----
 const HEART = [
   '.oo.oo.',
@@ -139,6 +153,7 @@ export function buildSprites() {
     right: frames(SIDE_TOP, SIDE_LEGS, RIGHT_PAL),
     left: frames(SIDE_TOP, SIDE_LEGS, LEFT_PAL, true),
   };
+  SPR.catLying = makeSprite(LYING, CAT);
   SPR.heart = makeSprite(HEART, { o: '#8a2040', h: '#f06080', w: '#ffd0dc' });
   SPR.drop = makeSprite(DROP, { o: '#1f4f9a', b: '#4aa0e0', w: '#ffffff' });
   SPR.dropEmpty = makeSprite(DROP, { o: '#8a8a90', b: '#d8d4cc', w: '#eeeae2' });
