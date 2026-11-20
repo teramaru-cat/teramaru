@@ -95,7 +95,7 @@ export class KamatteScene {
     for (const p of input.fresh()) p.role = 'none';
     if (Math.floor(this.pt * 2.5) !== Math.floor((this.pt - 1 / 60) * 2.5)) {
       const s = this.scr(76, 50);
-      const words = { dog: ['ペロペロ', 'わんっ'], pigeons: ['クルック', 'ポッポー'] }[this.target.id] ?? ['ゴロゴロ', 'なでなで'];
+      const words = this.target.def.words;
       this.fx.add(new PopText(s.x + (Math.random() - 0.5) * 30, s.y, words[Math.random() < 0.5 ? 0 : 1], UI.pink, 0.8));
     }
   }
@@ -185,7 +185,7 @@ export class KamatteScene {
     if (this.phase === 'in') return;
 
     // 見出し
-    const title = this.kind === 'nade' && this.target.def.kind !== 'human' ? 'なかよし' : TITLE[this.kind];
+    const title = (this.kind === 'nade' && this.target.def.kamatteTitle) || TITLE[this.kind];
     drawText(ctx, title, W / 2, b.y + 3, { font: 'small', scale: 2, color: UI.orangeD, outline: UI.white, align: 'center' });
     this.fx.draw(ctx);
     if (this.phase === 'play') this.drawGuide(ctx, b);
@@ -228,8 +228,8 @@ export class KamatteScene {
     const py = b.y + PH - 6 - person.height * S;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
     ctx.fillRect(px + 4, b.y + PH - 8, person.width * S - 8, 4);
-    if (animal && this.target.id === 'dog') {
-      // 犬は右向きの絵なので、左（てらまるの方）へ向ける
+    if (this.target.def.faces === 'right') {
+      // 右向きの絵は、左（てらまるの方）へ向け直す
       ctx.save();
       ctx.translate(px + person.width * S, py);
       ctx.scale(-1, 1);

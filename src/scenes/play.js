@@ -269,7 +269,7 @@ export class PlayScene {
 
   // 爪とぎボーナス：人に触れたら使う（TP2倍）
   takeScratchBonus(target) {
-    if (this.state.scratch > 0 && target.def.kind === 'human') {
+    if (this.state.scratch > 0 && target.def.scratchBonus) {
       this.state.scratch = 0;
       return BAL.scratch.mult;
     }
@@ -339,7 +339,7 @@ export class PlayScene {
   // おねだりできる相手（人・動物で、近くにいて、去っていないもの）
   onedariList() {
     const R = BAL.onedari.radius;
-    return this.spawner.targets.filter((t) => t.state === 'idle' && (t.def.kind === 'human' || t.def.kind === 'animal') && !this.strays.guards(t)
+    return this.spawner.targets.filter((t) => t.state === 'idle' && t.def.canOnedari && !this.strays.guards(t)
       && Math.hypot(t.x - this.cat.x, t.y - this.cat.y) <= R);
   }
 
@@ -622,7 +622,7 @@ export class PlayScene {
   autoRing(target, mult) {
     const tp = target.def.tp * mult;
     const getCat = () => ({ x: this.cat.x, y: this.cat.y - 8 });
-    this.fx.add(new PopText(target.x, target.y - 34, target.def.kind === 'landmark' ? 'マーキング！' : 'メロメロ！', UI.pink));
+    this.fx.add(new PopText(target.x, target.y - 34, target.def.winText, UI.pink));
     audio.sfx('win');
     if (mult > 1) this.fx.add(new PopText(target.x, target.y - 44, `TP×${mult}`, UI.orangeD));
     const n = Math.max(3, Math.min(10, tp));

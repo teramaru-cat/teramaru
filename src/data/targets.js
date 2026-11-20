@@ -1,10 +1,34 @@
 // ターゲットの定義（仕様書 §5.4・§6.2）。数値の調整はここで。
+// どのステージに何人出るかは areas.js の targets で決める。
 //
-// legs: てらまりんぐ画面での足の位置（足元の地面の真ん中からのずれ、画面ドット）と太さ r
-//       cane: true は杖（細い）
-// motion: still（棒立ち）| stomp（足踏み、period 秒ごとに左右交互）| lively（よく動く）
-// look: 街での見た目と、てらまりんぐ画面での足の見た目
-// どのステージに何人出るかは areas.js の targets で決める
+// 1人分の書き方：
+//   name        … 画面に出す名前
+//   kind        … human（人）| animal（動物）| landmark（ベンチなど）。下の KINDS のふつうの値が入る
+//   durability  … メロメロに必要な周回（ハートの数）
+//   tp          … メロメロにしたときにもらえる TP
+//   drops       … 落とすご飯 { item: ITEMS の id, count: 個数 }。なければ null
+//   motion      … still（棒立ち）| stomp（足踏み、period 秒ごとに左右交互）| lively（よく動く。sway で揺れの大きさと速さ）
+//   legs        … てらまりんぐ画面での足の位置（足元の地面の真ん中からのずれ、画面ドット）と太さ r。cane: true は杖
+//   look        … 見た目。人は服などの色、動物・ベンチは type（dog | pigeons | bench、絵は art/animals.js）
+//   wander      … 街でうろうろする速さ（ドット/秒）。なければ立ち止まったまま
+//   fixed       … true なら地図の決まった場所にずっといる（地図の fixedTargets に置く）
+//   owner       … 一緒に歩く飼い主の見た目（犬）
+//   onedari     … おねだりの成功確率 { base: 基本, perTp: TP 1 あたりの上がり幅 }
+//   ふつうの値を変えたいときだけ書くもの（KINDS を上書き）：
+//   canOnedari  … おねだりできるか
+//   scratchBonus… 爪とぎの TP 2倍が効くか
+//   leaves      … メロメロにしたら去るか（false ならその場で休む）
+//   winText     … メロメロにしたときの言葉
+//   kamatteTitle… 構ってもらう（なでなで）のときの題（なければ「なでなで」）
+//   words       … 構ってもらっているときに出る言葉（2つ）
+//   faces       … 街の絵の向き（right なら、構ってもらう画面で左＝てらまるの方へ向け直す）
+
+// 種類ごとのふつうの値
+export const KINDS = {
+  human: { canOnedari: true, scratchBonus: true, leaves: true, winText: 'メロメロ！', kamatteTitle: null, words: ['ゴロゴロ', 'なでなで'] },
+  animal: { canOnedari: true, scratchBonus: false, leaves: true, winText: 'メロメロ！', kamatteTitle: 'なかよし', words: ['ゴロゴロ', 'すりすり'] },
+  landmark: { canOnedari: false, scratchBonus: false, leaves: false, winText: 'マーキング！', kamatteTitle: null, words: [] },
+};
 
 export const TARGETS = {
   salaryman: {
@@ -100,6 +124,8 @@ export const TARGETS = {
     sway: { x: 12, y: 3, speed: 0.6 },
     legs: [{ x: -26, y: 0, r: 4 }, { x: -14, y: -6, r: 4 }, { x: 14, y: -6, r: 4 }, { x: 26, y: 0, r: 4 }],
     look: { type: 'dog', fur: '#c8904a', light: '#f4e2c4', dark: '#96643a', collar: '#d04040' },
+    faces: 'right',
+    words: ['ペロペロ', 'わんっ'],
     // 飼い主（街ではリードでつないで一緒に歩く。てらまりんぐの相手にはならない）
     owner: { skin: '#f2c9a0', hair: '#5a3a2a', top: '#7aa8c8', bottom: '#5a5a6a', shoes: '#3a2a20', garment: 'coat' },
     wander: 12,
@@ -114,6 +140,7 @@ export const TARGETS = {
     motion: 'lively',
     sway: { x: 20, y: 4, speed: 1.6 },
     legs: [{ x: -48, y: 0, r: 2 }, { x: -40, y: 0, r: 2 }, { x: -4, y: -6, r: 2 }, { x: 4, y: -6, r: 2 }, { x: 40, y: 0, r: 2 }, { x: 48, y: 0, r: 2 }],
+    words: ['クルック', 'ポッポー'],
     look: { type: 'pigeons', body: '#969cab', wing: '#cdd2dc', head: '#7a7e8e', neck: '#5a968c', beak: '#e6aa6e', leg: '#e6828c' },
     wander: 6,
     onedari: { base: 0.05, perTp: 0.006 },
@@ -131,6 +158,9 @@ export const TARGETS = {
     look: { type: 'bench', wood: '#b07a48' },
   },
 };
+
+// 種類のふつうの値を入れる（それぞれに書いたものが優先）
+for (const [id, t] of Object.entries(TARGETS)) TARGETS[id] = { ...KINDS[t.kind], ...t };
 
 // 落とし物（ご飯）。1個 = ご飯ポイント fp
 export const ITEMS = {

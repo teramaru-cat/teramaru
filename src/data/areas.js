@@ -94,9 +94,9 @@ export const STAGES = {};
 AREAS.forEach((area, ai) => {
   area.stages.forEach((st, si) => {
     st.area = area;
-    st.areaNo = ai + 1;
+    st.areaNo = ai; // チュートリアルがエリア0（てらまるのいえ＝0-1）、きんじょがエリア1（じゅうたくち＝1-1）
     st.no = si + 1;
-    st.label = st.boss ? `${ai + 1}-ボス` : `${ai + 1}-${si + 1}`;
+    st.label = st.boss ? `${ai}-ボス` : `${ai}-${si + 1}`;
     st.rules = { ...RULES, ...st.rules };
     STAGES[st.id] = st;
   });

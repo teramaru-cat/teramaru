@@ -21,7 +21,7 @@
 
 - ステージの並び・出てくる人と人数・使えるしくみ（お水・ご飯・フィーバーなど）・開く条件：[src/data/areas.js](src/data/areas.js) の表だけを書きかえる
 - 街の地図：[src/data/maps/](src/data/maps/) にステージごとのファイル（新しいステージは地図を作って areas.js の `map` に入れる。`map: null` のあいだは「じゅんびちゅう」）
-- ターゲット（人・動物・ベンチ）の見た目と強さ：[src/data/targets.js](src/data/targets.js)
+- ターゲット（人・動物・ベンチ）：[src/data/targets.js](src/data/targets.js) の表。強さ・落とすご飯・動き・足の位置・見た目・おねだりの確率に加えて、おねだりできるか・爪とぎ2倍が効くか・去るか・メロメロのときの言葉・構ってもらうときの言葉も、ここで1人ずつ決める（種類ごとのふつうの値は同じファイルの KINDS）。絵の形そのものは art/people.js（人）と art/animals.js（動物・ベンチ）
 - 数値の調整：[src/data/balance.js](src/data/balance.js)
 
 ## 動かし方

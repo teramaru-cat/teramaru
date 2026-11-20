@@ -65,7 +65,7 @@ export class Target {
 
   leave(fromX, fromY) {
     // ランドマーク（ベンチなど）は去らずに、しばらく休むだけ
-    if (this.def.kind === 'landmark') { this.cooldown = BAL.town.landmarkRest; return; }
+    if (!this.def.leaves) { this.cooldown = BAL.town.landmarkRest; return; }
     this.state = 'leaving';
     this.leaveT = 0;
     const dx = this.x - fromX;

@@ -121,7 +121,7 @@ export class StageSelectScene {
 
     // エリア名と ◀ ▶
     const ai = AREAS.indexOf(this.area);
-    const head = `エリア${ai + 1}  ${this.area.name}`;
+    const head = `エリア${ai}  ${this.area.name}`; // チュートリアルはエリア0
     const hw = textWidth(head, 'small') + 16;
     panel(ctx, Math.round(W / 2 - hw / 2), 26, hw, 14, '#fff6e0');
     drawText(ctx, head, W / 2, 29, { font: 'small', color: UI.ink, align: 'center' });
