@@ -111,6 +111,18 @@ export function drawAnimalBody(ctx, look, cx, bx, by, GROUND) {
     ctx.fillRect(E(x + 36), E(gy - 52), 2, 2); // 目
     ctx.fillStyle = '#ec8c96';
     if (Math.floor(t * 3) % 2) ctx.fillRect(E(x + 44), E(gy - 38), 2, 4); // ベロ
+    // リード：首輪から、画面の外（左上）にいる飼い主の手へ。少したるませる
+    const lx0 = x + 26;
+    const ly0 = gy - 34;
+    const lx1 = cx - 110;
+    const ly1 = -8;
+    const n = Math.ceil(Math.hypot(lx1 - lx0, ly1 - ly0)); // すき間ができないよう1ドットずつ
+    ctx.fillStyle = '#c03030';
+    for (let i = 0; i <= n; i++) {
+      const k = i / n;
+      const sag = Math.sin(k * Math.PI) * 14;
+      ctx.fillRect(E(lx0 + (lx1 - lx0) * k), E(ly0 + (ly1 - ly0) * k + sag), 2, 2);
+    }
   } else if (look.type === 'pigeons') {
     [-44, 0, 44].forEach((off, i) => {
       const k = i === 1 ? -6 : 0; // 真ん中は少し奥
