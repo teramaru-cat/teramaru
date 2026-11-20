@@ -235,7 +235,7 @@ export class Tutorial {
   }
 
   // 予防接種の場面（神の世界のようなレベチな場所）：
-  // 金の柱と虹、上から光、雲の上の金の診察台。雲から光る金の手が、虹色のワクチンを打つ。打ったら光があふれて「えらい！」
+  // 金の柱と虹、上から光、雲の上の金の診察台。虹色のワクチンの注射だけが浮いてきて打つ。打ったら光があふれて「えらい！」
   drawVet(ctx) {
     const W = screen.W;
     const H = screen.H;
@@ -343,36 +343,26 @@ export class Tutorial {
       const push = t >= VET.poke - 0.2 && t < VET.poke + 0.3 ? 4 : 0;
       const tipX = Math.round(W + 10 - (W / 2 - 4) * armK) - push; // 針の先
       const ay = top - 22;
-      // 光の腕（まわりに光）
-      ctx.fillStyle = 'rgba(255,240,170,0.45)';
-      ctx.fillRect(tipX + 36, ay - 10, W, 24);
-      ctx.fillStyle = '#c89018';
-      ctx.fillRect(tipX + 40, ay - 6, W, 16);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(tipX + 41, ay - 5, W, 14);
-      ctx.fillStyle = '#f0c040';
-      ctx.fillRect(tipX + 41, ay - 5, 4, 14); // 金のそで口
-      ctx.fillStyle = '#ffe8b8';
-      ctx.fillRect(tipX + 32, ay - 3, 10, 9); // 手
-      ctx.fillStyle = '#c89018';
-      ctx.fillRect(tipX + 32, ay - 3, 10, 1);
-      // 雲（腕の出どころ）
-      drawCloudPuff(ctx, Math.min(W - 10, tipX + 80), ay + 2, 1.2);
+      // 注射だけが ふわふわ浮いてくる（まわりがぼんやり光る）
+      const bob = Math.round(Math.sin(now * 4) * 1.5);
+      const ayb = ay + bob;
+      ctx.fillStyle = 'rgba(255,240,170,0.5)';
+      ctx.fillRect(tipX + 8, ayb - 6, 34, 15);
       // ワクチン（金のつつに虹色の中身）
       ctx.fillStyle = '#8a5a10';
-      ctx.fillRect(tipX + 12, ay - 2, 22, 7);
+      ctx.fillRect(tipX + 12, ayb - 2, 22, 7);
       ctx.fillStyle = '#fffaf0';
-      ctx.fillRect(tipX + 13, ay - 1, 20, 5);
+      ctx.fillRect(tipX + 13, ayb - 1, 20, 5);
       const fill = t >= VET.poke ? 6 : 18;
       for (let i = 0; i < fill; i++) {
         ctx.fillStyle = rainbow[(i + Math.floor(now * 10)) % rainbow.length];
-        ctx.fillRect(tipX + 14 + i, ay, 1, 3);
+        ctx.fillRect(tipX + 14 + i, ayb, 1, 3);
       }
       ctx.fillStyle = '#f0c040';
-      ctx.fillRect(tipX + 34, ay - 4, 2, 11);
+      ctx.fillRect(tipX + 34, ayb - 4, 2, 11);
       ctx.fillStyle = '#d8dce0';
-      ctx.fillRect(tipX, ay + 1, 12, 1); // 針
-      drawSpark(ctx, tipX, ay + 1, sparkSize(now * 2));
+      ctx.fillRect(tipX, ayb + 1, 12, 1); // 針
+      drawSpark(ctx, tipX, ayb + 1, sparkSize(now * 2));
     }
     // 打った瞬間：光の輪が広がって、画面が白く光る
     if (t >= VET.poke && t < VET.poke + 0.8) {
