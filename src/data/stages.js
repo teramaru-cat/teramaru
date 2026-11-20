@@ -136,6 +136,8 @@ export const STAGES = {
       { type: 'flowerpot', ...at(32, 21) },
       { type: 'vending', ...at(40, 1), y: T * 2 + 6 },
     ],
+    // ベンチ（ランドマーク）：ずっとここにいる。てらまりんぐできる
+    fixedTargets: [{ id: 'bench', ...at(14, 16) }, { id: 'bench', ...at(45, 29) }],
     start: at(29, 21),
     hospital: at(5, 15),
   },

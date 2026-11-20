@@ -63,6 +63,8 @@ export class Target {
   }
 
   leave(fromX, fromY) {
+    // ランドマーク（ベンチなど）は去らずに、しばらく休むだけ
+    if (this.def.kind === 'landmark') { this.cooldown = BAL.town.landmarkRest; return; }
     this.state = 'leaving';
     this.leaveT = 0;
     const dx = this.x - fromX;
@@ -83,7 +85,8 @@ export class Target {
     const x = Math.round(this.x) - cx;
     const y = Math.round(this.y) - cy;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
-    ctx.fillRect(x - 6, y - 1, 12, 2);
+    const hw = Math.floor(img.width / 2);
+    ctx.fillRect(x - hw + 1, y - 1, img.width - 2, 2);
     const a = this.state === 'leaving' ? Math.max(0, 1 - this.leaveT / 1.6) : this.cooldown > 0 ? 0.55 : 1;
     ctx.globalAlpha = a;
     const bob = !this.moving && this.def.motion !== 'still' && Math.floor(this.t * 3) % 2 ? 1 : 0;
@@ -91,10 +94,10 @@ export class Target {
       ctx.save();
       ctx.translate(x, 0);
       ctx.scale(-1, 1);
-      ctx.drawImage(img, -7, y - img.height + 1 + bob);
+      ctx.drawImage(img, -hw, y - img.height + 1 + bob);
       ctx.restore();
     } else {
-      ctx.drawImage(img, x - 7, y - img.height + 1 + bob);
+      ctx.drawImage(img, x - hw, y - img.height + 1 + bob);
     }
     ctx.globalAlpha = 1;
   }
@@ -104,7 +107,9 @@ export class Target {
 export class Spawner {
   constructor(town, stageId) {
     this.town = town;
-    this.ids = Object.keys(TARGETS).filter((id) => TARGETS[id].stages.includes(stageId) && SPR.people[id]);
+    this.ids = Object.keys(TARGETS).filter((id) => TARGETS[id].stages.includes(stageId) && SPR.people[id] && !TARGETS[id].fixed);
+    // 決まった場所にずっといるターゲット（ベンチなど）
+    this.fixed = (town.stage.fixedTargets ?? []).map((f) => { const t = new Target(f.id, f.x, f.y); t.flip = false; return t; });
     this.targets = [];
     this.waiting = 0; // 補充待ちの数
     this.timers = [];
@@ -122,11 +127,14 @@ export class Spawner {
   }
 
   fill(cat) {
-    while (this.targets.length + this.timers.length < BAL.town.targets) {
+    for (const t of this.fixed) if (!this.targets.includes(t)) this.targets.push(t);
+    while (this.roaming() + this.timers.length < BAL.town.targets) {
       const t = this.spawn(cat, true);
       if (!t) break;
     }
   }
+
+  roaming() { return this.targets.filter((t) => !t.def.fixed).length; }
 
   spawn(cat, initial = false) {
     for (let tries = 0; tries < 40; tries++) {
@@ -136,7 +144,7 @@ export class Spawner {
       if (this.targets.some((t) => Math.hypot(t.x - s.x, t.y - s.y) < 56)) continue;
       // 同じ種類ばかりにならないよう、少ないものを優先
       const counts = Object.fromEntries(this.ids.map((id) => [id, 0]));
-      for (const t of this.targets) counts[t.id] = (counts[t.id] ?? 0) + 1;
+      for (const t of this.targets) if (t.id in counts) counts[t.id] += 1;
       const min = Math.min(...Object.values(counts));
       const pool = this.ids.filter((id) => counts[id] === min);
       const id = pool[Math.floor(Math.random() * pool.length)];

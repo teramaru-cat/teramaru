@@ -4,8 +4,9 @@
 
 import { makeCanvas, shade } from '../core/renderer.js';
 import { UI } from './palette.js';
+import { drawAnimalLeg, drawAnimalBody } from './animals.js';
 
-const INK = '#2a1d17';
+export const INK = '#2a1d17';
 const WHITE = '#f6f2ea';
 
 function outline(c, ctx) {
@@ -166,9 +167,9 @@ export function makeCrouch(look) {
 
 // ---- てらまりんぐ画面（2倍） ----
 
-const E = (v) => Math.round(v / 2) * 2; // 2ドット単位にそろえる
+export const E = (v) => Math.round(v / 2) * 2; // 2ドット単位にそろえる
 
-function box(ctx, x, y, w, h, col) {
+export function box(ctx, x, y, w, h, col) {
   ctx.fillStyle = INK;
   ctx.fillRect(E(x) - 2, E(y) - 2, E(w) + 4, E(h) + 4);
   ctx.fillStyle = col;
@@ -177,6 +178,7 @@ function box(ctx, x, y, w, h, col) {
 
 // 1本の足（x, y は地面に着いている点。lift は持ち上がっている高さ）
 export function drawLeg(ctx, look, leg, x, y, lift, topY) {
+  if (look.type) { drawAnimalLeg(ctx, look, leg, x, y, lift); return; }
   const fy = y - lift;
   if (lift > 0.5) {
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
@@ -208,7 +210,8 @@ export function drawLeg(ctx, look, leg, x, y, lift, topY) {
 }
 
 // 足の上にかぶさる服のすそ（体ごと動くので bx でずらす）
-export function drawGarment(ctx, look, cx, bx) {
+export function drawGarment(ctx, look, cx, bx, by = 0, ground = 112) {
+  if (look.type) { drawAnimalBody(ctx, look, cx, bx, by, ground); return; }
   const x = cx + bx;
   switch (look.garment) {
     case 'coat':
@@ -328,6 +331,19 @@ FOOD_ROWS.tomato = {
     '..ooooo..',
   ],
   pal: { o: INK, r: '#e04030', g: '#3a9a3a', w: '#ff9a8a' },
+};
+
+// 犬：ジャーキー
+FOOD_ROWS.jerky = {
+  rows: [
+    '.ooooooo...',
+    'ojjjjjjjoo.',
+    'ojljjjjjjjo',
+    '.ojjjjjjjjo',
+    '..oojjjjjjo',
+    '....ooooo..',
+  ],
+  pal: { o: INK, j: '#a0522d', l: '#c87850' },
 };
 
 // HUD の「ご飯」アイコン（猫のごはん皿）

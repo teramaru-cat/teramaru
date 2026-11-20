@@ -95,7 +95,8 @@ export class KamatteScene {
     for (const p of input.fresh()) p.role = 'none';
     if (Math.floor(this.pt * 2.5) !== Math.floor((this.pt - 1 / 60) * 2.5)) {
       const s = this.scr(76, 50);
-      this.fx.add(new PopText(s.x + (Math.random() - 0.5) * 30, s.y, Math.random() < 0.5 ? 'ゴロゴロ' : 'なでなで', UI.pink, 0.8));
+      const words = { dog: ['ペロペロ', 'わんっ'], pigeons: ['クルック', 'ポッポー'] }[this.target.id] ?? ['ゴロゴロ', 'なでなで'];
+      this.fx.add(new PopText(s.x + (Math.random() - 0.5) * 30, s.y, words[Math.random() < 0.5 ? 0 : 1], UI.pink, 0.8));
     }
   }
 
@@ -184,7 +185,7 @@ export class KamatteScene {
     if (this.phase === 'in') return;
 
     // 見出し
-    const title = TITLE[this.kind];
+    const title = this.kind === 'nade' && this.target.def.kind !== 'human' ? 'なかよし' : TITLE[this.kind];
     drawText(ctx, title, W / 2, b.y + 3, { font: 'small', scale: 2, color: UI.orangeD, outline: UI.white, align: 'center' });
     this.fx.draw(ctx);
     if (this.phase === 'play') this.drawGuide(ctx, b);
@@ -219,13 +220,24 @@ export class KamatteScene {
   drawPair(ctx, b) {
     const S = 3;
     const t = this.pt;
-    // なでなでは、しゃがんだ絵（のばす腕は別に描く）
-    const person = SPR.people[this.target.id][this.kind === 'nade' ? 2 : 0];
-    const px = b.x + (this.kind === 'nade' ? 86 : 150); // なでなでは、しゃがんですぐ横に
+    // なでなでは、しゃがんだ絵（のばす腕は別に描く）。動物はそのままの絵を、てらまるの方へ向けて
+    const animal = this.target.def.kind !== 'human';
+    const frames = SPR.people[this.target.id];
+    const person = animal ? frames[this.kind === 'nade' && Math.floor(t * 3) % 2 ? 1 : 0] : frames[this.kind === 'nade' ? 2 : 0];
+    const px = b.x + (this.kind === 'nade' ? (animal ? 92 : 86) : (animal ? 140 : 150)); // なでなでは、すぐ横に
     const py = b.y + PH - 6 - person.height * S;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
     ctx.fillRect(px + 4, b.y + PH - 8, person.width * S - 8, 4);
-    ctx.drawImage(person, px, py, person.width * S, person.height * S);
+    if (animal && this.target.id === 'dog') {
+      // 犬は右向きの絵なので、左（てらまるの方）へ向ける
+      ctx.save();
+      ctx.translate(px + person.width * S, py);
+      ctx.scale(-1, 1);
+      ctx.drawImage(person, 0, 0, person.width * S, person.height * S);
+      ctx.restore();
+    } else {
+      ctx.drawImage(person, px, py, person.width * S, person.height * S);
+    }
 
     // てらまる
     let img = SPR.cat.right[0];
@@ -244,7 +256,7 @@ export class KamatteScene {
     ctx.fillRect(b.x + 70 - 18, b.y + PH - 8, 36, 4);
     ctx.drawImage(img, Math.round(cx), Math.round(cyy), cw, ch);
 
-    if (this.kind === 'nade') {
+    if (this.kind === 'nade' && !animal) {
       // 人の肩から腕がのびて、手が頭の上を行ったり来たり
       const hx = Math.round(b.x + 70 + Math.sin(t * 9) * 8);
       const hy = Math.round(cyy - 7 + squish);
@@ -280,8 +292,9 @@ export class KamatteScene {
     }
     if (this.kind === 'toy') {
       // 猫じゃらし：手から先が揺れる
-      const hx = px + 6;
-      const hy = py + 40;
+      // 動物は口にくわえる
+      const hx = animal ? px + 6 : px + 6;
+      const hy = animal ? py + 16 : py + 40;
       const tipX = Math.round(b.x + 100 + Math.sin(t * 5) * 16);
       const tipY = Math.round(b.y + 52 + Math.cos(t * 7) * 12);
       ctx.strokeStyle = '#6a4a2a';

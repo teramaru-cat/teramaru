@@ -5,6 +5,7 @@ import { CAT } from './palette.js';
 import { makeCanvas } from '../core/renderer.js';
 import { makePerson, makeCrouch, FOOD_ROWS, FOOD_ICON } from './people.js';
 import { TARGETS } from '../data/targets.js';
+import { ANIMAL_ROWS } from './animals.js';
 
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -174,5 +175,6 @@ export function buildSprites() {
   SPR.people = {};
   for (const [id, t] of Object.entries(TARGETS)) {
     if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true), makeCrouch(t.look)];
+    else if (ANIMAL_ROWS[id]) SPR.people[id] = ANIMAL_ROWS[id].frames.map((rows) => makeSprite(rows, ANIMAL_ROWS[id].pal));
   }
 }

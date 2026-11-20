@@ -96,6 +96,47 @@ export const TARGETS = {
     look: { skin: '#e8b890', hair: '#2a2a30', hat: 'band', bandColor: '#3a6ab0', top: '#f0e0b0', apron: '#3a8a4a', bottom: '#6b5a40', shoes: '#3a2a20', garment: 'apron' },
     onedari: { base: 0.35, perTp: 0.010 },
   },
+  dog: {
+    name: '散歩中の犬',
+    kind: 'animal',
+    durability: 4,
+    tp: 10,
+    drops: { item: 'jerky', count: 3 },
+    stages: [2, 3, 4],
+    motion: 'lively',
+    sway: { x: 12, y: 3, speed: 0.6 },
+    legs: [{ x: -34, y: 0, r: 5 }, { x: -20, y: -8, r: 5 }, { x: 22, y: -8, r: 5 }, { x: 36, y: 0, r: 5 }],
+    look: { type: 'dog', fur: '#c8904a', light: '#f4e2c4', dark: '#96643a', collar: '#d04040' },
+    wander: 12,
+    onedari: { base: 0.15, perTp: 0.007 },
+  },
+  pigeons: {
+    name: '鳩の群れ',
+    kind: 'animal',
+    durability: 3,
+    tp: 12,
+    drops: null,
+    stages: [2, 3, 4],
+    motion: 'lively',
+    sway: { x: 20, y: 4, speed: 1.6 },
+    legs: [{ x: -48, y: 0, r: 2 }, { x: -40, y: 0, r: 2 }, { x: -4, y: -6, r: 2 }, { x: 4, y: -6, r: 2 }, { x: 40, y: 0, r: 2 }, { x: 48, y: 0, r: 2 }],
+    look: { type: 'pigeons', body: '#969cab', wing: '#cdd2dc', head: '#7a7e8e', neck: '#5a968c', beak: '#e6aa6e', leg: '#e6828c' },
+    wander: 6,
+    onedari: { base: 0.05, perTp: 0.006 },
+  },
+  // ランドマーク：決まった場所にずっとある（去らない。メロメロにしたあとはしばらく休み）
+  bench: {
+    name: '公園のベンチ',
+    kind: 'landmark',
+    durability: 5,
+    tp: 8,
+    drops: null,
+    stages: [2],
+    fixed: true,
+    motion: 'still',
+    legs: [{ x: -44, y: 0, r: 4 }, { x: -36, y: -12, r: 4 }, { x: 36, y: -12, r: 4 }, { x: 44, y: 0, r: 4 }],
+    look: { type: 'bench', wood: '#b07a48' },
+  },
 };
 
 // 落とし物（ご飯）。1個 = ご飯ポイント fp
@@ -106,4 +147,5 @@ export const ITEMS = {
   fish: { name: 'おさかな', fp: 2 },
   meat: { name: 'ほねつき肉', fp: 2 },
   tomato: { name: 'トマト', fp: 2 },
+  jerky: { name: 'ジャーキー', fp: 2 },
 };

@@ -366,7 +366,7 @@ export class RingingScene {
     items.push({ y: this.cat.y, draw: () => this.drawCat(ctx) });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) it.draw();
-    drawGarment(ctx, look, this.gx, this.bx);
+    drawGarment(ctx, look, this.gx, this.bx, this.by, GROUND_Y);
   }
 
   drawRing(ctx, L) {
