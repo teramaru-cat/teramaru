@@ -201,11 +201,11 @@ export class Spawner {
   }
 
   // てらまるが触れているターゲット
-  touching(cat) {
+  touching(cat, skip = null) {
     let best = null;
     let bestD = BAL.town.touchDist;
     for (const t of this.targets) {
-      if (!t.canRing()) continue;
+      if (!t.canRing() || skip?.(t)) continue;
       const d = Math.hypot(t.x - cat.x, (t.y - cat.y) * 1.4);
       if (d < bestD) { best = t; bestD = d; }
     }

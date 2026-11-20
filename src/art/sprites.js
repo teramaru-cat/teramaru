@@ -158,6 +158,21 @@ export function buildSprites() {
     left: frames(SIDE_TOP, SIDE_LEGS, LEFT_PAL, true),
   };
   SPR.catLying = makeSprite(LYING, CAT);
+  // ほかの猫（形はてらまると同じで、色ちがい）：黒猫・グレーのしま猫
+  const STRAY = {
+    black: { ...CAT, c: '#3d3640', b: '#2e2a32', w: '#4f4856', e: '#e8d040', g: '#e8d040', p: '#c87080' },
+    tabby: { ...CAT, c: '#9a9aa4', b: '#5e5e68', w: '#e4e4ea', e: '#7ab040', g: '#7ab040' },
+  };
+  SPR.strays = {};
+  for (const [k, pal] of Object.entries(STRAY)) {
+    const side = { ...pal, H: pal.c, F: pal.c, E: pal.e };
+    SPR.strays[k] = {
+      down: frames(FRONT_TOP, FB_LEGS, pal),
+      up: frames(BACK_TOP, FB_LEGS, pal),
+      right: frames(SIDE_TOP, SIDE_LEGS, side),
+      left: frames(SIDE_TOP, SIDE_LEGS, side, true),
+    };
+  }
   // おしりを前へ寄せたコマ：後ろ足の先より右の1列を抜いて、左を1つ空ける（ドットはくずさない）
   SPR.catLyingIn = makeSprite(LYING.map((r) => `.${r.slice(0, 7)}${r.slice(8)}`), CAT);
   SPR.heart = makeSprite(HEART, { o: '#8a2040', h: '#f06080', w: '#ffd0dc' });

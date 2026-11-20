@@ -12,6 +12,7 @@ import { ITEMS } from '../data/targets.js';
 import { getTown } from '../game/town.js';
 import { Cat } from '../game/cat.js';
 import { Spawner } from '../game/target.js';
+import { Strays } from '../game/othercat.js';
 import { claimMove, moveVector, drawSticks } from '../game/control.js';
 import { Effects, PopText, Absorb, heartAbsorb } from '../game/effects.js';
 import { liveScore } from '../game/score.js';
@@ -61,6 +62,8 @@ export class PlayScene {
     this.ending = 0; // 時間切れの「おしまい！」を見せている残り秒
     this.spawner = new Spawner(this.town, stageId);
     this.spawner.fill(this.cat);
+    this.strays = new Strays(this.town, stageId, this.cat); // ほかの猫（ステージ2〜）
+    this.hiss = 0; // シャー！の残り秒
     this.fx = new Effects(); // 街の中の演出（座標は街）
     this.flash = 0; // 白いフェード
     this.lastCam = { x: 0, y: 0 };
@@ -214,17 +217,28 @@ export class PlayScene {
     if (this.feverIntro > 0) this.feverIntro -= dt;
 
     // 動けない動作（爪とぎ・トイレ・倒れる）
+    if (this.hiss > 0) this.hiss -= dt;
     if (this.action) {
       this.cat.stop();
       this.updateAction(dt);
       this.spawner.update(dt, this.cat);
+      this.strays.update(dt, this.town, this.spawner.targets, this.cat);
       return;
     }
     if (this.thirsty()) { this.startFaint(); return; }
 
     this.cat.update(dt, moveVector(this.catScreen()), this.town, this.speedMul(), this.turnRate());
+    // ニガテゾーンには入れない：押し戻されて「シャー！」
+    if (this.strays.repel(this.cat, this.town)) {
+      if (this.hiss <= 0) {
+        this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'シャー！', UI.red, 0.8));
+        audio.sfx('hiss');
+      }
+      this.hiss = 0.6;
+    }
     this.followCamera(dt);
     this.spawner.update(dt, this.cat);
+    this.strays.update(dt, this.town, this.spawner.targets, this.cat);
     if (this.state.toilet > 0 && Math.random() < dt * (this.cat.moving ? 40 : 16)) this.addDashSpark();
 
     this.checkWater();
@@ -232,7 +246,7 @@ export class PlayScene {
     this.checkLitter();
 
     // ターゲットに触れたら、てらまりんぐへ（トイレのあとのダッシュ中は自動で成功）
-    const t = this.spawner.touching(this.cat);
+    const t = this.spawner.touching(this.cat, (x) => this.strays.guards(x));
     if (t) {
       const mult = this.takeScratchBonus(t);
       if (this.state.toilet > 0) this.autoRing(t, mult);
@@ -319,7 +333,7 @@ export class PlayScene {
   // おねだりできる相手（人・動物で、近くにいて、去っていないもの）
   onedariList() {
     const R = BAL.onedari.radius;
-    return this.spawner.targets.filter((t) => t.state === 'idle' && (t.def.kind === 'human' || t.def.kind === 'animal')
+    return this.spawner.targets.filter((t) => t.state === 'idle' && (t.def.kind === 'human' || t.def.kind === 'animal') && !this.strays.guards(t)
       && Math.hypot(t.x - this.cat.x, t.y - this.cat.y) <= R);
   }
 
@@ -757,9 +771,21 @@ export class PlayScene {
     // 奥（上）から順に描く
     const things = this.town.props.map((p) => ({ y: p.y, draw: () => this.drawProp(ctx, p, cx, cy) }));
     for (const t of this.spawner.targets) things.push({ y: t.y, draw: () => t.draw(ctx, cx, cy) });
+    for (const s of this.strays.list) things.push({ y: s.y, draw: () => this.drawStray(ctx, s, cx, cy) });
     things.push({ y: this.cat.y, draw: () => this.drawCat(ctx, cx, cy) });
+    this.drawZones(ctx, cx, cy);
     things.sort((a, b) => a.y - b.y);
     for (const t of things) t.draw();
+    if (this.hiss > 0) {
+      // 毛を逆立てる：頭のまわりに赤いギザギザ
+      const hx = Math.round(this.cat.x - cx);
+      const hy = Math.round(this.cat.y - cy) - 20;
+      ctx.fillStyle = UI.red;
+      for (const [dx, dy] of [[-9, -2], [-5, -7], [0, -9], [5, -7], [9, -2]]) {
+        ctx.fillRect(hx + dx, hy + dy, 1, 3);
+        ctx.fillRect(hx + dx + (dx < 0 ? -1 : dx > 0 ? 1 : 0), hy + dy - 1, 1, 1);
+      }
+    }
 
     ctx.save();
     ctx.translate(-cx, -cy);
@@ -769,6 +795,33 @@ export class PlayScene {
     if (this.bubble > 0) this.drawBubble(ctx, cx, cy);
     if (this.aim) this.drawAim(ctx, cx, cy);
     if (this.full() && this.action?.kind !== 'toilet') this.drawLitterGuide(ctx, cx, cy);
+  }
+
+  // ほかの猫
+  drawStray(ctx, s, cx, cy) {
+    const img = s.sprite();
+    const x = Math.round(s.x) - cx;
+    const y = Math.round(s.y) - cy;
+    ctx.fillStyle = 'rgba(40,30,20,0.25)';
+    ctx.fillRect(x - 6, y - 1, 12, 2);
+    ctx.drawImage(img, x - 8, y - img.height + 1);
+  }
+
+  // ニガテゾーン：てらまるが近づくと、猫のまわりに赤い点の輪が見える
+  drawZones(ctx, cx, cy) {
+    const R = BAL.strays.radius;
+    for (const s of this.strays.list) {
+      const d = Math.hypot(this.cat.x - s.x, this.cat.y - s.y);
+      if (d > R + 50) continue;
+      const a = Math.min(1, (R + 50 - d) / 40);
+      ctx.fillStyle = `rgba(224,72,72,${0.7 * a})`;
+      const n = 40;
+      for (let i = 0; i < n; i++) {
+        if (i % 2) continue;
+        const ang = (i / n) * Math.PI * 2 + this.t * 0.5;
+        ctx.fillRect(Math.round(s.x - cx + Math.cos(ang) * R), Math.round(s.y - cy - 2 + Math.sin(ang) * R), 2, 2);
+      }
+    }
   }
 
   // おなかがいっぱいのとき：猫砂の上で矢印が跳ねる。画面の外なら、いちばん近い猫砂の方向を画面の端に出す
@@ -926,7 +979,7 @@ export class PlayScene {
     // 太ると横に広がる
     const w = img.width + this.tummyLevel() * 2;
     let h = img.height;
-    if (a?.kind === 'scratch') x += Math.floor(this.t * 20) % 2 ? 1 : -1;
+    if (a?.kind === 'scratch' || this.hiss > 0) x += Math.floor(this.t * 20) % 2 ? 1 : -1;
     if (a?.kind === 'toilet') { h -= 2; x += Math.floor(this.t * 12) % 2 ? 1 : 0; } // しゃがんでカキカキ
     else if (!a && this.full() && !this.cat.moving) x += Math.floor(this.t * 3) % 2; // 止まっているときだけ、ゆっくりもじもじ
     ctx.drawImage(img, x - w / 2, y - h - lz, w, h);
@@ -1090,6 +1143,16 @@ export class PlayScene {
         ctx.fillRect(x + Math.floor(w / 2) - 2, y + 12, 5, 1);
         ctx.fillRect(x + Math.floor(w / 2) - 1, y + 13, 3, 1);
       }
+    }
+    // 猫のそばにいて ねらえない相手には ×
+    for (const t of this.spawner.targets) {
+      if (t.state !== 'idle' || !this.strays.guards(t)) continue;
+      if (Math.hypot(t.x - this.cat.x, t.y - this.cat.y) > BAL.onedari.radius) continue;
+      const x = Math.round(t.x - cx) - 6;
+      const y = Math.round(t.y - cy) - 44;
+      panel(ctx, x, y, 12, 12, '#f0d8d8');
+      ctx.fillStyle = UI.red;
+      for (let i = 0; i < 6; i++) { ctx.fillRect(x + 3 + i, y + 3 + i, 1, 1); ctx.fillRect(x + 8 - i, y + 3 + i, 1, 1); }
     }
     // 説明
     const msg = list.length === 0 ? 'ちかくに おねだりできる人が いない'

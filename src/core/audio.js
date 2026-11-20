@@ -258,7 +258,7 @@ function scrape(t, dur, buf, { vol = 0.4, f0 = 1000, f1 = 600, q = 1, peak = 0.3
 const N = { C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880, B5: 988, C6: 1047, E6: 1319, G6: 1568, C4: 262, E4: 330, G4: 392 };
 
 // 同じ音を鳴らせる最短の間隔（秒）
-const GAP = { heart: 0.06, eat: 0.08, tick: 0.5, drink: 1.2 };
+const GAP = { heart: 0.06, eat: 0.08, tick: 0.5, drink: 1.2, hiss: 1.0 };
 
 const SFX = {
   ui: (t) => tone(t, 880, 0.06, { vol: 0.2 }),
@@ -301,6 +301,10 @@ const SFX = {
       scrape(at + 0.15, 0.18, sandBuf, { vol: 0.35, f0: 5000, f1: 5000, q: 1.5, peak: 0.2 });
       at += 0.27 + Math.random() * 0.04;
     }
+  },
+  // シャー！（息をはく音）
+  hiss: (t) => {
+    scrape(t, 0.4, noiseBuf, { vol: 0.5, f0: 4500, f1: 3000, q: 0.6, peak: 0.1 });
   },
   // 足のあいだをくぐった
   pass: (t) => {
