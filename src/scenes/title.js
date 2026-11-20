@@ -21,7 +21,7 @@ export class TitleScene {
     this.soundBtn = new Button('sound', '', { icon: 'sound', pad: 6 });
   }
 
-  enter() { input.releaseAll(); audio.music('song'); }
+  enter() { input.releaseAll(); audio.music('play'); }
 
   update(dt) {
     this.t += dt;

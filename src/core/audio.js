@@ -4,7 +4,7 @@
 // - ミュートは保存データの settings.mute に入れる
 // - 外に見せるのは audio.init / audio.sfx(name) / audio.music(name) / audio.setMuted / audio.duck
 //
-// BGM：song＝てらまるの歌（タイトル・トイレフィーバー）、play＝ふだんのプレイ中（ぴこぴこ版）。
+// BGM：song＝てらまるの歌（トイレフィーバー）、play＝タイトルとふだんのプレイ中（ぴこぴこ版）。
 // play の曲が無いときは song をそのまま流す。
 
 const TRACKS = { song: 'audio/bgm.mp3', play: 'audio/bgm_play.mp3' };
