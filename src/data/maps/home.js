@@ -22,20 +22,21 @@ export const HOME = {
   centerLines: [],
   buildings: [],
   props: [
-    // リビング：上の壁に（左から）ケージ・テレビ・猫砂・キャットタワー。じゅうたんにちゃぶ台、下にテレビを向いたソファ（うしろ姿）
-    { type: 'cage', x: 2 * T + 12, y: 4 * T + 6 }, // てらまるの三段ケージ
+    // リビング：上の壁にテレビ、じゅうたんにちゃぶ台、下にテレビを向いたソファ（うしろ姿）
+    // 左下に、猫砂と三段ケージ（てらまるのコーナー。テレビからははなす）
     { type: 'tv', x: 6 * T + 8, y: 4 * T + 2 },
-    { type: 'litter', x: 9 * T + 6, y: 3 * T + 12 }, // てらまるのトイレ（キャットタワーのそば）
-    { type: 'catTower', x: 11 * T + 4, y: 4 * T + 2 },
     { type: 'lowTable', x: 6 * T + 8, y: 9 * T + 6 },
     { type: 'sofaBack', x: 6 * T + 8, y: 12 * T + 14 },
-    { type: 'flowerpot', ...at(1, 13) },
-    { type: 'water', ...at(2, 12) }, // てらまるの水皿（チュートリアルではかざり）
-    // 台所・ダイニング
+    { type: 'litter', x: 1 * T + 12, y: 13 * T + 8 }, // てらまるのトイレ（ケージの左どなり）
+    { type: 'cage', x: 3 * T + 10, y: 13 * T + 14 }, // てらまるの三段ケージ
+    { type: 'water', x: 1 * T + 10, y: 10 * T + 8 }, // てらまるの水皿（チュートリアルではかざり）
+    { type: 'flowerpot', ...at(1, 3) },
+    // 台所・ダイニング：右下にキャットタワー
     { type: 'counter', x: 18 * T, y: 3 * T + 12 },
     { type: 'fridge', x: 22 * T + 8, y: 3 * T + 12 },
     { type: 'diningTable', x: 19 * T, y: 11 * T + 4 },
-    { type: 'flowerpot', ...at(24, 13) },
+    { type: 'catTower', x: 23 * T + 8, y: 13 * T + 14 },
+    { type: 'flowerpot', ...at(24, 8) },
   ],
   fixedTargets: [
     { id: 'ownerA', ...at(9, 6) },
