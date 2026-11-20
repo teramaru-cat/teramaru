@@ -8,6 +8,7 @@ import { load } from './core/save.js';
 import { audio } from './core/audio.js';
 import { buildSprites, SPR } from './art/sprites.js';
 import { buildProps } from './art/props.js';
+import { startRotateCat } from './art/rotateCat.js';
 import { TitleScene } from './scenes/title.js';
 import { PlayScene } from './scenes/play.js';
 
@@ -33,17 +34,9 @@ async function boot() {
   audio.init(game.save.settings?.mute);
   await loadFonts();
   buildSprites();
-  // 「よこにしてね」の画面に、寝そべったてらまる
-  // （絵の大きさはここで合わせる。HTML と絵が食い違っても切れないように）
+  // 「よこにしてね」の画面に、獲物をねらってフリフリするてらまる
   const rc = document.getElementById('rotate-cat');
-  if (rc) {
-    const img = SPR.catLying;
-    rc.width = img.width;
-    rc.height = img.height;
-    rc.style.width = `${img.width * 8}px`;
-    rc.style.height = `${img.height * 8}px`;
-    rc.getContext('2d').drawImage(img, 0, 0);
-  }
+  if (rc) startRotateCat(rc);
   buildProps();
   game.toTitle();
 

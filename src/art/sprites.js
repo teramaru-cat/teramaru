@@ -112,7 +112,8 @@ function frames(top, legs, pal, flip = false) {
   return ['idle', 'a', 'b'].map((k) => makeSprite([...top, ...legs[k]], pal, { flip }));
 }
 
-// 寝そべったてらまる（22×11。「よこにしてね」の画面用）：ふっくら香箱ぎみ、顔は正面、前足を顔の下に出す
+// 寝そべったてらまる（22×11。「よこにしてね」の画面用）：獲物をねらう低い姿勢、顔は正面、前足を顔の下に出す。
+// しっぽは動かすので別に描く（rotateCat.js）
 const LYING = [
   '............o......o..',
   '...........obo....obo.',
@@ -122,8 +123,8 @@ const LYING = [
   '.ocbbccbccobebwwbgbo..',
   '.ocbccbcccobbwppwbwo..',
   '.owwccwwwwoowcwwcwo...',
-  'oowwwwwwwwwowwwwwwoo..',
-  'occowwwwwowwowwowwwo..',
+  '.owwwwwwwwwowwwwwwoo..',
+  '.owwwwwwwowwowwowwwo..',
   '.oooooooooooooooooo...',
 ];
 
