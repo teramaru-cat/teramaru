@@ -29,7 +29,7 @@ export const HOME = {
     { type: 'sofaBack', x: 6 * T + 8, y: 12 * T + 14 },
     { type: 'cageSide', x: 1 * T + 10, y: 13 * T + 14 }, // てらまるの三段ケージ（横向き）
     { type: 'litter', x: 2 * T + 14, y: 13 * T + 10 }, // てらまるのトイレ（ケージの横）
-    { type: 'water', x: 1 * T + 10, y: 8 * T + 8 }, // てらまるの水皿（チュートリアルではかざり）
+    { type: 'water', x: 1 * T + 10, y: 8 * T + 8 }, // てらまるの水皿（チュートリアルでは、ごくごくの見た目だけ）
     { type: 'flowerpot', ...at(1, 3) },
     // 台所・ダイニング：右下にキャットタワー
     { type: 'counter', x: 18 * T, y: 3 * T + 12 },

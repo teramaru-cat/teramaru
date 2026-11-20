@@ -252,6 +252,7 @@ export class PlayScene {
     this.checkWater();
     this.checkScratch();
     this.checkLitter();
+    this.checkFlavor();
 
     // ターゲットに触れたら、てらまりんぐへ（トイレのあとのダッシュ中は自動で成功）
     const t = this.spawner.touching(this.cat, (x) => this.strays.guards(x));
@@ -310,6 +311,40 @@ export class PlayScene {
       this.addFp(BAL.water.fp, true);
       this.fx.add(new PopText(this.cat.x + 10, this.cat.y - 18, `+${BAL.water.fp}`, UI.orangeD, 0.8));
     }
+  }
+
+  // まだこのステージで使えないしくみ（お水・トイレ・爪とぎ）：さわると見た目と音だけ出る。ゲームには何も影響しない
+  checkFlavor() {
+    const R = this.rules;
+    this.flavor ??= {};
+    const ready = (k) => !(this.flavor[k] > this.t);
+    const c = this.cat;
+    if (!R.water && ready('water') && (this.findProp(['water', 'fountain'], 8) || this.town.nearPond(c.x, c.y, 13))) {
+      this.flavor.water = this.t + 3;
+      this.fx.add(new PopText(c.x, c.y - 26, 'ごくごく', '#2a70c0'));
+      audio.sfx('drink');
+      for (let i = 0; i < 4; i++) this.addDrop(c.x + (Math.random() - 0.5) * 10, c.y - 4, '#7ac0ec');
+    }
+    if (!R.food && ready('litter') && this.findProp(['litter'], 4)) {
+      this.flavor.litter = this.t + 3;
+      this.fx.add(new PopText(c.x, c.y - 30, 'カキカキ', UI.orangeD));
+      audio.sfx('toilet');
+      for (let i = 0; i < 10; i++) this.addSand();
+    }
+    if (!R.scratch && ready('scratch') && this.findProp(['scratch', 'catTower'], 6)) {
+      this.flavor.scratch = this.t + 3;
+      this.fx.add(new PopText(c.x, c.y - 30, 'ガリガリ', UI.orangeD));
+      audio.sfx('scratch');
+    }
+  }
+
+  // 小さな水しぶき
+  addDrop(x, y, col) {
+    const sp = { x, y, vx: (Math.random() - 0.5) * 30, vy: -30 - Math.random() * 20, t: 0 };
+    this.fx.add({
+      update(dt) { sp.t += dt; sp.x += sp.vx * dt; sp.y += sp.vy * dt; sp.vy += 160 * dt; return sp.t < 0.4; },
+      draw(ctx) { ctx.fillStyle = col; ctx.fillRect(Math.round(sp.x), Math.round(sp.y), 1, 1); },
+    });
   }
 
   // 決定：TPが足りていればおねだりの照準（押している間）。足りなければ「にゃ」

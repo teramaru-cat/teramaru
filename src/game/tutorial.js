@@ -3,7 +3,7 @@
 // 1. walk    … 歩いてみる（上に「あそびかた」の操作説明。ウィルキャッはまだ出ない）
 // 2. ring    … 飼い主2人をてらまりんぐでメロメロに（まだの人の上に▼）
 // 3. mission … みごとなてらまりんぐを見た ウィルキャッ（ねこたちの意志。姿のないキラキラ）が、てらまるを見そめて使命を伝える。「猫は家で飼おうね」
-// 4. vet     … てんかい どうぶつびょういん（ねこの神の世界の病院）で予防接種（チクッ）
+// 4. vet     … 神の世界のようなレベチな場所で「ウルトラハイパーむてきゴッドワクチン」（チクッ）
 // 5. after   … 「さあ、まちへ」→ 暗くなってステージ選択へ（結果発表はなし）
 //
 // セリフはここの PAGES を書きかえる。てらまるはしゃべらない。
@@ -19,6 +19,9 @@ import { SPR } from '../art/sprites.js';
 import { newlyOpened } from '../data/areas.js';
 import { VOICE, drawVoiceBox, drawPresence, drawSpark, sparkSize, shownChars, totalChars } from './voice.js';
 
+// 予防接種の名前（この世でいちばんすごそうで、むてきっぽい）
+const VACCINE = 'ウルトラハイパーむてきゴッドワクチン';
+
 // セリフ（1ページ＝1〜3行）
 const PAGES = {
   // 飼い主2人をメロメロにした てらまるが、ウィルキャッに見そめられる
@@ -32,11 +35,11 @@ const PAGES = {
     ['まちじゅうを てらまりんぐで', 'メロメロに するにゃ！', 'それが てらまるの しめい だにゃ'],
     ['……でも ほんとうは、', 'ねこは いえの なかで かうのが', 'いちばん だにゃ'],
     ['おそとに でるのは', 'この ゲームの なか だけ。', 'やくそく だにゃ'],
-    ['そのまえに、われらの せかいの', 'てんかい どうぶつびょういんで', 'よぼうせっしゅを うけるにゃ'],
+    ['そのまえに、この よで いちばん', 'すごい よぼうせっしゅ', `「${VACCINE}」を うけるにゃ`],
   ],
   after: [
     ['よく がまん したにゃ！'],
-    ['てんかいの ワクチンは', 'ききめ ばつぐん。', 'これで びょうきも へっちゃら だにゃ'],
+    [`${VACCINE}の`, 'ききめは ばつぐん だにゃ。', 'これで びょうきも へっちゃら だにゃ'],
     ['さあ、まちへ でかけるにゃ！'],
   ],
 };
@@ -201,11 +204,12 @@ export class Tutorial {
       lines = ['あと ひとり！', 'もう ひとりの かいぬしも メロメロに しよう'];
     }
     const w = Math.min(W - 70, Math.max(...lines.map((l) => textWidth(l, 'small'))) + 16);
-    const h = lines.length * 10 + 7;
+    const h = lines.length * 10 + 10;
     const x = Math.round(W / 2 - w / 2);
     const y = 12;
     panel(ctx, x, y, w, h, UI.cream);
-    lines.forEach((l, i) => drawText(ctx, l, W / 2, y + 4 + i * 10, { font: 'small', color: UI.ink, align: 'center' }));
+    // 文字は「あそびかた」の札より下から
+    lines.forEach((l, i) => drawText(ctx, l, W / 2, y + 7 + i * 10, { font: 'small', color: UI.ink, align: 'center' }));
     const tag = 'あそびかた';
     const tw = textWidth(tag, 'small') + 8;
     panel(ctx, x + 6, y - 7, tw, 11, UI.orange);
@@ -243,7 +247,7 @@ export class Tutorial {
     drawVoiceBox(ctx, lines, { x: 8, y: H - h - 8, w, t: d.t, now: this.now, align: 'left', more: true });
   }
 
-  // てんかい どうぶつびょういん（ねこの神の世界のレベチな病院）：
+  // 予防接種の場面（神の世界のようなレベチな場所）：
   // 金の柱と虹、上から光、雲の上の金の診察台。雲から光る金の手が、虹色のワクチンを打つ。打ったら光があふれて、てらまるに天使の輪
   drawVet(ctx) {
     const W = screen.W;
@@ -294,7 +298,7 @@ export class Tutorial {
     // 雲の床
     drawClouds(ctx, W, top + 20, now);
     // 看板（金のわく、肉球の十字）
-    const sign = 'てんかい どうぶつびょういん';
+    const sign = VACCINE; // 看板にワクチンの名前
     const sw = textWidth(sign, 'small') + 26;
     const sx = Math.round(cx - sw / 2);
     panel(ctx, sx - 1, 5, sw + 2, 17, '#c89018', '#8a5a10');
