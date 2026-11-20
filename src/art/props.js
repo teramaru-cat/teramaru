@@ -373,6 +373,49 @@ function catTower() {
   return { img: c, ox: 11, oy: 43, solid: { w: 18, h: 5 } };
 }
 
+// 三段ケージを横から見たところ（壁ぎわに90度まわして置く）：奥行きだけの細い姿
+function cageSide() {
+  const [c, x] = makeCanvas(20, 54);
+  x.fillStyle = '#e8e4dc';
+  x.fillRect(0, 50, 20, 4); // 台
+  x.fillStyle = '#5a5a60';
+  x.fillRect(1, 53, 2, 1);
+  x.fillRect(17, 53, 2, 1);
+  x.fillStyle = '#d8d0c4';
+  x.fillRect(1, 1, 18, 49);
+  // 棚（横から見ると細い板）
+  x.fillStyle = '#c8a070';
+  x.fillRect(1, 16, 12, 2);
+  x.fillRect(7, 33, 12, 2);
+  // 上の段：ハンモック（横から見ると、たれた布）
+  x.fillStyle = '#f07890';
+  x.fillRect(3, 8, 1, 2);
+  x.fillRect(16, 8, 1, 2);
+  x.fillRect(4, 10, 2, 1);
+  x.fillRect(14, 10, 2, 1);
+  x.fillRect(6, 11, 8, 2);
+  // はしご（ななめ）
+  x.fillStyle = '#c8a070';
+  for (let i = 0; i < 14; i++) x.fillRect(14 - Math.floor(i / 3), 19 + i, 1, 1);
+  for (let i = 0; i < 14; i++) x.fillRect(17 - Math.floor(i / 3), 19 + i, 1, 1);
+  // 下の段：ベッド
+  x.fillStyle = '#7a9ac8';
+  x.fillRect(3, 44, 12, 5);
+  x.fillStyle = '#f6f2ea';
+  x.fillRect(5, 45, 8, 2);
+  // 金網
+  x.fillStyle = '#ffffff';
+  for (let xx = 0; xx < 20; xx += 3) x.fillRect(xx, 0, 1, 50);
+  x.fillRect(0, 0, 20, 1);
+  x.fillRect(0, 17, 20, 1);
+  x.fillRect(0, 34, 20, 1);
+  x.fillStyle = '#9a9690';
+  x.fillRect(0, 0, 1, 50);
+  x.fillRect(19, 0, 1, 50);
+  x.fillRect(0, 49, 20, 1);
+  return { img: c, ox: 10, oy: 53, solid: { w: 20, h: 10 } };
+}
+
 export const PROPS = {};
 
 export function buildProps() {
@@ -392,6 +435,7 @@ export function buildProps() {
     fridge: fridge(),
     diningTable: diningTable(),
     cage: cage(),
+    cageSide: cageSide(),
     catTower: catTower(),
   });
 }
