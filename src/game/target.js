@@ -113,12 +113,12 @@ export class Spawner {
     this.targets = [];
     this.waiting = 0; // 補充待ちの数
     this.timers = [];
-    // 出られる場所：歩道・広場・公園の小道で、ぶつからないところ
+    // 出られる場所：歩道・広場・小道・芝生で、ぶつからないところ
     this.spots = [];
     for (let r = 0; r < town.rows; r++) {
       for (let c = 0; c < town.cols; c++) {
         const g = town.grid[r][c];
-        if (g !== 'S' && g !== 'P') continue;
+        if (g !== 'S' && g !== 'P' && g !== 'G') continue;
         const x = c * TILE + TILE / 2;
         const y = r * TILE + TILE - 2;
         if (!town.blocked(x, y, FOOT_W + 4, FOOT_H + 4)) this.spots.push({ x, y });
@@ -128,7 +128,7 @@ export class Spawner {
 
   fill(cat) {
     for (const t of this.fixed) if (!this.targets.includes(t)) this.targets.push(t);
-    while (this.roaming() + this.timers.length < BAL.town.targets) {
+    while (this.roaming() + this.timers.length < this.ids.length * BAL.town.perKind) {
       const t = this.spawn(cat, true);
       if (!t) break;
     }
