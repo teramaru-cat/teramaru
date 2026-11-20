@@ -36,7 +36,8 @@ export function startRotateCat(canvas) {
 
 // しっぽ：おしりの上から立ち上がって、先が左右にゆれる（縁取り付き）
 function drawTail(ctx, ox, oy, sway) {
-  const cells = [[2, 4], [1, 3], [1, 2], [1 + sway, 1], [1 + sway, 0]];
+  // 背中の上（体の縁より内側）から生やして、体の横に黒いはみ出しができないようにする
+  const cells = [[3, 3], [2, 2], [2, 1], [2 + sway, 0], [2 + sway, -1]];
   ctx.fillStyle = CAT.o;
   for (const [x, y] of cells) ctx.fillRect(ox + x - 1, oy + y - 1, 3, 3);
   cells.forEach(([x, y], i) => {

@@ -125,7 +125,7 @@ const LYING = [
   '.ocbccbcccobbwppwbwo..',
   '.owwccwwwwoowcwwcwo...',
   '.owwwwwwwwwowwwwwwoo..',
-  'oowwwowwwwwowwwowwwo..',
+  '.owwwowwwwwowwwowwwo..',
   '.oooooooooooooooooo...',
 ];
 
