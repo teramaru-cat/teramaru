@@ -8,6 +8,7 @@
 //   name    … 画面に出す名前（ひらがな）
 //   map     … 街の地図（src/data/maps/）。まだ作っていないステージは null（「じゅんびちゅう」になる）
 //   boss    … ボス戦なら true
+//   tutorial… チュートリアルなら true（時間なし。流れは src/game/tutorial.js。おわったら結果発表なしでステージ選択へ）
 //   targets … 出てくるターゲットと人数 { id: 人数 }（id は src/data/targets.js）
 //   rules   … 使えるしくみ（下の RULES を土台に、ちがうところだけ書く）
 //   unlock  … 開く条件 { after: 前のステージの id, score: その点数以上 }。なければ最初から開いている。
@@ -15,6 +16,7 @@
 
 import { SHOTENGAI } from './maps/shotengai.js';
 import { PARK } from './maps/park.js';
+import { HOME } from './maps/home.js';
 
 // しくみ（ステージごとに、オン・オフや数を変える）
 export const RULES = {
@@ -24,6 +26,7 @@ export const RULES = {
   scratch: true, // 爪とぎで TP 2倍
   onedari: true, // おねだり（構ってもらう）
   strays: 0, // ほかの猫の数（ニガテゾーン）
+  timer: true, // 制限時間（90秒）。false なら時間なし・スコアなし（チュートリアル）
 };
 
 // ステージごとの「最初に流すしくみ」は少しずつ増やす：公園でお水、商店街でご飯・トイレ、ボス猫戦でフィーバー
@@ -37,10 +40,12 @@ export const AREAS = [
       {
         id: 'home',
         name: 'てらまるのいえ',
-        // てらまるの1フロアの家。飼い主2人をメロメロ → 使命をもらう（猫は家で飼おうね）→ 予防接種 → 街へ
-        map: null,
-        targets: {},
-        rules: { ...BASIC, scratch: false, onedari: false },
+        // てらまるの1フロアの家。飼い主2人をメロメロ → ウィルにゃんが使命を伝える（猫は家で飼おうね）→ 予防接種 → 街へ
+        // 流れは src/game/tutorial.js
+        tutorial: true,
+        map: HOME,
+        targets: {}, // 飼い主2人は地図の fixedTargets
+        rules: { ...BASIC, scratch: false, onedari: false, timer: false },
       },
     ],
   },
@@ -102,7 +107,7 @@ AREAS.forEach((area, ai) => {
   });
 });
 
-export const FIRST_STAGE = 'park'; // いま遊べる最初のステージ（チュートリアルと住宅地ができたら 'home' にする）
+export const FIRST_STAGE = 'home'; // 最初のステージ（チュートリアル）
 
 // 遊べるか（地図ができているか）
 export function isReady(id) { return !!STAGES[id]?.map; }

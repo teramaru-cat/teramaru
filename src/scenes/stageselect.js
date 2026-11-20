@@ -23,6 +23,9 @@ export class StageSelectScene {
     // いちばん先の開いているステージにカーソルを合わせる
     const open = ALL.filter((id) => this.isOpen(id));
     this.sel = open[open.length - 1] ?? ALL[0];
+    // チュートリアルがまだなら、そこから
+    const tut = ALL.find((id) => STAGES[id].tutorial && this.isOpen(id));
+    if (tut && !game.save.cleared.includes(tut)) this.sel = tut;
     this.backBtn = new Button('back', 'もどる', { font: 'small', pad: 6 });
     this.prevBtn = new Button('prev', '', { icon: 'left', pad: 6 });
     this.nextBtn = new Button('next', '', { icon: 'right', pad: 6 });
@@ -175,7 +178,12 @@ export class StageSelectScene {
 
     // 下：ベスト、開く条件、または「じゅんびちゅう」
     const by = y + 80;
-    if (open) {
+    if (open && st.tutorial) {
+      // チュートリアル：点数はなく、クリアしたかだけ
+      const done = this.game.save.cleared.includes(b.id);
+      drawText(ctx, done ? 'クリア！' : 'はじめに', cx, by, { font: 'small', color: done ? UI.orangeD : '#6a6258', align: 'center' });
+      if (focused) drawText(ctx, 'あそぶ！', cx, by + 13, { font: 'small', color: UI.orangeD, align: 'center' });
+    } else if (open) {
       const best = this.game.save.bestScore[b.id] ?? 0;
       const bw = 9 + digitsWidth(String(best));
       ctx.drawImage(SPR.star, cx - Math.round(bw / 2), by + 1);

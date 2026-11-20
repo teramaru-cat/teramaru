@@ -23,6 +23,7 @@ export class Target {
     this.wtime = 0;
     this.moving = false;
     this.flip = Math.random() < 0.5;
+    this.charmed = false; // チュートリアルの飼い主：メロメロのまま、その場でハートを出す
   }
 
   update(dt, town) {
@@ -39,7 +40,7 @@ export class Target {
       if (this.leaveT > 1.6) this.state = 'gone';
       return;
     }
-    const sp = this.def.wander ?? 0;
+    const sp = this.charmed ? 0 : this.def.wander ?? 0;
     if (sp > 0) {
       this.wtime -= dt;
       if (this.wtime <= 0) {
@@ -74,7 +75,7 @@ export class Target {
     this.wdir = { x: dx / d, y: dy / d };
   }
 
-  canRing() { return this.state === 'idle' && this.cooldown <= 0; }
+  canRing() { return this.state === 'idle' && this.cooldown <= 0 && !this.charmed; }
 
   sprite() {
     const fr = SPR.people[this.id];
@@ -88,7 +89,7 @@ export class Target {
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
     const hw = Math.floor(img.width / 2);
     ctx.fillRect(x - hw + 1, y - 1, img.width - 2, 2);
-    const a = this.state === 'leaving' ? Math.max(0, 1 - this.leaveT / 1.6) : this.cooldown > 0 ? 0.55 : 1;
+    const a = this.state === 'leaving' ? Math.max(0, 1 - this.leaveT / 1.6) : this.cooldown > 0 && !this.charmed ? 0.55 : 1;
     ctx.globalAlpha = a;
     const bob = !this.moving && this.def.motion !== 'still' && Math.floor(this.t * 3) % 2 ? 1 : 0;
     if (this.def.owner) this.drawOwner(ctx, x, y, hw, img);
@@ -102,6 +103,11 @@ export class Target {
       ctx.drawImage(img, x - hw, y - img.height + 1 + bob);
     }
     ctx.globalAlpha = 1;
+    if (this.charmed) {
+      // メロメロ：頭の上でハートがぴょこぴょこ
+      const hb = Math.floor(this.t * 3) % 2;
+      ctx.drawImage(SPR.heart, x - 3, y - img.height - 8 - hb);
+    }
   }
 
   // 犬の飼い主：犬のうしろを歩いて、リードで首輪とつながる

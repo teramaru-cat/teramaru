@@ -13,21 +13,21 @@ import { BAL } from '../data/balance.js';
 import { finalScore } from '../game/score.js';
 import { getTown } from '../game/town.js';
 import { newlyOpened } from '../data/areas.js';
+import { drawVoiceBox } from '../game/voice.js';
 
 const ROW_GAP = 0.35; // 内訳を1行ずつ出す間隔（秒）
 const PW = 216; // 結果のパネルの幅（左にてらまると、評価の枠が出る）
 
-// キラキラ（姿のない、てらまるに語りかける声。チュートリアルで使命を伝えるのと同じ）の評価。
-// てらまるはしゃべらない。評価は四角い枠に出す（ふきだしにしない）。
+// ウィルにゃん（ねこたちの意志。姿のないキラキラ。game/voice.js）の評価。てらまるはしゃべらない。
 // スコアで評価が変わる（同じ評価の中からランダム）。mood はてらまるの様子（ぴょんぴょん・しょんぼりなど）
 const COMMENTS = {
-  best: [['ベストこうしん！', 'きょうの てらまるは', 'さいこうでした'], ['ベストこうしん！', 'みごとな', 'てらまりんぐでした']],
-  great: [['まちじゅう メロメロ！', 'おみごとです'], ['かわいさ', 'まんてんです！'], ['きょうの てらまるは', 'むてきでした']],
-  good: [['なかなか', 'やりますね'], ['すりすり', 'じょうずでした'], ['いい ちょうしです']],
-  ok: [['まあまあ', 'ですね'], ['もっと すりすり', 'できるはずです']],
-  low: [['まだまだ', 'ですね…'], ['あいきょうが', 'たりないようです…']],
-  faint: [['おみずは', 'こまめに のみましょう'], ['たおれては', 'いけません…']],
-  kamatte: [['かまってもらえて', 'よかったですね'], ['あまえじょうず', 'ですね']],
+  best: [['ベストこうしん！', 'きょうの てらまるは', 'さいこう だにゃ'], ['ベストこうしん！', 'みごとな', 'てらまりんぐ だにゃ']],
+  great: [['まちじゅう メロメロ！', 'おみごと だにゃ'], ['かわいさ', 'まんてん だにゃ！'], ['きょうの てらまるは', 'むてき だったにゃ']],
+  good: [['なかなか', 'やるにゃ'], ['すりすり', 'じょうず だったにゃ'], ['いい ちょうし', 'だにゃ']],
+  ok: [['まあまあ', 'だにゃ'], ['もっと すりすり', 'できるはず だにゃ']],
+  low: [['まだまだ', 'だにゃ…'], ['あいきょうが', 'たりないにゃ…']],
+  faint: [['おみずは', 'こまめに のむにゃ'], ['たおれちゃ', 'だめ だにゃ…']],
+  kamatte: [['かまってもらえて', 'よかったにゃ'], ['あまえじょうず', 'だにゃ']],
 };
 
 function pickComment(sc, st, newBest) {
@@ -235,42 +235,13 @@ export class ResultScene {
       const k2 = (this.t * 0.8) % 1;
       ctx.drawImage(SPR.drop, x + 9, Math.round(y - h + 6 + k2 * 6));
     }
-    // 評価の枠（四角。左上の空きに出し、まわりにキラキラ）
+    // 評価の枠（ウィルにゃんの声。四角い枠に1文字ずつ）
     const lines = this.comment.lines;
     const fw = screen.W - PW - 6 - 8;
     const fh = lines.length * 10 + 8;
     const fx = 4;
-    const fy = Math.round((feet - h - 6 - fh) / 2) + 4;
-    const tt = this.t - this.catIn - 0.6;
-    const ink = this.comment.mood === 'low' ? '#4a5a7a' : UI.ink;
-    panel(ctx, fx, fy, fw, fh, '#fffaf0');
-    // 1文字ずつ出す
-    let n = Math.floor(tt * 18);
-    lines.forEach((l, i) => {
-      const s = [...l].slice(0, Math.max(0, n)).join('');
-      n -= l.length;
-      drawText(ctx, s, fx + Math.round(fw / 2), fy + 5 + i * 10, { font: 'small', color: ink, align: 'center' });
-    });
-    drawSparkles(ctx, fx, fy, fw, fh, this.t);
+    const fy = Math.round((feet - h - 6 - fh) / 2) + 8;
+    drawVoiceBox(ctx, lines, { x: fx, y: fy, w: fw, t: this.t - this.catIn - 0.6, now: this.t, color: this.comment.mood === 'low' ? '#4a5a7a' : UI.ink });
   }
 }
 
-// キラキラ（枠の角のまわりで、4つが順にまたたく。小→大→小）
-const SPARK_AT = [[-1, -1, 0], [1, -1, 0.25], [1, 1, 0.5], [-1, 1, 0.75]];
-function drawSparkles(ctx, x, y, w, h, t) {
-  for (const [sx, sy, ph] of SPARK_AT) {
-    const k = (t * 0.9 + ph) % 1;
-    const r = [1, 2, 3, 4, 3, 2, 1, 0][Math.floor(k * 8)];
-    if (!r) continue;
-    const cx = sx < 0 ? x + 2 : x + w - 3;
-    const cy = sy < 0 ? y + 1 : y + h - 2;
-    ctx.fillStyle = '#c89018'; // ふち
-    ctx.fillRect(cx - r - 1, cy - 1, r * 2 + 3, 3);
-    ctx.fillRect(cx - 1, cy - r - 1, 3, r * 2 + 3);
-    ctx.fillStyle = '#ffe870';
-    ctx.fillRect(cx - r, cy, r * 2 + 1, 1);
-    ctx.fillRect(cx, cy - r, 1, r * 2 + 1);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(cx, cy, 1, 1);
-  }
-}

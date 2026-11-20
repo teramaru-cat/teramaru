@@ -1,0 +1,45 @@
+// 家の地図：てらまるのいえ（チュートリアル 0-1）
+// 1フロアの家。左がリビング、右が台所とダイニング（まん中の壁に出入り口）。
+// 地面：F=板の床 K=台所のタイル C=じゅうたん X=壁（入れない）
+// 飼い主2人は fixedTargets（家の中をゆっくり歩く。メロメロにしても去らない）
+
+const T = 16;
+const at = (c, r) => ({ x: c * T + 8, y: r * T + 8 });
+
+export const HOME = {
+  cols: 26,
+  rows: 15,
+  seed: 7,
+  paint(g) {
+    g.fill(0, 0, 25, 14, 'X'); // まず全部壁
+    g.fill(1, 2, 12, 13, 'F'); // リビング
+    g.fill(3, 7, 9, 11, 'C'); // じゅうたん
+    g.fill(14, 2, 24, 7, 'K'); // 台所
+    g.fill(14, 8, 24, 13, 'F'); // ダイニング
+    g.fill(13, 8, 13, 10, 'F'); // 出入り口
+  },
+  crosswalks: [],
+  centerLines: [],
+  buildings: [],
+  props: [
+    // リビング
+    { type: 'sofa', x: 5 * T, y: 3 * T + 14 },
+    { type: 'tv', x: 10 * T + 8, y: 3 * T + 10 },
+    { type: 'lowTable', x: 6 * T + 8, y: 9 * T + 8 },
+    { type: 'catTower', x: 11 * T + 8, y: 12 * T + 14 },
+    { type: 'flowerpot', ...at(1, 3) },
+    { type: 'water', ...at(2, 12) }, // てらまるの水皿（チュートリアルではかざり）
+    { type: 'litter', x: 4 * T + 8, y: 13 * T + 4 }, // てらまるのトイレ
+    // 台所・ダイニング
+    { type: 'counter', x: 18 * T, y: 3 * T + 12 },
+    { type: 'fridge', x: 22 * T + 8, y: 3 * T + 12 },
+    { type: 'diningTable', x: 19 * T, y: 11 * T + 4 },
+    { type: 'flowerpot', ...at(24, 13) },
+  ],
+  fixedTargets: [
+    { id: 'ownerA', ...at(9, 6) },
+    { id: 'ownerB', ...at(17, 9) },
+  ],
+  start: at(5, 12),
+  hospital: at(5, 12), // 家では倒れないが、念のため
+};

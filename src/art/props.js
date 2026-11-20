@@ -1,4 +1,4 @@
-// 街の小物（木・爪とぎ電柱・水皿・猫砂・ベンチ・自販機・噴水・植木鉢）
+// 街の小物（木・爪とぎ電柱・水皿・猫砂・ベンチ・自販機・噴水・植木鉢）と、家の家具（ソファ・テレビ・テーブル・台所・冷蔵庫・キャットタワー）
 // それぞれ画像と「足元の位置（ox, oy）」「ぶつかる箱（solid）」を返す。
 
 import { makeCanvas, fillCircle, fillEllipse } from '../core/renderer.js';
@@ -158,6 +158,173 @@ function flowerpot() {
   return { img: c, ox: 5, oy: 11, solid: { w: 8, h: 4 } };
 }
 
+// ---- 家の家具（チュートリアル） ----
+
+// ソファ（正面向き。背もたれとひじかけ）
+function sofa() {
+  const [c, x] = makeCanvas(44, 24);
+  x.fillStyle = '#2f5a48';
+  x.fillRect(0, 2, 44, 20);
+  x.fillStyle = '#4a8a6a';
+  x.fillRect(1, 3, 42, 10); // 背もたれ
+  x.fillStyle = '#5aa07c';
+  x.fillRect(1, 3, 42, 2);
+  x.fillStyle = '#3e7a5c';
+  x.fillRect(5, 13, 34, 7); // 座面
+  x.fillStyle = '#4a8a6a';
+  x.fillRect(5, 13, 16, 6);
+  x.fillRect(23, 13, 16, 6);
+  x.fillStyle = '#5aa07c';
+  x.fillRect(5, 13, 16, 1);
+  x.fillRect(23, 13, 16, 1);
+  x.fillStyle = '#3e7a5c';
+  x.fillRect(1, 8, 5, 13); // ひじかけ
+  x.fillRect(38, 8, 5, 13);
+  x.fillStyle = '#5aa07c';
+  x.fillRect(1, 8, 5, 1);
+  x.fillRect(38, 8, 5, 1);
+  // クッション
+  x.fillStyle = '#f0c060';
+  x.fillRect(8, 7, 8, 7);
+  x.fillStyle = '#f8d888';
+  x.fillRect(8, 7, 8, 1);
+  x.fillStyle = '#2a1d17';
+  x.fillRect(2, 22, 2, 2);
+  x.fillRect(40, 22, 2, 2);
+  return { img: c, ox: 22, oy: 23, solid: { w: 42, h: 10 } };
+}
+
+// テレビ台とテレビ
+function tv() {
+  const [c, x] = makeCanvas(32, 28);
+  x.fillStyle = '#2a2a30';
+  x.fillRect(4, 0, 24, 16);
+  x.fillStyle = '#4a6a8a';
+  x.fillRect(6, 2, 20, 12);
+  x.fillStyle = '#7aa8d0';
+  x.fillRect(7, 3, 6, 1);
+  x.fillRect(7, 4, 2, 2);
+  x.fillStyle = '#2a2a30';
+  x.fillRect(14, 16, 4, 2);
+  x.fillStyle = '#6a4a30';
+  x.fillRect(0, 18, 32, 10);
+  x.fillStyle = '#8a6440';
+  x.fillRect(0, 18, 32, 2);
+  x.fillStyle = '#5a3c24';
+  x.fillRect(2, 21, 13, 6);
+  x.fillRect(17, 21, 13, 6);
+  x.fillStyle = '#c8a070';
+  x.fillRect(13, 23, 1, 2);
+  x.fillRect(18, 23, 1, 2);
+  return { img: c, ox: 16, oy: 27, solid: { w: 32, h: 8 } };
+}
+
+// ひくいテーブル（みかんつき）
+function lowTable() {
+  const [c, x] = makeCanvas(30, 14);
+  x.fillStyle = '#6a4428';
+  x.fillRect(0, 0, 30, 9);
+  x.fillStyle = '#a87448';
+  x.fillRect(1, 1, 28, 6);
+  x.fillStyle = '#c08a58';
+  x.fillRect(1, 1, 28, 1);
+  x.fillStyle = '#6a4428';
+  x.fillRect(2, 9, 3, 5);
+  x.fillRect(25, 9, 3, 5);
+  x.fillStyle = '#f08a20';
+  fillCircle(x, 10, 3, 2);
+  fillCircle(x, 15, 4, 2);
+  x.fillStyle = '#4a9a3c';
+  x.fillRect(10, 1, 1, 1);
+  x.fillRect(15, 2, 1, 1);
+  return { img: c, ox: 15, oy: 13, solid: { w: 30, h: 6 } };
+}
+
+// 台所（流しとコンロ）
+function counter() {
+  const [c, x] = makeCanvas(56, 26);
+  x.fillStyle = '#8a8a90';
+  x.fillRect(0, 0, 56, 26);
+  x.fillStyle = '#d8d8dc';
+  x.fillRect(1, 1, 54, 8); // 天板
+  x.fillStyle = '#f0f0f2';
+  x.fillRect(1, 1, 54, 1);
+  x.fillStyle = '#9a9aa2';
+  x.fillRect(6, 3, 16, 5); // 流し
+  x.fillStyle = '#7ab8d8';
+  x.fillRect(7, 4, 14, 3);
+  x.fillStyle = '#2a2a30';
+  fillCircle(x, 36, 5, 2); // コンロ
+  fillCircle(x, 46, 5, 2);
+  x.fillStyle = '#e8e0d0';
+  x.fillRect(1, 10, 54, 15); // 戸棚
+  x.fillStyle = '#b8ae9a';
+  for (const dx of [1, 19, 37]) x.fillRect(dx + 17, 10, 1, 15);
+  x.fillStyle = '#8a8070';
+  for (const dx of [14, 22, 32, 40]) x.fillRect(dx, 16, 2, 1);
+  return { img: c, ox: 28, oy: 25, solid: { w: 56, h: 10 } };
+}
+
+function fridge() {
+  const [c, x] = makeCanvas(18, 34);
+  x.fillStyle = '#7a8a92';
+  x.fillRect(0, 0, 18, 34);
+  x.fillStyle = '#e8f0f2';
+  x.fillRect(1, 1, 16, 32);
+  x.fillStyle = '#c8d4d8';
+  x.fillRect(1, 12, 16, 1);
+  x.fillRect(15, 3, 1, 6);
+  x.fillRect(15, 15, 1, 8);
+  x.fillStyle = '#f07890'; // マグネット
+  x.fillRect(4, 4, 2, 2);
+  x.fillStyle = '#f0c030';
+  x.fillRect(7, 18, 2, 2);
+  return { img: c, ox: 9, oy: 33, solid: { w: 18, h: 8 } };
+}
+
+// ダイニングテーブルと いす2つ
+function diningTable() {
+  const [c, x] = makeCanvas(36, 26);
+  x.fillStyle = '#6a4428';
+  x.fillRect(3, 0, 6, 8); // 奥のいす
+  x.fillRect(27, 0, 6, 8);
+  x.fillStyle = '#5a3a24';
+  x.fillRect(0, 7, 36, 12);
+  x.fillStyle = '#b07c4c';
+  x.fillRect(1, 8, 34, 9);
+  x.fillStyle = '#c8935e';
+  x.fillRect(1, 8, 34, 1);
+  x.fillStyle = '#f6f2ea'; // お皿
+  x.fillRect(8, 11, 6, 3);
+  x.fillRect(22, 11, 6, 3);
+  x.fillStyle = '#5a3a24';
+  x.fillRect(2, 19, 3, 7);
+  x.fillRect(31, 19, 3, 7);
+  return { img: c, ox: 18, oy: 25, solid: { w: 36, h: 9 } };
+}
+
+// キャットタワー（てらまるのお気に入り）
+function catTower() {
+  const [c, x] = makeCanvas(22, 44);
+  x.fillStyle = '#dcc488';
+  x.fillRect(9, 6, 4, 36); // 柱（麻ひも）
+  x.fillStyle = '#b89a5c';
+  for (let y = 7; y < 42; y += 2) x.fillRect(9, y, 4, 1);
+  x.fillStyle = '#8a5a3a';
+  x.fillRect(1, 2, 20, 5); // 上の台
+  x.fillRect(0, 22, 14, 4); // 中の台
+  x.fillRect(2, 40, 18, 4); // 土台
+  x.fillStyle = '#c87850';
+  x.fillRect(2, 2, 18, 3);
+  x.fillRect(1, 22, 12, 2);
+  x.fillRect(3, 40, 16, 2);
+  x.fillStyle = '#f6f2ea'; // ぶら下がるボール
+  x.fillRect(17, 26, 1, 4);
+  x.fillStyle = '#f07890';
+  x.fillRect(16, 30, 3, 3);
+  return { img: c, ox: 11, oy: 43, solid: { w: 18, h: 5 } };
+}
+
 export const PROPS = {};
 
 export function buildProps() {
@@ -170,5 +337,12 @@ export function buildProps() {
     vending: vending(),
     fountain: fountain(),
     flowerpot: flowerpot(),
+    sofa: sofa(),
+    tv: tv(),
+    lowTable: lowTable(),
+    counter: counter(),
+    fridge: fridge(),
+    diningTable: diningTable(),
+    catTower: catTower(),
   });
 }

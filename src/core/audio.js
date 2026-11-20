@@ -258,7 +258,7 @@ function scrape(t, dur, buf, { vol = 0.4, f0 = 1000, f1 = 600, q = 1, peak = 0.3
 const N = { C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880, B5: 988, C6: 1047, E6: 1319, G6: 1568, C4: 262, E4: 330, G4: 392 };
 
 // 同じ音を鳴らせる最短の間隔（秒）
-const GAP = { heart: 0.06, eat: 0.08, tick: 0.5, drink: 1.2, hiss: 1.0 };
+const GAP = { voice: 0.05, heart: 0.06, eat: 0.08, tick: 0.5, drink: 1.2, hiss: 1.0 };
 
 const SFX = {
   ui: (t) => tone(t, 880, 0.06, { vol: 0.2 }),
@@ -349,5 +349,10 @@ const SFX = {
   tick: (t) => tone(t, 1200, 0.03, { vol: 0.12 }),
   end: (t) => notes(t, [N.G5, N.E5, N.C5, N.G5, N.C6], 0.1, { vol: 0.25 }),
   row: (t) => tone(t, 700, 0.05, { vol: 0.15 }),
+  // ウィルにゃん（キラキラの声）：あらわれる・しゃべる文字・次へ
+  sparkle: (t) => notes(t, [N.E6, N.G6, 2093, 2637, 2093, 2637], 0.06, { type: 'triangle', vol: 0.14 }),
+  voice: (t) => tone(t, 1800 + Math.random() * 400, 0.025, { type: 'triangle', vol: 0.06 }),
+  // 予防接種のチクッ
+  poke: (t) => { tone(t, 2400, 0.04, { vol: 0.2, to: 3200 }); tone(t + 0.05, 600, 0.18, { type: 'triangle', vol: 0.25, to: 900 }); },
   best: (t) => notes(t, [N.C5, N.E5, N.G5, N.C6, N.G5, N.C6, N.E6], 0.08, { vol: 0.25 }),
 };

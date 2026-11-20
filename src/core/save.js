@@ -8,6 +8,7 @@ const DEFAULT = () => ({
   coins: 0,
   bestScore: {}, // ステージの id（'park' など）→ ベストスコア
   unlocked: [], // 点数で開いたステージの id
+  cleared: [], // クリアしたステージの id（チュートリアルなど、点数のないステージ）
   learned: {}, // 覚えたこと（トイレフィーバーなど。ボス戦で覚える）
   archive: {},
   settings: { mute: false },

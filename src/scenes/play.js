@@ -22,6 +22,7 @@ import { KamatteScene } from './kamatte.js';
 import { audio } from '../core/audio.js';
 import { ResultScene } from './result.js';
 import { PauseScene } from './pause.js';
+import { Tutorial } from '../game/tutorial.js';
 
 export class PlayScene {
   constructor(game, stageId = FIRST_STAGE) {
@@ -70,6 +71,7 @@ export class PlayScene {
     this.fx = new Effects(); // 街の中の演出（座標は街）
     this.flash = 0; // 白いフェード
     this.lastCam = { x: 0, y: 0 };
+    this.tutorial = this.stage.tutorial ? new Tutorial(this) : null; // チュートリアルの流れ（game/tutorial.js）
   }
 
   enter() { input.releaseAll(); audio.music('play'); this.feverMusic = false; }
@@ -155,7 +157,7 @@ export class PlayScene {
     const st = this.state;
     const prevSec = Math.ceil(st.timeLeft);
     const prevThirst = st.thirst;
-    st.timeLeft = Math.max(0, st.timeLeft - dt);
+    if (this.rules.timer) st.timeLeft = Math.max(0, st.timeLeft - dt); // 時間なし（チュートリアル）なら減らない
     if (thirst && this.rules.water && this.action?.kind !== 'faint') st.thirst += dt;
     if (prevThirst < BAL.water.warn && st.thirst >= BAL.water.warn) audio.sfx('warn');
     if (Math.ceil(st.timeLeft) < prevSec && prevSec <= BAL.hurryAt && st.timeLeft > 0) audio.sfx('tick');
@@ -178,6 +180,7 @@ export class PlayScene {
     }
     this.fx.update(dt);
     if (this.flash > 0) this.flash -= dt;
+    if (this.tutorial?.update(dt)) return; // セリフ・病院の間は止める
 
     // 時間切れ → 「おしまい！」を少し見せてからリザルトへ
     if (this.ending > 0) {
@@ -677,6 +680,7 @@ export class PlayScene {
   onRingingEnd(target, won) {
     if (won) target.leave(this.cat.x, this.cat.y);
     this.flash = 0.3;
+    this.tutorial?.onRingingEnd(target, won);
   }
 
   worldToScreen(x, y) {
@@ -716,6 +720,7 @@ export class PlayScene {
       ctx.fillStyle = `rgba(255,250,240,${Math.min(1, this.flash / 0.3)})`;
       ctx.fillRect(0, 0, screen.W, screen.H);
     }
+    this.tutorial?.draw(ctx);
     if (this.ending > 0) {
       const a = Math.min(1, (1.8 - this.ending) * 4);
       ctx.fillStyle = `rgba(20,12,8,${0.45 * a})`;
@@ -749,6 +754,7 @@ export class PlayScene {
 
   // 残り時間（てらまりんぐ画面でも使う）
   drawTimer(ctx) {
+    if (!this.rules.timer) return; // 時間なし（チュートリアル）
     const W = screen.W;
     const sec = Math.ceil(this.state.timeLeft);
     const hurry = sec <= BAL.hurryAt;
@@ -1038,7 +1044,7 @@ export class PlayScene {
     this.drawCounters(ctx, 4, 4);
     this.drawStatus(ctx, 4, 22);
     this.drawTimer(ctx);
-    this.drawScore(ctx, screen.W - 28, 4);
+    if (this.rules.timer) this.drawScore(ctx, screen.W - 28, 4);
 
     this.drawFever(ctx);
 

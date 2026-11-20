@@ -14,7 +14,13 @@ const GROUND = {
   G: { base: '#7fb65a', line: null, dot: ['#6aa24a', '#93c96a'] },
   P: { base: '#c99a76', line: '#b0805c', dot: ['#d4a884'] },
   W: { base: '#5aa8d8', line: null, dot: ['#6ab8e4', '#4e9acb'] }, // 池（入れない）
+  // 家の中（チュートリアル）
+  F: { base: '#c8955a', line: '#a87840', dot: ['#d2a068', '#bb8a50'] }, // 板の床
+  K: { base: '#efe6d2', line: '#d6cab0', dot: ['#f4ecdc'] }, // 台所のタイル
+  C: { base: '#d88a8a', line: '#c07070', dot: ['#e09a9a', '#cc7e7e'] }, // じゅうたん
+  X: { base: '#e8dcc4', line: '#8a6a4a', dot: ['#e0d2b8'] }, // 壁（入れない）
 };
+const SOLID_GROUND = ['W', 'X'];
 
 const towns = new Map();
 
@@ -38,7 +44,7 @@ export class Town {
       },
     });
     this.solid = Array.from({ length: this.rows }, () => Array(this.cols).fill(false));
-    for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) if (this.grid[r][c] === 'W') this.solid[r][c] = true;
+    for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) if (SOLID_GROUND.includes(this.grid[r][c])) this.solid[r][c] = true;
     for (const b of stage.buildings) {
       for (let r = b.r; r < b.r + b.h; r++) for (let c = b.c; c < b.c + b.w; c++) this.solid[r][c] = true;
     }
@@ -106,6 +112,45 @@ export class Town {
           x.fillRect(gx, gy + 1, 1, 2);
           x.fillRect(gx + 2, gy, 1, 3);
           x.fillRect(gx + 4, gy + 1, 1, 2);
+        }
+        // 家の中：床板・タイル・じゅうたん・壁
+        if (this.grid[r][col] === 'F') {
+          x.fillStyle = t.line;
+          x.fillRect(px, py + 7, TILE, 1);
+          x.fillRect(px, py + 15, TILE, 1);
+          x.fillRect(px + ((r * 7 + col * 5) % 12) + 2, py, 1, 7);
+          x.fillRect(px + ((r * 3 + col * 11) % 12) + 2, py + 8, 1, 7);
+        } else if (this.grid[r][col] === 'K') {
+          x.fillStyle = t.line;
+          x.fillRect(px, py + 7, TILE, 1);
+          x.fillRect(px + 7, py, 1, TILE);
+          x.fillRect(px, py + 15, TILE, 1);
+          x.fillRect(px + 15, py, 1, TILE);
+        } else if (this.grid[r][col] === 'C') {
+          const g = (rr, cc) => this.grid[rr]?.[cc];
+          x.fillStyle = '#f0c8a0'; // ふちの模様
+          if (g(r - 1, col) !== 'C') x.fillRect(px, py + 2, TILE, 1);
+          if (g(r + 1, col) !== 'C') x.fillRect(px, py + TILE - 3, TILE, 1);
+          if (g(r, col - 1) !== 'C') x.fillRect(px + 2, py, 1, TILE);
+          if (g(r, col + 1) !== 'C') x.fillRect(px + TILE - 3, py, 1, TILE);
+        } else if (this.grid[r][col] === 'X') {
+          // 下も壁なら壁の上（こげ茶）、下が床なら壁の正面（壁紙と幅木）
+          const below = this.grid[r + 1]?.[col];
+          if (below === 'X' || below === undefined) {
+            x.fillStyle = '#6a5040';
+            x.fillRect(px, py, TILE, TILE);
+            x.fillStyle = '#7a5e4c';
+            x.fillRect(px, py, TILE, 1);
+          } else {
+            x.fillStyle = '#efe4cc';
+            x.fillRect(px, py, TILE, TILE);
+            x.fillStyle = '#e2d4b8';
+            for (let xx = 2; xx < TILE; xx += 6) x.fillRect(px + xx, py, 1, TILE - 4);
+            x.fillStyle = t.line;
+            x.fillRect(px, py + TILE - 4, TILE, 4); // 幅木
+            x.fillStyle = '#a8845e';
+            x.fillRect(px, py + TILE - 4, TILE, 1);
+          }
         }
         // 池：さざなみと、岸の石
         if (this.grid[r][col] === 'W') {

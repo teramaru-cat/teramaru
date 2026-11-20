@@ -10,6 +10,7 @@ import { audio } from '../core/audio.js';
 import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
 import { getTown } from '../game/town.js';
+import { FIRST_STAGE } from '../data/areas.js';
 
 export class TitleScene {
   constructor(game) {
@@ -36,7 +37,13 @@ export class TitleScene {
       if (this.soundBtn.contains(p.x, p.y)) { p.role = 'button:sound'; toggleMute(this.game); }
     }
     const id = this.menu.update();
-    if (id === 'start') this.game.toStageSelect();
+    if (id === 'start') {
+      // はじめて遊ぶ人は、そのままチュートリアルへ
+      const sv = this.game.save;
+      const fresh = !sv.cleared.includes(FIRST_STAGE) && Object.keys(sv.bestScore).length === 0;
+      if (fresh) this.game.startPlay(FIRST_STAGE);
+      else this.game.toStageSelect();
+    }
   }
 
   draw(ctx) {
