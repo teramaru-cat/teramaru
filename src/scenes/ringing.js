@@ -17,12 +17,15 @@ import { Cat } from '../game/cat.js';
 import { claimMove, moveVector, drawSticks } from '../game/control.js';
 import { Effects, PopText, Absorb, heartAbsorb } from '../game/effects.js';
 import { PauseScene } from './pause.js';
-import { drawHowTo, HOW_TO_RING } from '../game/tutorial.js';
+import { drawHowTo } from '../game/tutorial.js';
+import { tr } from '../i18n/index.js';
 
 const TAU = Math.PI * 2;
 const GROUND_Y = 112; // 足が地面に着いている高さ（画面）
 const TOP_LIMIT = 58; // てらまるはこれより上（服の中）には行けない
-const LAP_WORDS = ['すりっ', 'すりすり', 'ゴロゴロ']; // 足を1周したときに出る言葉（ランダム）
+const LAP_WORDS = () => tr('ring.lap'); // 足を1周したときに出る言葉（ランダム）
+
+function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
 
 function wrap(a) {
   while (a > Math.PI) a -= TAU;
@@ -194,7 +197,7 @@ export class RingingScene {
     this.gauge = Math.max(0, this.gauge - BAL.ring.hitPenalty);
     this.cat.x += nx * 8;
     this.cat.y = Math.max(TOP_LIMIT, this.cat.y + ny * 8);
-    this.fx.add(new PopText(this.cat.x, this.cat.y - 44, stomped ? 'ふまれそう！' : 'ぶつかった！', UI.red));
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 44, stomped ? tr('ring.stomp') : tr('ring.bump'), UI.red));
     audio.sfx('hit');
     audio.buzz(40);
   }
@@ -220,7 +223,7 @@ export class RingingScene {
           L.laps++;
           audio.sfx('lap', this.legs.reduce((s, l) => s + l.laps, 0));
           this.gauge = Math.min(dur, this.gauge + 1);
-          this.fx.add(new PopText(L.x, L.y - 34, LAP_WORDS[Math.floor(Math.random() * LAP_WORDS.length)], UI.orangeD));
+          this.fx.add(new PopText(L.x, L.y - 34, pick(LAP_WORDS()), UI.orangeD));
         }
       }
       L.prevA = a;
@@ -247,7 +250,7 @@ export class RingingScene {
         const tp = BAL.ring.passTp;
         this.play.addTp(tp);
         audio.sfx('pass');
-        this.fx.add(new PopText((a.x + b.x) / 2, my - 40, this.passes >= 2 ? `8のじ！ +${tp}TP` : `くぐった！ +${tp}TP`, UI.pink, 0.9));
+        this.fx.add(new PopText((a.x + b.x) / 2, my - 40, this.passes >= 2 ? tr('ring.eight', { n: tp }) : tr('ring.pass', { n: tp }), UI.pink, 0.9));
       }
       g.side = side;
     }
@@ -428,18 +431,18 @@ export class RingingScene {
 
     this.play.drawCounters(ctx, W - 28, 4, true);
     this.play.drawStatus(ctx, W - 4, 22, true);
-    if (this.mult > 1) drawText(ctx, `つめとぎ TP×${this.mult}`, 8, 33, { font: 'small', color: UI.orangeD, outline: UI.white });
+    if (this.mult > 1) drawText(ctx, tr('ring.scratchMult', { n: this.mult }), 8, 33, { font: 'small', color: UI.orangeD, outline: UI.white });
     this.play.drawTimer(ctx);
     this.pauseBtn.draw(ctx, { pressed: this.pauseBtn.isHeld() });
 
     if (this.play.tutorial && (this.phase === 'play' || this.phase === 'in')) {
       // チュートリアル：ズームインしたら、てらまりんぐのやり方を上に出しつづける
-      drawHowTo(ctx, HOW_TO_RING, 44);
+      drawHowTo(ctx, tr('tutorial.howToRing'), 44);
     } else if (this.phase === 'play' && this.pt < 3.5) {
-      drawText(ctx, 'あしのまわりを ぐるぐる まわろう', W / 2, H - 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
-      drawText(ctx, 'はしから でると やめる', W / 2, H - 12, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
+      drawText(ctx, tr('ring.hint1'), W / 2, H - 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
+      drawText(ctx, tr('ring.hint2'), W / 2, H - 12, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
     } else if (this.phase === 'play' && this.pt < 7) {
-      drawText(ctx, 'あしのあいだを くぐると ボーナス', W / 2, H - 12, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
+      drawText(ctx, tr('ring.hint3'), W / 2, H - 12, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
     }
     // メロメロにできたときだけ（時間切れ・お水切れ・途中でやめたときは出さない）
     if (this.result === 'win') {

@@ -12,6 +12,7 @@ import { startRotateCat } from './art/rotateCat.js';
 import { TitleScene } from './scenes/title.js';
 import { PlayScene } from './scenes/play.js';
 import { StageSelectScene } from './scenes/stageselect.js';
+import { setLang, detectLang, onLangChange, tr } from './i18n/index.js';
 
 const STEP = 1 / 60;
 const MAX_STEPS = 5;
@@ -34,6 +35,10 @@ async function boot() {
   initScreen(canvas);
   input.init(canvas);
   audio.init(game.save.settings?.mute);
+  // ことば：保存してあればそれ、なければブラウザの言語から
+  const rotateText = document.querySelector('#rotate p');
+  onLangChange(() => { if (rotateText) rotateText.textContent = tr('rotate'); });
+  setLang(game.save.settings?.lang ?? detectLang());
   await loadFonts();
   buildSprites();
   // 「よこにしてね」の画面に、獲物をねらってフリフリするてらまる

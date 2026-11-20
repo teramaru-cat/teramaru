@@ -5,11 +5,12 @@
 import { drawText, textWidth } from '../core/text.js';
 import { panel } from '../core/ui.js';
 import { UI } from '../art/palette.js';
+import { tr } from '../i18n/index.js';
 
-// 名前（ここを変えれば全部変わる）
+// 名前（言葉は i18n の voice.name / voice.fullName）
 export const VOICE = {
-  name: 'ウィルキャッ', // 枠の名札に出す愛称
-  fullName: 'ウィル・オブ・キャッツ', // 正式な名前（せかいじゅうの ねこの いし）
+  get name() { return tr('voice.name'); }, // 枠の名札に出す愛称
+  get fullName() { return tr('voice.fullName'); }, // 正式な名前（せかいじゅうの ねこの いし）
 };
 
 const CHAR_SPEED = 18; // 1秒に出す文字数

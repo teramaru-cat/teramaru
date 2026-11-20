@@ -1,6 +1,6 @@
 // 街の地図：公園
 // 地面は 16ドット四方のマスで塗る。S=歩道 R=道路 G=芝生 P=レンガ W=池（入れない）
-// 建物・小物・特別な場所は、マス座標（c, r）で置く。
+// 看板 sign は i18n の sign の key。建物・小物・特別な場所は、マス座標（c, r）で置く。
 // start：スタート地点、hospital：倒れたときに運ばれる病院の前、fixedTargets：ずっと同じ場所にいるターゲット（ベンチなど）
 
 const T = 16;
@@ -28,8 +28,8 @@ export const PARK = {
   crosswalks: [],
   centerLines: [],
   buildings: [
-    { c: 1, r: 9, w: 8, h: 5, kind: 'hospital', sign: 'びょういん', wall: '#fafafa', roof: '#8fb8c8' },
-    { c: 33, r: 3, w: 6, h: 5, kind: 'shop', sign: 'ばいてん', wall: '#f5e6c8', roof: '#2f8a5a', awning: '#f0a030' },
+    { c: 1, r: 9, w: 8, h: 5, kind: 'hospital', sign: 'hospital', wall: '#fafafa', roof: '#8fb8c8' },
+    { c: 33, r: 3, w: 6, h: 5, kind: 'shop', sign: 'kiosk', wall: '#f5e6c8', roof: '#2f8a5a', awning: '#f0a030' },
     { c: 10, r: 9, w: 5, h: 5, kind: 'house', wall: '#efe3c8', roof: '#7a5a3a' }, // 管理小屋
     { c: 12, r: 27, w: 7, h: 4, kind: 'house', wall: '#f0e0c0', roof: '#c05050' }, // トイレ（公園の）
   ],

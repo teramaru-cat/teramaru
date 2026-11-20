@@ -7,6 +7,7 @@ import { Menu, panel } from '../core/ui.js';
 import { UI } from '../art/palette.js';
 import { audio } from '../core/audio.js';
 import { save } from '../core/save.js';
+import { tr } from '../i18n/index.js';
 
 export class PauseScene {
   constructor(game, play) {
@@ -14,9 +15,9 @@ export class PauseScene {
     this.play = play;
     this.overlay = true;
     this.menu = new Menu([
-      { id: 'resume', label: 'つづける' },
-      { id: 'restart', label: 'さいしょから' },
-      { id: 'title', label: 'タイトルへ' },
+      { id: 'resume', label: tr('pause.resume') },
+      { id: 'restart', label: tr('pause.restart') },
+      { id: 'title', label: tr('pause.toTitle') },
       { id: 'sound', label: soundLabel() },
     ]);
   }
@@ -47,13 +48,13 @@ export class PauseScene {
     const px = Math.round((W - pw) / 2);
     const py = Math.round((H - ph) / 2);
     panel(ctx, px, py, pw, ph, UI.cream2);
-    drawText(ctx, 'ひとやすみ', W / 2, py + 9, { font: 'small', scale: 2, color: UI.ink, align: 'center' });
+    drawText(ctx, tr('pause.title'), W / 2, py + 9, { font: 'small', scale: 2, color: UI.ink, align: 'center' });
     this.menu.layout(W / 2, py + 36, 100, 20, 5);
     this.menu.draw(ctx);
   }
 }
 
-function soundLabel() { return audio.muted ? 'おと：なし' : 'おと：あり'; }
+function soundLabel() { return audio.muted ? tr('pause.soundOff') : tr('pause.soundOn'); }
 
 // ミュートを切り替えて保存する（タイトルからも使う）
 export function toggleMute(game) {

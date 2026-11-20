@@ -1,6 +1,6 @@
 // 街の地図：商店街
 // 地面は 16ドット四方のマスで塗る。S=歩道 R=道路 G=芝生 P=レンガ W=池（入れない）
-// 建物・小物・特別な場所は、マス座標（c, r）で置く。
+// 看板 sign は i18n の sign の key。建物・小物・特別な場所は、マス座標（c, r）で置く。
 // start：スタート地点、hospital：倒れたときに運ばれる病院の前、fixedTargets：ずっと同じ場所にいるターゲット（ベンチなど）
 
 const T = 16;
@@ -30,18 +30,18 @@ export const SHOTENGAI = {
     { dir: 'v', c: 30, r0: 14, r1: 33, skip: [14, 17] },
   ],
   buildings: [
-    { c: 1, r: 0, w: 7, h: 7, kind: 'shop', sign: 'パン', wall: '#f3dcb2', roof: '#b0533a', awning: '#e0703a' },
-    { c: 9, r: 0, w: 7, h: 7, kind: 'shop', sign: 'さかな', wall: '#dfe9ef', roof: '#3c6e9a', awning: '#3a8ad0' },
-    { c: 17, r: 0, w: 7, h: 7, kind: 'shop', sign: 'カフェ', wall: '#e8d5c4', roof: '#6b4a3a', awning: '#2f8a5a' },
-    { c: 34, r: 0, w: 6, h: 7, kind: 'shop', sign: 'ほん', wall: '#efe3c8', roof: '#7a5a9a', awning: '#8a5ab0' },
-    { c: 41, r: 0, w: 6, h: 7, kind: 'shop', sign: 'はな', wall: '#fbe8ee', roof: '#c25a7a', awning: '#e888a8' },
-    { c: 48, r: 0, w: 11, h: 7, kind: 'shop', sign: 'スーパー', wall: '#f0f0e8', roof: '#4a8a4a', awning: '#e04a3a' },
-    { c: 1, r: 16, w: 11, h: 6, kind: 'hospital', sign: 'びょういん', wall: '#fafafa', roof: '#8fb8c8' },
+    { c: 1, r: 0, w: 7, h: 7, kind: 'shop', sign: 'bakery', wall: '#f3dcb2', roof: '#b0533a', awning: '#e0703a' },
+    { c: 9, r: 0, w: 7, h: 7, kind: 'shop', sign: 'fish', wall: '#dfe9ef', roof: '#3c6e9a', awning: '#3a8ad0' },
+    { c: 17, r: 0, w: 7, h: 7, kind: 'shop', sign: 'cafe', wall: '#e8d5c4', roof: '#6b4a3a', awning: '#2f8a5a' },
+    { c: 34, r: 0, w: 6, h: 7, kind: 'shop', sign: 'books', wall: '#efe3c8', roof: '#7a5a9a', awning: '#8a5ab0' },
+    { c: 41, r: 0, w: 6, h: 7, kind: 'shop', sign: 'flowers', wall: '#fbe8ee', roof: '#c25a7a', awning: '#e888a8' },
+    { c: 48, r: 0, w: 11, h: 7, kind: 'shop', sign: 'market', wall: '#f0f0e8', roof: '#4a8a4a', awning: '#e04a3a' },
+    { c: 1, r: 16, w: 11, h: 6, kind: 'hospital', sign: 'hospital', wall: '#fafafa', roof: '#8fb8c8' },
     { c: 14, r: 16, w: 6, h: 6, kind: 'house', wall: '#f0e0c0', roof: '#c05050' },
     { c: 21, r: 16, w: 6, h: 6, kind: 'house', wall: '#dde8d0', roof: '#4060a0' },
     { c: 1, r: 26, w: 12, h: 8, kind: 'apart', wall: '#e0dcd4', roof: '#807870' },
-    { c: 14, r: 26, w: 7, h: 8, kind: 'shop', sign: 'ラーメン', wall: '#f5e6c8', roof: '#3a3a3a', awning: '#c8302a' },
-    { c: 21, r: 26, w: 6, h: 8, kind: 'shop', sign: 'くすり', wall: '#eef4f8', roof: '#2a6aaa', awning: '#2aa0d0' },
+    { c: 14, r: 26, w: 7, h: 8, kind: 'shop', sign: 'ramen', wall: '#f5e6c8', roof: '#3a3a3a', awning: '#c8302a' },
+    { c: 21, r: 26, w: 6, h: 8, kind: 'shop', sign: 'pharmacy', wall: '#eef4f8', roof: '#2a6aaa', awning: '#2aa0d0' },
   ],
   props: [
     // 街路樹

@@ -23,6 +23,7 @@ import { audio } from '../core/audio.js';
 import { ResultScene } from './result.js';
 import { PauseScene } from './pause.js';
 import { Tutorial } from '../game/tutorial.js';
+import { tr } from '../i18n/index.js';
 
 export class PlayScene {
   constructor(game, stageId = FIRST_STAGE) {
@@ -45,7 +46,7 @@ export class PlayScene {
     this.hintShown = false; // 「おねだりできるよ」を出したか
     this.t = 0;
     this.pauseBtn = new Button('pause', '', { icon: 'pause', pad: 6 });
-    this.confirmBtn = new Button('confirm', 'けってい', { pad: 6 });
+    this.confirmBtn = new Button('confirm', tr('play.confirm'), { pad: 6 });
     // 1プレイ分の状態
     this.state = {
       timeLeft: BAL.playSeconds,
@@ -147,7 +148,7 @@ export class PlayScene {
     if (!wasFull && this.full()) {
       st.over = 0;
       audio.sfx('full');
-      this.fx.add(new PopText(this.cat.x, this.cat.y - 34, 'もじもじ…', UI.pink, 1.4));
+      this.fx.add(new PopText(this.cat.x, this.cat.y - 34, tr('play.mojimoji'), UI.pink, 1.4));
     }
   }
 
@@ -239,7 +240,7 @@ export class PlayScene {
     // ニガテゾーンには入れない：押し戻されて「シャー！」
     if (this.strays.repel(this.cat, this.town)) {
       if (this.hiss <= 0) {
-        this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'シャー！', UI.red, 0.8));
+        this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.hiss'), UI.red, 0.8));
         audio.sfx('hiss');
       }
       this.hiss = 0.6;
@@ -304,7 +305,7 @@ export class PlayScene {
     if (st.thirst < 0.5) return; // 飲んだばかり
     const award = this.t - st.lastDrink >= BAL.water.refill;
     st.thirst = 0;
-    this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'ごくごく', '#2a70c0'));
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 26, tr('play.drink'), '#2a70c0'));
     audio.sfx('drink');
     if (award) {
       st.lastDrink = this.t;
@@ -321,19 +322,19 @@ export class PlayScene {
     const c = this.cat;
     if (!R.water && ready('water') && (this.findProp(['water', 'fountain'], 8) || this.town.nearPond(c.x, c.y, 13))) {
       this.flavor.water = this.t + 3;
-      this.fx.add(new PopText(c.x, c.y - 26, 'ごくごく', '#2a70c0'));
+      this.fx.add(new PopText(c.x, c.y - 26, tr('play.drink'), '#2a70c0'));
       audio.sfx('drink');
       for (let i = 0; i < 4; i++) this.addDrop(c.x + (Math.random() - 0.5) * 10, c.y - 4, '#7ac0ec');
     }
     if (!R.food && ready('litter') && this.findProp(['litter'], 4)) {
       this.flavor.litter = this.t + 3;
-      this.fx.add(new PopText(c.x, c.y - 30, 'カキカキ', UI.orangeD));
+      this.fx.add(new PopText(c.x, c.y - 30, tr('play.litter'), UI.orangeD));
       audio.sfx('toilet');
       for (let i = 0; i < 10; i++) this.addSand();
     }
     if (!R.scratch && ready('scratch') && this.findProp(['scratch', 'catTower'], 6)) {
       this.flavor.scratch = this.t + 3;
-      this.fx.add(new PopText(c.x, c.y - 30, 'ガリガリ', UI.orangeD));
+      this.fx.add(new PopText(c.x, c.y - 30, tr('play.scratch'), UI.orangeD));
       audio.sfx('scratch');
     }
   }
@@ -369,7 +370,7 @@ export class PlayScene {
     const need = BAL.onedari.minTp - this.state.tp;
     if (need <= 0) return;
     if (this.fx.list.some((e) => e.hint)) return;
-    const e = new PopText(this.cat.x, this.cat.y - 34, `おねだりは TP あと${need}`, UI.ink, 1.2);
+    const e = new PopText(this.cat.x, this.cat.y - 34, tr('play.needTp', { n: need }), UI.ink, 1.2);
     e.hint = true;
     this.fx.add(e);
   }
@@ -479,7 +480,7 @@ export class PlayScene {
     const dx = t.x - this.cat.x;
     const dy = t.y - this.cat.y;
     this.cat.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
-    this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'にゃーん', UI.pink, 0.8));
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.meow'), UI.pink, 0.8));
     audio.sfx('meow');
   }
 
@@ -519,8 +520,8 @@ export class PlayScene {
     this.cat.py = this.cat.y;
     if (L.wait === undefined) {
       L.wait = 0;
-      if (L.win) this.fx.add(new PopText(t.x, t.y - 34, 'しょうがないなぁ', UI.pink, 0.9));
-      else this.fx.add(new PopText(t.x, t.y - 34, 'また今度ね', UI.ink, 1.2));
+      if (L.win) this.fx.add(new PopText(t.x, t.y - 34, tr('play.yes'), UI.pink, 0.9));
+      else this.fx.add(new PopText(t.x, t.y - 34, tr('play.no'), UI.ink, 1.2));
       audio.sfx(L.win ? 'yes' : 'no');
     }
     L.wait += dt;
@@ -530,7 +531,7 @@ export class PlayScene {
       this.game.scenes.push(new KamatteScene(this.game, this, t, this.pickKamatte(L.spent, L.base)));
     } else {
       t.leave(this.cat.x, this.cat.y);
-      this.fx.add(new PopText(this.cat.x, this.cat.y - 28, 'しょんぼり', '#6a7a9a', 1.0));
+      this.fx.add(new PopText(this.cat.x, this.cat.y - 28, tr('play.sad'), '#6a7a9a', 1.0));
     }
   }
 
@@ -570,7 +571,7 @@ export class PlayScene {
     this.state.lastScratch = this.t;
     this.action = { kind: 'scratch', t: 0 };
     this.cat.dir = 'up';
-    this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'ガリガリ', UI.orangeD));
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.scratch'), UI.orangeD));
     audio.sfx('scratch');
   }
 
@@ -587,7 +588,7 @@ export class PlayScene {
   startToilet() {
     this.action = { kind: 'toilet', t: 0, sand: 0 };
     this.cat.dir = 'down';
-    this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'カキカキ', UI.orangeD));
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.litter'), UI.orangeD));
     audio.sfx('toilet');
   }
 
@@ -608,7 +609,7 @@ export class PlayScene {
     st.scratch = 0;
     st.toilet = 0;
     this.action = { kind: 'faint', t: 0, moved: false };
-    this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'バタッ', UI.red));
+    this.fx.add(new PopText(this.cat.x, this.cat.y - 26, tr('play.faint'), UI.red));
     audio.sfx('faint');
     audio.buzz([60, 60, 120]);
   }
@@ -619,14 +620,14 @@ export class PlayScene {
     const st = this.state;
     if (a.kind === 'scratch' && a.t >= BAL.scratch.motion) {
       st.scratch = BAL.scratch.window;
-      this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'つめ ばっちり！', UI.orangeD));
+      this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.scratchDone'), UI.orangeD));
       this.action = null;
     } else if (a.kind === 'toilet' && a.t < BAL.toilet.motion) {
       if (Math.random() < dt * 25) this.addSand();
     } else if (a.kind === 'toilet') {
       st.fp = 0;
       st.over = 0;
-      this.fx.add(new PopText(this.cat.x, this.cat.y - 30, 'すっきり！', UI.orangeD));
+      this.fx.add(new PopText(this.cat.x, this.cat.y - 30, tr('play.toiletDone'), UI.orangeD));
       // トイレフィーバーは、使えるステージだけ（ボス猫戦で覚える）
       if (this.rules.fever) {
         st.toilet = BAL.toilet.buff;
@@ -650,7 +651,7 @@ export class PlayScene {
       }
       if (a.t >= F.total) {
         this.action = null;
-        this.fx.add(new PopText(this.cat.x, this.cat.y - 26, 'げんきになった！', UI.orangeD));
+        this.fx.add(new PopText(this.cat.x, this.cat.y - 26, tr('play.recovered'), UI.orangeD));
         audio.sfx('recover');
       }
     }
@@ -761,7 +762,7 @@ export class PlayScene {
       ctx.fillStyle = `rgba(20,12,8,${0.45 * a})`;
       ctx.fillRect(0, 0, screen.W, screen.H);
       const pop = Math.round(Math.max(0, 1 - (1.8 - this.ending) * 5) * -20);
-      drawText(ctx, 'おしまい！', screen.W / 2, 70 + pop, { scale: 2, color: UI.orange, outline: UI.ink, align: 'center' });
+      drawText(ctx, tr('play.end'), screen.W / 2, 70 + pop, { scale: 2, color: UI.orange, outline: UI.ink, align: 'center' });
     }
   }
 
@@ -775,7 +776,7 @@ export class PlayScene {
     else if (a.t >= F.fall + 0.4 && a.t < F.fall + 0.8) white = 1 - (a.t - F.fall - 0.4) / 0.4;
     if (a.t >= F.fall + 0.4) {
       const left = Math.max(0, Math.ceil(F.total - a.t));
-      const msg = 'びょういんで やすみちゅう';
+      const msg = tr('play.resting');
       const w = textWidth(msg, 'small') + 30;
       panel(ctx, Math.round(W / 2 - w / 2), 44, w, 14, UI.cream);
       drawText(ctx, msg, Math.round(W / 2 - w / 2) + 6, 47, { font: 'small', color: UI.ink });
@@ -903,7 +904,7 @@ export class PlayScene {
       ctx.fillRect(ax - 3, ay, 7, 3);
       ctx.fillRect(ax - 1, ay + 3, 3, 2);
       ctx.fillRect(ax, ay + 5, 1, 1);
-      drawText(ctx, 'トイレ', ax, ay - 9, { font: 'small', color: UI.pink, outline: UI.white, align: 'center' });
+      drawText(ctx, tr('play.toilet'), ax, ay - 9, { font: 'small', color: UI.pink, outline: UI.white, align: 'center' });
     }
     // いちばん近い猫砂が画面の外 → 端に三角
     if (near && !near.seen) {
@@ -965,7 +966,7 @@ export class PlayScene {
     const wl = this.tummyLevel();
     const weightCol = ['#7ab050', '#e0a030', UI.red][wl];
     const fullBlink = R.food && wl === 2 && Math.floor(this.t * 4) % 2 === 0;
-    const lab = 'おなか';
+    const lab = tr('play.tummy');
     const lw = textWidth(lab, 'small');
     if (st.scratch > 0) parts.push({ img: SPR.paw, sec: Math.ceil(st.scratch) });
     if (st.toilet > 0) parts.push({ img: SPR.bolt, sec: Math.ceil(st.toilet) });
@@ -1072,7 +1073,7 @@ export class PlayScene {
     ctx.fillStyle = UI.ink;
     ctx.fillRect(x - 1, y + 12, 3, 1);
     ctx.fillRect(x, y + 13, 1, 1);
-    drawText(ctx, 'にゃ', x + 1, y + 2, { font: 'small', color: UI.ink, align: 'center' });
+    drawText(ctx, tr('play.nya'), x + 1, y + 2, { font: 'small', color: UI.ink, align: 'center' });
   }
 
   drawHud(ctx) {
@@ -1088,14 +1089,14 @@ export class PlayScene {
       const a = Math.min(1, this.banner * 2, (2.6 - this.banner) * 4);
       const slide = Math.round((1 - a) * -60);
       panel(ctx, 6 + slide, 40, 112, 30, UI.cream);
-      drawText(ctx, `ステージ${this.stage.label}`, 12 + slide, 43, { font: 'small', color: UI.orangeD });
+      drawText(ctx, tr('common.stage', { label: this.stage.label }), 12 + slide, 43, { font: 'small', color: UI.orangeD });
       drawText(ctx, this.stage.name, 12 + slide, 53, { color: UI.ink });
     }
 
     this.drawOnedariHint(ctx);
     this.pauseBtn.draw(ctx, { pressed: this.pauseBtn.isHeld() });
     const ok = this.canOnedari();
-    this.confirmBtn.label = ok ? 'おねだり' : 'けってい';
+    this.confirmBtn.label = ok ? tr('play.onedari') : tr('play.confirm');
     this.confirmBtn.draw(ctx, { pressed: this.confirmBtn.isHeld(), lit: ok && Math.floor(this.t * 2) % 2 === 0 });
 
     drawSticks(ctx);
@@ -1110,13 +1111,13 @@ export class PlayScene {
     const k = Math.floor(this.t * 8);
 
     // 残り時間のバー（時計の下）
-    const lw = textWidth('フィーバー', 'small');
+    const lw = textWidth(tr('play.fever'), 'small');
     const bw = lw + 40;
     const bx = Math.round(W / 2 - bw / 2);
     const by = 26;
     const end = left < 3 && Math.floor(left * 6) % 2 === 0; // 終わりぎわは点滅
     panel(ctx, bx, by, bw, 15, end ? '#fff0f4' : UI.cream);
-    drawText(ctx, 'フィーバー', bx + 4, by + 4, { font: 'small', color: rainbow[k % rainbow.length] });
+    drawText(ctx, tr('play.fever'), bx + 4, by + 4, { font: 'small', color: rainbow[k % rainbow.length] });
     const gx = bx + lw + 8;
     const gw = bw - lw - 12;
     ctx.fillStyle = '#e0d4c0';
@@ -1129,7 +1130,7 @@ export class PlayScene {
       const t = 1.8 - this.feverIntro;
       const a = Math.min(1, this.feverIntro * 3);
       const pop = t < 0.15 ? 3 : 2;
-      const text = 'トイレフィーバー！';
+      const text = tr('play.feverBig');
       const chars = [...text];
       const total = chars.reduce((w, ch) => w + textWidth(ch, 'small') * pop + pop, 0) - pop;
       let x = Math.round(W / 2 - total / 2);
@@ -1140,7 +1141,7 @@ export class PlayScene {
         drawText(ctx, ch, x, y + bob, { font: 'small', scale: pop, color: rainbow[(i + k) % rainbow.length], outline: UI.white });
         x += textWidth(ch, 'small') * pop + pop;
       });
-      drawText(ctx, 'さわるだけで メロメロ！', W / 2, y + 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
+      drawText(ctx, tr('play.feverSub'), W / 2, y + 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
       ctx.globalAlpha = 1;
     }
   }
@@ -1219,16 +1220,16 @@ export class PlayScene {
       for (let i = 0; i < 6; i++) { ctx.fillRect(x + 3 + i, y + 3 + i, 1, 1); ctx.fillRect(x + 8 - i, y + 3 + i, 1, 1); }
     }
     // 説明
-    const msg = list.length === 0 ? 'ちかくに おねだりできる人が いない'
-      : a.pointer ? 'あいてのほうへ スライドして はなす' : '←→↑↓で えらんで はなす';
+    const msg = list.length === 0 ? tr('play.aimNone')
+      : a.pointer ? tr('play.aimSlide') : tr('play.aimKeys');
     drawText(ctx, msg, screen.W / 2, screen.H - 40, { font: 'small', color: UI.white, outline: UI.ink, align: 'center' });
-    drawText(ctx, `TP ${this.state.tp} を ぜんぶ つかうよ`, screen.W / 2, screen.H - 30, { font: 'small', color: '#ffd0dc', outline: UI.ink, align: 'center' });
+    drawText(ctx, tr('play.aimTp', { n: this.state.tp }), screen.W / 2, screen.H - 30, { font: 'small', color: '#ffd0dc', outline: UI.ink, align: 'center' });
   }
 
   // はじめてTPが10になったとき・時間がのびたとき
   drawOnedariHint(ctx) {
     if (this.hintT > 0 && !this.aim) {
-      const msg = input.lastDevice === 'keyboard' ? 'けってい ながおしで おねだり！' : 'てらまるを おさえて おねだり！';
+      const msg = input.lastDevice === 'keyboard' ? tr('play.hintKey') : tr('play.hintTouch');
       const a = Math.min(1, this.hintT * 2);
       ctx.globalAlpha = a;
       const w = textWidth(msg, 'small') + 12;
@@ -1242,7 +1243,7 @@ export class PlayScene {
       const y = 26 - Math.round((1.8 - this.timeBonus) * 4);
       const tw = digitsWidth(this.timeBonusText, 2);
       drawDigits(ctx, this.timeBonusText, screen.W / 2 - 6, y, { color: '#2a70c0', outline: UI.white, align: 'center', scale: 2 });
-      drawText(ctx, 'びょう', screen.W / 2 - 6 + tw / 2 + 2, y + 5, { font: 'small', color: '#2a70c0', outline: UI.white });
+      drawText(ctx, tr('play.sec'), screen.W / 2 - 6 + tw / 2 + 2, y + 5, { font: 'small', color: '#2a70c0', outline: UI.white });
       ctx.globalAlpha = 1;
     }
   }

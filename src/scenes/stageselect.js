@@ -12,6 +12,7 @@ import { SPR } from '../art/sprites.js';
 import { drawDigits, digitsWidth } from '../art/digits.js';
 import { AREAS, STAGES, isOpen, isReady } from '../data/areas.js';
 import { getTown } from '../game/town.js';
+import { tr } from '../i18n/index.js';
 
 const ALL = AREAS.flatMap((a) => a.stages.map((s) => s.id)); // すべてのステージ（並び順）
 
@@ -26,7 +27,7 @@ export class StageSelectScene {
     // チュートリアルがまだなら、そこから
     const tut = ALL.find((id) => STAGES[id].tutorial && this.isOpen(id));
     if (tut && !game.save.cleared.includes(tut)) this.sel = tut;
-    this.backBtn = new Button('back', 'もどる', { font: 'small', pad: 6 });
+    this.backBtn = new Button('back', tr('select.back'), { font: 'small', pad: 6 });
     this.prevBtn = new Button('prev', '', { icon: 'left', pad: 6 });
     this.nextBtn = new Button('next', '', { icon: 'right', pad: 6 });
     this.cards = []; // { id, x, y, w, h }
@@ -120,11 +121,11 @@ export class StageSelectScene {
     ctx.drawImage(bg.image, -Math.round(bg.w / 2 - W / 2), -150);
     ctx.fillStyle = 'rgba(255,246,224,0.72)';
     ctx.fillRect(0, 0, W, H);
-    drawText(ctx, 'ステージを えらぶ', W / 2, 6, { font: 'small', scale: 2, color: UI.orangeD, align: 'center' });
+    drawText(ctx, tr('select.title'), W / 2, 6, { font: 'small', scale: 2, color: UI.orangeD, align: 'center' });
 
     // エリア名と ◀ ▶
     const ai = AREAS.indexOf(this.area);
-    const head = `エリア${ai}  ${this.area.name}`; // チュートリアルはエリア0
+    const head = tr('select.area', { n: ai, name: this.area.name }); // チュートリアルはエリア0
     const hw = textWidth(head, 'small') + 16;
     panel(ctx, Math.round(W / 2 - hw / 2), 26, hw, 14, '#fff6e0');
     drawText(ctx, head, W / 2, 29, { font: 'small', color: UI.ink, align: 'center' });
@@ -181,24 +182,24 @@ export class StageSelectScene {
     if (open && st.tutorial) {
       // チュートリアル：点数はなく、クリアしたかだけ
       const done = this.game.save.cleared.includes(b.id);
-      drawText(ctx, done ? 'クリア！' : 'はじめに', cx, by, { font: 'small', color: done ? UI.orangeD : '#6a6258', align: 'center' });
-      if (focused) drawText(ctx, 'あそぶ！', cx, by + 13, { font: 'small', color: UI.orangeD, align: 'center' });
+      drawText(ctx, done ? tr('select.clear') : tr('select.first'), cx, by, { font: 'small', color: done ? UI.orangeD : '#6a6258', align: 'center' });
+      if (focused) drawText(ctx, tr('select.play'), cx, by + 13, { font: 'small', color: UI.orangeD, align: 'center' });
     } else if (open) {
       const best = this.game.save.bestScore[b.id] ?? 0;
       const bw = 9 + digitsWidth(String(best));
       ctx.drawImage(SPR.star, cx - Math.round(bw / 2), by + 1);
       drawDigits(ctx, best, cx - Math.round(bw / 2) + 9, by + 1, { color: UI.ink });
-      if (focused) drawText(ctx, 'あそぶ！', cx, by + 13, { font: 'small', color: UI.orangeD, align: 'center' });
+      if (focused) drawText(ctx, tr('select.play'), cx, by + 13, { font: 'small', color: UI.orangeD, align: 'center' });
     } else if (!ready) {
-      drawText(ctx, 'じゅんび', cx, by, { font: 'small', color: '#6a6258', align: 'center' });
-      drawText(ctx, 'ちゅう', cx, by + 10, { font: 'small', color: '#6a6258', align: 'center' });
+      drawText(ctx, tr('select.notReady')[0], cx, by, { font: 'small', color: '#6a6258', align: 'center' });
+      drawText(ctx, tr('select.notReady')[1], cx, by + 10, { font: 'small', color: '#6a6258', align: 'center' });
     } else {
       const u = st.unlock;
-      drawText(ctx, `${STAGES[u.after].name}で`, cx, by, { font: 'small', color: '#6a6258', align: 'center' });
+      drawText(ctx, tr('select.unlockAt', { name: STAGES[u.after].name }), cx, by, { font: 'small', color: '#6a6258', align: 'center' });
       const need = u.score ?? 0;
-      const tw = digitsWidth(String(need)) + 2 + textWidth('てん', 'small');
+      const tw = digitsWidth(String(need)) + 2 + textWidth(tr('select.points'), 'small');
       drawDigits(ctx, need, cx - Math.round(tw / 2), by + 11, { color: '#6a6258' });
-      drawText(ctx, 'てん', cx - Math.round(tw / 2) + digitsWidth(String(need)) + 2, by + 10, { font: 'small', color: '#6a6258' });
+      drawText(ctx, tr('select.points'), cx - Math.round(tw / 2) + digitsWidth(String(need)) + 2, by + 10, { font: 'small', color: '#6a6258' });
     }
   }
 }

@@ -14,24 +14,18 @@ import { finalScore } from '../game/score.js';
 import { getTown } from '../game/town.js';
 import { newlyOpened } from '../data/areas.js';
 import { drawVoiceBox } from '../game/voice.js';
+import { tr } from '../i18n/index.js';
 
 const ROW_GAP = 0.35; // 内訳を1行ずつ出す間隔（秒）
 const PW = 216; // 結果のパネルの幅（左にてらまると、評価の枠が出る）
 
 // ウィルキャッ（ねこたちの意志。姿のないキラキラ。game/voice.js）の評価。てらまるはしゃべらない。
-// スコアで評価が変わる（同じ評価の中からランダム）。mood はてらまるの様子（ぴょんぴょん・しょんぼりなど）
-const COMMENTS = {
-  best: [['ベストこうしん！', 'きょうの てらまるは', 'さいこう だにゃ'], ['ベストこうしん！', 'みごとな', 'てらまりんぐ だにゃ']],
-  great: [['まちじゅう メロメロ！', 'おみごと だにゃ'], ['かわいさ', 'まんてん だにゃ！'], ['きょうの てらまるは', 'むてき だったにゃ']],
-  good: [['なかなか', 'やるにゃ'], ['すりすり', 'じょうず だったにゃ'], ['いい ちょうし', 'だにゃ']],
-  ok: [['まあまあ', 'だにゃ'], ['もっと すりすり', 'できるはず だにゃ']],
-  low: [['まだまだ', 'だにゃ…'], ['あいきょうが', 'たりないにゃ…']],
-  faint: [['おみずは', 'こまめに のむにゃ'], ['たおれちゃ', 'だめ だにゃ…']],
-  kamatte: [['かまってもらえて', 'よかったにゃ'], ['あまえじょうず', 'だにゃ']],
-};
-
+// 言葉は i18n の result.comments。スコアで評価が変わる（同じ評価の中からランダム）。mood はてらまるの様子（ぴょんぴょん・しょんぼりなど）
 function pickComment(sc, st, newBest) {
-  const pick = (k) => ({ mood: k, lines: COMMENTS[k][Math.floor(Math.random() * COMMENTS[k].length)] });
+  const pick = (k) => {
+    const list = tr(`result.comments.${k}`);
+    return { mood: k, lines: list[Math.floor(Math.random() * list.length)] };
+  };
   const total = sc.total;
   if (newBest && total >= 1000) return { ...pick('best'), mood: 'great' };
   if (total >= 2000) return pick('great');
@@ -77,16 +71,16 @@ export class ResultScene {
     save(sv);
 
     this.rows = [
-      { label: 'てらまりんぐ', detail: [state.tpTotal, '×', BAL.score.tp], value: this.sc.ring },
-      { label: 'ごはん', detail: [state.fpTotal, '×', BAL.score.fp], value: this.sc.food },
-      { label: 'かまってもらった', detail: [], value: this.sc.kamaware },
-      { label: 'ノーミス', detail: [], value: this.sc.noMiss },
+      { label: tr('result.ring'), detail: [state.tpTotal, '×', BAL.score.tp], value: this.sc.ring },
+      { label: tr('result.food'), detail: [state.fpTotal, '×', BAL.score.fp], value: this.sc.food },
+      { label: tr('result.kamatte'), detail: [], value: this.sc.kamaware },
+      { label: tr('result.noMiss'), detail: [], value: this.sc.noMiss },
     ];
     this.showAll = ROW_GAP * this.rows.length + 0.9; // 全部出し終わる時間
     this.comment = pickComment(this.sc, state, this.newBest);
     this.catIn = ROW_GAP * this.rows.length; // てらまるが歩いてくる（0.6秒）
     this.hearts = [];
-    this.menu = new Menu([{ id: 'again', label: 'もういちど' }, { id: 'select', label: 'ステージへ' }]);
+    this.menu = new Menu([{ id: 'again', label: tr('result.again') }, { id: 'select', label: tr('result.select') }]);
   }
 
   enter() { input.releaseAll(); }
@@ -136,7 +130,7 @@ export class ResultScene {
     const px = W - pw - 6;
     const py = 7;
     panel(ctx, px, py, pw, ph, UI.cream);
-    drawText(ctx, 'けっか', px + pw / 2, py + 5, { font: 'small', scale: 2, color: UI.orangeD, align: 'center' });
+    drawText(ctx, tr('result.title'), px + pw / 2, py + 5, { font: 'small', scale: 2, color: UI.orangeD, align: 'center' });
 
     // 内訳
     const lx = px + 12;
@@ -156,26 +150,26 @@ export class ResultScene {
       ctx.fillRect(lx, py + 82, pw - 24, 1);
       const k = Math.min(1, (this.t - tTotal) / 0.6);
       const shown = Math.round(this.sc.total * k);
-      drawText(ctx, 'そうごうスコア', lx, py + 92, { font: 'small', color: UI.ink });
+      drawText(ctx, tr('result.total'), lx, py + 92, { font: 'small', color: UI.ink });
       drawDigits(ctx, shown, rx, py + 88, { color: UI.orangeD, align: 'right', scale: 2 });
 
       if (k >= 1) {
         // コイン
         ctx.drawImage(SPR.coin, lx, py + 108);
-        drawMixed(ctx, ['てらまるコイン', `+${this.sc.coins}`, 'まい'], lx + 10, py + 107, UI.ink);
+        drawMixed(ctx, [tr('result.coins'), `+${this.sc.coins}`, tr('result.mai')], lx + 10, py + 107, UI.ink);
         if (this.unlocked) {
           // 新しいステージが開いた
-          const msg = `「${this.unlocked.name}」が ひらいた！`;
+          const msg = tr('result.opened', { name: this.unlocked.name });
           const mw = textWidth(msg, 'small') + 10;
           const mx = px + Math.round((pw - mw) / 2);
           panel(ctx, mx, py + 119, mw, 13, Math.floor(this.t * 3) % 2 ? '#ffe8b8' : '#fff6e0');
           drawText(ctx, msg, mx + 5, py + 122, { font: 'small', color: UI.orangeD });
         }
         if (this.newBest && Math.floor(this.t * 3) % 2 === 0) {
-          drawText(ctx, 'ベストこうしん！', rx, py + 107, { font: 'small', color: UI.pink, align: 'right' });
+          drawText(ctx, tr('result.newBest'), rx, py + 107, { font: 'small', color: UI.pink, align: 'right' });
         } else if (!this.newBest) {
           const bw = digitsWidth(String(this.prevBest));
-          drawText(ctx, 'ベスト', rx - bw - 3 - textWidth('ベスト', 'small'), py + 107, { font: 'small', color: '#8a7a6a' });
+          drawText(ctx, tr('result.best'), rx - bw - 3 - textWidth(tr('result.best'), 'small'), py + 107, { font: 'small', color: '#8a7a6a' });
           drawDigits(ctx, this.prevBest, rx, py + 108, { color: '#8a7a6a', align: 'right' });
         }
       }

@@ -5,6 +5,7 @@ import { PROPS } from '../art/props.js';
 import { makeCanvas, shade } from '../core/renderer.js';
 import { drawText, textWidth } from '../core/text.js';
 import { makeRng } from '../core/rng.js';
+import { tr, onLangChange } from '../i18n/index.js';
 
 export const TILE = 16;
 
@@ -23,6 +24,7 @@ const GROUND = {
 const SOLID_GROUND = ['W', 'X'];
 
 const towns = new Map();
+onLangChange(() => towns.clear()); // 看板の文字が変わるので描き直す
 
 // ステージの id → その地図の街（作るのは1回だけ）
 export function getTown(stageId) {
@@ -115,11 +117,17 @@ export class Town {
         }
         // 家の中：床板・タイル・じゅうたん・壁
         if (this.grid[r][col] === 'F') {
+          // 板の床：横長の板が、段ごとに半分ずれて並ぶ（決まったパターン）
+          x.fillStyle = t.base;
+          x.fillRect(px, py, TILE, TILE); // 点々を消して、のっぺりした板に
           x.fillStyle = t.line;
           x.fillRect(px, py + 7, TILE, 1);
           x.fillRect(px, py + 15, TILE, 1);
-          x.fillRect(px + ((r * 7 + col * 5) % 12) + 2, py, 1, 7);
-          x.fillRect(px + ((r * 3 + col * 11) % 12) + 2, py + 8, 1, 7);
+          x.fillRect(px + 15, py, 1, 7); // 上の段の板のつなぎ目
+          x.fillRect(px + 7, py + 8, 1, 7); // 下の段は半分ずらす
+          x.fillStyle = '#d4a26a'; // 板の明るいすじ
+          x.fillRect(px, py, TILE, 1);
+          x.fillRect(px, py + 8, TILE, 1);
         } else if (this.grid[r][col] === 'K') {
           x.fillStyle = t.line;
           x.fillRect(px, py + 7, TILE, 1);
@@ -308,7 +316,8 @@ function drawBuilding(x, b) {
 
   // 看板
   if (b.sign) {
-    const tw = textWidth(b.sign, 'small');
+    const sign = tr(`sign.${b.sign}`);
+    const tw = textWidth(sign, 'small');
     const sw = tw + 8;
     const sx = px + Math.floor((w - sw) / 2);
     const sy = b.kind === 'shop' ? storeY - 12 : wallY + 3;
@@ -316,6 +325,6 @@ function drawBuilding(x, b) {
     x.fillRect(sx, sy, sw, 11);
     x.fillStyle = '#fff6e0';
     x.fillRect(sx + 1, sy + 1, sw - 2, 9);
-    drawText(x, b.sign, sx + 4, sy + 2, { font: 'small', color: '#3a2a20' });
+    drawText(x, sign, sx + 4, sy + 2, { font: 'small', color: '#3a2a20' });
   }
 }

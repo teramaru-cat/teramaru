@@ -11,15 +11,28 @@ import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
 import { getTown } from '../game/town.js';
 import { FIRST_STAGE } from '../data/areas.js';
+import { tr, lang, setLang, LANG_IDS } from '../i18n/index.js';
+import { save } from '../core/save.js';
 
 export class TitleScene {
   constructor(game) {
     this.game = game;
     this.t = 0;
     this.town = getTown('shotengai');
-    this.menu = new Menu([{ id: 'start', label: 'はじめる' }]);
+    this.menu = new Menu([{ id: 'start', label: tr('title.start') }]);
     this.hearts = [];
     this.soundBtn = new Button('sound', '', { icon: 'sound', pad: 6 });
+    this.langBtn = new Button('lang', tr('langName'), { font: 'small', pad: 6 }); // ことばの切りかえ（左上）
+  }
+
+  // 次の言語へ（保存して、文字を入れかえる）
+  nextLang() {
+    const i = LANG_IDS.indexOf(lang());
+    setLang(LANG_IDS[(i + 1) % LANG_IDS.length]);
+    this.game.save.settings = { ...this.game.save.settings, lang: lang() };
+    save(this.game.save);
+    this.langBtn.label = tr('langName');
+    this.menu.buttons[0].label = tr('title.start');
   }
 
   enter() { input.releaseAll(); audio.music('play'); }
@@ -33,8 +46,10 @@ export class TitleScene {
     this.hearts = this.hearts.filter((h) => h.life > 0);
 
     this.soundBtn.place(screen.W - 24, 4, 20, 16);
+    this.langBtn.place(4, 4, textWidth(this.langBtn.label, 'small') + 12, 16);
     for (const p of input.fresh()) {
       if (this.soundBtn.contains(p.x, p.y)) { p.role = 'button:sound'; toggleMute(this.game); }
+      if (this.langBtn.contains(p.x, p.y)) { p.role = 'button:lang'; audio.sfx('ui'); this.nextLang(); }
     }
     const id = this.menu.update();
     if (id === 'start') {
@@ -57,8 +72,8 @@ export class TitleScene {
     ctx.fillRect(0, 0, W, H);
 
     // タイトル
-    drawText(ctx, 'てらまる', W / 2, 14, { scale: 3, color: UI.orange, outline: UI.ink, align: 'center' });
-    drawText(ctx, '〜てらまりんぐ大作戦〜', W / 2, 54, { font: 'small', color: UI.ink, align: 'center' });
+    drawText(ctx, tr('title.name'), W / 2, 14, { scale: 3, color: UI.orange, outline: UI.ink, align: 'center' });
+    drawText(ctx, tr('title.sub'), W / 2, 54, { font: 'small', color: UI.ink, align: 'center' });
 
     // ハート
     for (const h of this.hearts) {
@@ -76,20 +91,21 @@ export class TitleScene {
     this.menu.layout(W / 2, 138, 96, 20, 6);
     this.menu.draw(ctx);
     this.soundBtn.draw(ctx, { pressed: this.soundBtn.isHeld() });
+    this.langBtn.draw(ctx, { pressed: this.langBtn.isHeld() });
 
     const coins = this.game.save.coins;
-    const label = 'てらまるコイン';
+    const label = tr('title.coins');
     const lw = textWidth(label, 'small');
     const cw = digitsWidth(String(coins));
-    const mw = textWidth('まい', 'small');
+    const mw = textWidth(tr('title.mai'), 'small');
     panel(ctx, 4, H - 17, lw + cw + mw + 16, 13, UI.cream);
     drawText(ctx, label, 8, H - 14, { font: 'small', color: UI.ink });
     drawDigits(ctx, coins, 8 + lw + 3, H - 14, { color: UI.ink });
-    drawText(ctx, 'まい', 8 + lw + cw + 5, H - 14, { font: 'small', color: UI.ink });
+    drawText(ctx, tr('title.mai'), 8 + lw + cw + 5, H - 14, { font: 'small', color: UI.ink });
 
     // ベストスコア（右下）。ステージが増えたらステージ選択で1つずつ見せる
     const best = Math.max(0, ...Object.values(this.game.save.bestScore));
-    const bl = 'ベスト';
+    const bl = tr('title.best');
     const blw = textWidth(bl, 'small');
     const bdw = digitsWidth(String(best));
     const bw = 4 + 7 + 3 + blw + 4 + bdw + 5;

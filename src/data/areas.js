@@ -5,7 +5,7 @@
 //
 // ステージの書き方：
 //   id      … 半角の名前（保存データのベストスコアなどに使う。あとから変えない）
-//   name    … 画面に出す名前（ひらがな）
+//   名前    … src/i18n/<言語>.js の stage.<id>（エリアは area.<id>）
 //   map     … 街の地図（src/data/maps/）。まだ作っていないステージは null（「じゅんびちゅう」になる）
 //   boss    … ボス戦なら true
 //   tutorial… チュートリアルなら true（時間なし。流れは src/game/tutorial.js。おわったら結果発表なしでステージ選択へ）
@@ -17,6 +17,7 @@
 import { SHOTENGAI } from './maps/shotengai.js';
 import { PARK } from './maps/park.js';
 import { HOME } from './maps/home.js';
+import { tr } from '../i18n/index.js';
 
 // しくみ（ステージごとに、オン・オフや数を変える）
 export const RULES = {
@@ -35,11 +36,9 @@ const BASIC = { water: false, food: false, fever: false };
 export const AREAS = [
   {
     id: 'tutorial',
-    name: 'チュートリアル',
     stages: [
       {
         id: 'home',
-        name: 'てらまるのいえ',
         // てらまるの1フロアの家。飼い主2人をメロメロ → ウィルキャッが使命を伝える（猫は家で飼おうね）→ 予防接種 → 街へ
         // 流れは src/game/tutorial.js
         tutorial: true,
@@ -51,11 +50,9 @@ export const AREAS = [
   },
   {
     id: 'kinjo',
-    name: 'きんじょ',
     stages: [
       {
         id: 'jutaku',
-        name: 'じゅうたくち',
         map: null,
         targets: { salaryman: 3, grandma: 3, child: 3 },
         rules: { ...BASIC },
@@ -63,7 +60,6 @@ export const AREAS = [
       },
       {
         id: 'park',
-        name: 'こうえん',
         // ここで初めてお水。ブランコ・すべり台はこれから
         map: PARK,
         targets: { pigeons: 3, dog: 3, salaryman: 3, grandma: 3, child: 3 },
@@ -72,7 +68,6 @@ export const AREAS = [
       },
       {
         id: 'shotengai',
-        name: 'しょうてんがい',
         // ここで初めてご飯・おなか・トイレ
         map: SHOTENGAI,
         targets: { greengrocer: 3, fishmonger: 3, butcher: 3, baker: 3, grandma: 3, child: 3, salaryman: 3 },
@@ -81,7 +76,6 @@ export const AREAS = [
       },
       {
         id: 'bossneko',
-        name: 'ボスねこ',
         boss: true,
         // ストーリーに縦にからむボス猫。戦いの途中でトイレフィーバーを覚える
         map: null,
@@ -97,11 +91,13 @@ export const AREAS = [
 
 export const STAGES = {};
 AREAS.forEach((area, ai) => {
+  Object.defineProperty(area, 'name', { get: () => tr(`area.${area.id}`) }); // 名前は i18n
   area.stages.forEach((st, si) => {
+    Object.defineProperty(st, 'name', { get: () => tr(`stage.${st.id}`) });
     st.area = area;
     st.areaNo = ai; // チュートリアルがエリア0（てらまるのいえ＝0-1）、きんじょがエリア1（じゅうたくち＝1-1）
     st.no = si + 1;
-    st.label = st.boss ? `${ai}-ボス` : `${ai}-${si + 1}`;
+    Object.defineProperty(st, 'label', { get: () => (st.boss ? `${ai}-${tr('common.boss')}` : `${ai}-${si + 1}`) });
     st.rules = { ...RULES, ...st.rules };
     STAGES[st.id] = st;
   });

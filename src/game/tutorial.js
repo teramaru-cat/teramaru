@@ -6,7 +6,7 @@
 // 4. vet     … 神の世界のようなレベチな場所で「ウルトラハイパーむてきゴッドワクチン」（チクッ）
 // 5. after   … 「さあ、まちへ」→ 暗くなってステージ選択へ（結果発表はなし）
 //
-// セリフはここの PAGES を書きかえる。てらまるはしゃべらない。
+// セリフは src/i18n/<言語>.js の tutorial に書く。てらまるはしゃべらない。
 
 import { screen } from '../core/renderer.js';
 import { input, KEY } from '../core/input.js';
@@ -17,32 +17,11 @@ import { save } from '../core/save.js';
 import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
 import { newlyOpened } from '../data/areas.js';
+import { tr } from '../i18n/index.js';
 import { VOICE, drawVoiceBox, drawPresence, drawSpark, sparkSize, shownChars, totalChars } from './voice.js';
 
-// 予防接種の名前（この世でいちばんすごそうで、むてきっぽい）
-const VACCINE = 'ウルトラハイパーむてきゴッドワクチン';
-
-// セリフ（1ページ＝1〜3行）
-const PAGES = {
-  // 飼い主2人をメロメロにした てらまるが、ウィルキャッに見そめられる
-  mission: [
-    ['……！'],
-    ['……みつけたにゃ。'],
-    ['なんて みごとな てらまりんぐ…', 'おまえこそ、えらばれし ねこ だにゃ'],
-    [`われらは ${VOICE.fullName}。`, 'せかいじゅうの ねこの いし だにゃ'],
-    [`${VOICE.name} って よんでほしいにゃ`],
-    ['まちには まだ ねこの かわいさを', 'しらない にんげんが いっぱい いるにゃ'],
-    ['まちじゅうを てらまりんぐで', 'メロメロに するにゃ！', 'それが てらまるの しめい だにゃ'],
-    ['……でも ほんとうは、', 'ねこは いえの なかで かうのが', 'いちばん だにゃ'],
-    ['おそとに でるのは', 'この ゲームの なか だけ。', 'やくそく だにゃ'],
-    ['そのまえに、この よで いちばん', 'すごい よぼうせっしゅ', `「${VACCINE}」を うけるにゃ`],
-  ],
-  after: [
-    ['よく がまん したにゃ！'],
-    [`${VACCINE}の`, 'ききめは ばつぐん だにゃ。', 'これで びょうきも へっちゃら だにゃ'],
-    ['さあ、まちへ でかけるにゃ！'],
-  ],
-};
+// セリフは i18n の tutorial.mission / tutorial.after（1ページ＝1〜3行）。{name}{fullName}{vaccine} を入れかえる
+const PAGES = (key) => tr(`tutorial.${key}`, { name: VOICE.name, fullName: VOICE.fullName, vaccine: tr('tutorial.vaccine') });
 
 // 予防接種の時間割（秒）
 const VET = { fadeIn: 0.6, armIn: 1.0, poke: 1.7, armOut: 2.6, happy: 3.0, end: 3.8 };
@@ -86,7 +65,7 @@ export class Tutorial {
         this.go('mission');
         audio.sfx('sparkle');
         P.cat.stop();
-        this.say(PAGES.mission, () => { this.go('toVet'); });
+        this.say(PAGES('mission'), () => { this.go('toVet'); });
       }
       return false;
     }
@@ -100,7 +79,7 @@ export class Tutorial {
       if (t - dt < VET.happy && t >= VET.happy) audio.sfx('yes');
       if (t >= VET.end && !this.dialog && !this.afterSaid) {
         this.afterSaid = true;
-        this.say(PAGES.after, () => { this.go('out'); });
+        this.say(PAGES('after'), () => { this.go('out'); });
       }
       this.updateDialog(dt);
       return true;
@@ -196,9 +175,9 @@ export class Tutorial {
   drawHint(ctx) {
     const touch = input.lastDevice !== 'keyboard';
     let lines;
-    if (this.step === 'walk') lines = [touch ? 'がめんを なぞって あるこう' : 'やじるしキーで あるこう'];
-    else if (this.charmed === 0) lines = ['かいぬしの あしもとに さわろう'];
-    else lines = ['あと ひとり！', 'もう ひとりの かいぬしの あしもとにも さわろう'];
+    if (this.step === 'walk') lines = [tr(touch ? 'tutorial.walkTouch' : 'tutorial.walkKey')];
+    else if (this.charmed === 0) lines = [tr('tutorial.ring1')];
+    else lines = tr('tutorial.ring2');
     drawHowTo(ctx, lines, 12);
   }
 
@@ -284,7 +263,7 @@ export class Tutorial {
     // 雲の床
     drawClouds(ctx, W, top + 20, now);
     // 看板（金のわく、肉球の十字）
-    const sign = VACCINE; // 看板にワクチンの名前
+    const sign = tr('tutorial.vaccine'); // 看板にワクチンの名前
     const sw = textWidth(sign, 'small') + 26;
     const sx = Math.round(cx - sw / 2);
     panel(ctx, sx - 1, 5, sw + 2, 17, '#c89018', '#8a5a10');
@@ -389,17 +368,20 @@ export class Tutorial {
         ctx.fillRect(0, 0, W, H);
       }
       const pop = t < VET.poke + 0.1 ? -3 : 0;
-      drawText(ctx, 'チクッ！', cx + 34, top - 70 + pop, { scale: 2, color: UI.red, outline: UI.white, align: 'center' });
+      drawText(ctx, tr('tutorial.poke'), cx + 34, top - 70 + pop, { scale: 2, color: UI.red, outline: UI.white, align: 'center' });
     }
     if (t >= VET.poke + 0.8 && t < VET.happy) {
-      drawText(ctx, 'ぷるぷる…', cx, top - h - 14, { font: 'small', color: '#4a5a7a', align: 'center' });
+      drawText(ctx, tr('tutorial.shiver'), cx, top - h - 14, { font: 'small', color: '#4a5a7a', align: 'center' });
     }
     if (t >= VET.happy) {
       // 虹色の「むてき！」とハート・キラキラ
-      const word = 'むてき！';
-      [...word].forEach((ch, i) => {
+      const chars = [...tr('tutorial.mighty')];
+      const total = chars.reduce((n, ch) => n + textWidth(ch, 'small') * 2 + 1, 0);
+      let wx = Math.min(cx + 44, W - total - 4); // 長い言語でも画面からはみ出さない
+      chars.forEach((ch, i) => {
         const bob = Math.round(Math.sin(now * 8 + i) * 2);
-        drawText(ctx, ch, cx + 44 + i * 13, top - 66 + bob, { scale: 2, color: rainbow[(i + Math.floor(now * 6)) % rainbow.length], outline: UI.white });
+        drawText(ctx, ch, wx, top - 66 + bob, { font: 'small', scale: 2, color: rainbow[(i + Math.floor(now * 6)) % rainbow.length], outline: UI.white });
+        wx += textWidth(ch, 'small') * 2 + 1;
       });
       for (let i = 0; i < 5; i++) {
         const ph = (now * 0.6 + i / 5) % 1;
@@ -479,15 +461,8 @@ export function drawHowTo(ctx, lines, y) {
   panel(ctx, x, y, w, h, UI.cream);
   // 文字は「あそびかた」の札より下から
   lines.forEach((l, i) => drawText(ctx, l, W / 2, y + 7 + i * 10, { font: 'small', color: UI.ink, align: 'center' }));
-  const tag = 'あそびかた';
+  const tag = tr('tutorial.howto');
   const tw = textWidth(tag, 'small') + 8;
   panel(ctx, x + 6, y - 7, tw, 11, UI.orange);
   drawText(ctx, tag, x + 10, y - 5, { font: 'small', color: UI.white });
 }
-
-// てらまりんぐのやり方（チュートリアルで、ズームインしたあと）
-export const HOW_TO_RING = [
-  'あしの まわりを ぐるぐる まわろう！',
-  'まわるたびに ハートが たまって、ぜんぶで メロメロ',
-  'あしの あいだを くぐると ボーナス',
-];

@@ -20,7 +20,8 @@
 ## エリアとステージを変えるとき
 
 - ステージの並び・出てくる人と人数・使えるしくみ（お水・ご飯・フィーバーなど）・開く条件：[src/data/areas.js](src/data/areas.js) の表だけを書きかえる
-- チュートリアル（0-1）の流れとセリフ：[src/game/tutorial.js](src/game/tutorial.js)。ウィルキャッ（キラキラの声）の名前と枠：[src/game/voice.js](src/game/voice.js)
+- **画面の言葉（多言語）**：[src/i18n/](src/i18n/) の ja.js（日本語）・en.js（英語）。コードには文字を書かず `tr('key')` で取り出す。新しい言語は ja.js をまねてファイルを作り、index.js の LANGS に足す（足りない言葉は日本語が出る）。タイトル画面の左上で切りかえ
+- チュートリアル（0-1）の流れ：[src/game/tutorial.js](src/game/tutorial.js)。ウィルキャッ（キラキラの声）の名前と枠：[src/game/voice.js](src/game/voice.js)
 - 街の地図：[src/data/maps/](src/data/maps/) にステージごとのファイル（新しいステージは地図を作って areas.js の `map` に入れる。`map: null` のあいだは「じゅんびちゅう」）
 - ターゲット（人・動物・ベンチ）：[src/data/targets.js](src/data/targets.js) の表。強さ・落とすご飯・動き・足の位置・見た目・おねだりの確率に加えて、おねだりできるか・爪とぎ2倍が効くか・去るか・メロメロのときの言葉・構ってもらうときの言葉も、ここで1人ずつ決める（種類ごとのふつうの値は同じファイルの KINDS）。絵の形そのものは art/people.js（人）と art/animals.js（動物・ベンチ）
 - 数値の調整：[src/data/balance.js](src/data/balance.js)

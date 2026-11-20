@@ -1,8 +1,10 @@
+import { tr, has } from '../i18n/index.js';
+
 // ターゲットの定義（仕様書 §5.4・§6.2）。数値の調整はここで。
 // どのステージに何人出るかは areas.js の targets で決める。
 //
 // 1人分の書き方：
-//   name        … 画面に出す名前
+//   （名前・winText・kamatteTitle・words の言葉は src/i18n/<言語>.js の target.<id> と kind.<kind> に書く）
 //   kind        … human（人）| animal（動物）| landmark（ベンチなど）。下の KINDS のふつうの値が入る
 //   durability  … メロメロに必要な周回（ハートの数）
 //   tp          … メロメロにしたときにもらえる TP
@@ -25,14 +27,13 @@
 
 // 種類ごとのふつうの値
 export const KINDS = {
-  human: { canOnedari: true, scratchBonus: true, leaves: true, winText: 'メロメロ！', kamatteTitle: null, words: ['ゴロゴロ', 'なでなで'] },
-  animal: { canOnedari: true, scratchBonus: false, leaves: true, winText: 'メロメロ！', kamatteTitle: 'なかよし', words: ['ゴロゴロ', 'すりすり'] },
-  landmark: { canOnedari: false, scratchBonus: false, leaves: false, winText: 'マーキング！', kamatteTitle: null, words: [] },
+  human: { canOnedari: true, scratchBonus: true, leaves: true },
+  animal: { canOnedari: true, scratchBonus: false, leaves: true },
+  landmark: { canOnedari: false, scratchBonus: false, leaves: false },
 };
 
 export const TARGETS = {
   salaryman: {
-    name: '棒立ちの会社員',
     kind: 'human',
     durability: 2,
     tp: 4,
@@ -43,7 +44,6 @@ export const TARGETS = {
     onedari: { base: 0.40, perTp: 0.010 },
   },
   baker: {
-    name: 'パン屋さん',
     kind: 'human',
     durability: 3,
     tp: 8,
@@ -55,7 +55,6 @@ export const TARGETS = {
     onedari: { base: 0.30, perTp: 0.009 },
   },
   grandma: {
-    name: '杖のおばあちゃん',
     kind: 'human',
     durability: 3,
     tp: 10,
@@ -66,7 +65,6 @@ export const TARGETS = {
     onedari: { base: 0.35, perTp: 0.010 },
   },
   child: {
-    name: '元気な子ども',
     kind: 'human',
     durability: 2,
     tp: 12,
@@ -79,7 +77,6 @@ export const TARGETS = {
     onedari: { base: 0.20, perTp: 0.008 },
   },
   fishmonger: {
-    name: '魚屋さん',
     kind: 'human',
     durability: 4,
     tp: 12,
@@ -91,7 +88,6 @@ export const TARGETS = {
     onedari: { base: 0.30, perTp: 0.009 },
   },
   butcher: {
-    name: 'お肉屋さん',
     kind: 'human',
     durability: 4,
     tp: 10,
@@ -103,7 +99,6 @@ export const TARGETS = {
     onedari: { base: 0.30, perTp: 0.009 },
   },
   greengrocer: {
-    name: '八百屋さん',
     kind: 'human',
     durability: 3,
     tp: 8,
@@ -116,7 +111,6 @@ export const TARGETS = {
   },
   // てらまるの飼い主（チュートリアルの家だけ）。家の中をゆっくり歩く。メロメロにしても去らない
   ownerA: {
-    name: 'かいぬし',
     kind: 'human',
     durability: 2,
     tp: 5,
@@ -132,7 +126,6 @@ export const TARGETS = {
     onedari: { base: 0.5, perTp: 0.01 },
   },
   ownerB: {
-    name: 'かいぬし',
     kind: 'human',
     durability: 2,
     tp: 5,
@@ -148,7 +141,6 @@ export const TARGETS = {
     onedari: { base: 0.5, perTp: 0.01 },
   },
   dog: {
-    name: '散歩中の犬',
     kind: 'animal',
     durability: 4,
     tp: 10,
@@ -158,14 +150,12 @@ export const TARGETS = {
     legs: [{ x: -26, y: 0, r: 4 }, { x: -14, y: -6, r: 4 }, { x: 14, y: -6, r: 4 }, { x: 26, y: 0, r: 4 }],
     look: { type: 'dog', fur: '#c8904a', light: '#f4e2c4', dark: '#96643a', collar: '#d04040' },
     faces: 'right',
-    words: ['ペロペロ', 'わんっ'],
     // 飼い主（街ではリードでつないで一緒に歩く。てらまりんぐの相手にはならない）
     owner: { skin: '#f2c9a0', hair: '#5a3a2a', top: '#7aa8c8', bottom: '#5a5a6a', shoes: '#3a2a20', garment: 'coat' },
     wander: 12,
     onedari: { base: 0.15, perTp: 0.007 },
   },
   pigeons: {
-    name: '鳩の群れ',
     kind: 'animal',
     durability: 3,
     tp: 12,
@@ -173,14 +163,12 @@ export const TARGETS = {
     motion: 'lively',
     sway: { x: 20, y: 4, speed: 1.6 },
     legs: [{ x: -48, y: 0, r: 2 }, { x: -40, y: 0, r: 2 }, { x: -4, y: -6, r: 2 }, { x: 4, y: -6, r: 2 }, { x: 40, y: 0, r: 2 }, { x: 48, y: 0, r: 2 }],
-    words: ['クルック', 'ポッポー'],
     look: { type: 'pigeons', body: '#969cab', wing: '#cdd2dc', head: '#7a7e8e', neck: '#5a968c', beak: '#e6aa6e', leg: '#e6828c' },
     wander: 6,
     onedari: { base: 0.05, perTp: 0.006 },
   },
   // ランドマーク：決まった場所にずっとある（去らない。メロメロにしたあとはしばらく休み）
   bench: {
-    name: '公園のベンチ',
     kind: 'landmark',
     durability: 5,
     tp: 8,
@@ -193,16 +181,28 @@ export const TARGETS = {
 };
 
 // 種類のふつうの値を入れる（それぞれに書いたものが優先）
-for (const [id, t] of Object.entries(TARGETS)) TARGETS[id] = { ...KINDS[t.kind], ...t };
+for (const [id, d] of Object.entries(TARGETS)) {
+  TARGETS[id] = { ...KINDS[d.kind], ...d };
+  // 言葉（名前・メロメロの言葉・構ってもらう題・言葉）は i18n：target.<id>.<field>、なければ kind.<kind>.<field>
+  for (const f of ['name', 'winText', 'kamatteTitle', 'words']) {
+    Object.defineProperty(TARGETS[id], f, {
+      get: () => (has(`target.${id}.${f}`) ? tr(`target.${id}.${f}`) : has(`kind.${d.kind}.${f}`) ? tr(`kind.${d.kind}.${f}`) : f === 'words' ? [] : null),
+      enumerable: true,
+    });
+  }
+}
 
 // 落とし物（ご飯）。1個 = ご飯ポイント fp
 export const ITEMS = {
-  bread: { name: '食パン', fp: 2 },
-  onigiri: { name: 'おにぎり', fp: 2 },
-  candy: { name: 'お菓子', fp: 2 },
-  fish: { name: 'おさかな', fp: 2 },
-  meat: { name: 'ほねつき肉', fp: 2 },
-  tomato: { name: 'トマト', fp: 2 },
-  jerky: { name: 'ジャーキー', fp: 2 },
-  crumbs: { name: 'パンくず', fp: 2 },
+  bread: { fp: 2 },
+  onigiri: { fp: 2 },
+  candy: { fp: 2 },
+  fish: { fp: 2 },
+  meat: { fp: 2 },
+  tomato: { fp: 2 },
+  jerky: { fp: 2 },
+  crumbs: { fp: 2 },
 };
+
+// 食べものの名前は i18n の item.<id>
+for (const id of Object.keys(ITEMS)) Object.defineProperty(ITEMS[id], 'name', { get: () => tr(`item.${id}`), enumerable: true });

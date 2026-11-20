@@ -13,10 +13,11 @@ import { drawDigits, digitsWidth } from '../art/digits.js';
 import { BAL } from '../data/balance.js';
 import { claimMove, moveVector, drawSticks } from '../game/control.js';
 import { Effects, PopText, heartAbsorb } from '../game/effects.js';
+import { tr } from '../i18n/index.js';
 
 const PW = 240; // 枠の大きさ
 const PH = 124;
-const TITLE = { nade: 'なでなで', toy: 'おもちゃで あそぶ', chase: 'おいかけっこ' };
+const TITLE = (kind) => tr(`kamatte.${kind}`);
 
 export class KamatteScene {
   constructor(game, play, target, kind) {
@@ -111,7 +112,7 @@ export class KamatteScene {
       this.bonus += this.cfg.tapBonus;
       const s = this.scr(100 + Math.random() * 30, 46);
       this.fx.add(new PopText(s.x, s.y, `+${this.cfg.tapBonus}`, UI.orangeD, 0.6));
-      if (this.punches % 3 === 0) this.fx.add(new PopText(s.x - 20, s.y - 10, 'パンチ！', UI.pink, 0.7));
+      if (this.punches % 3 === 0) this.fx.add(new PopText(s.x - 20, s.y - 10, tr('kamatte.punch'), UI.pink, 0.7));
     }
   }
 
@@ -159,7 +160,7 @@ export class KamatteScene {
       audio.sfx('catch');
       this.bonus += this.cfg.catchBonus;
       const s = this.scr(r.x, r.y - 40);
-      this.fx.add(new PopText(s.x, s.y, 'つかまえた！', UI.pink, 1.2));
+      this.fx.add(new PopText(s.x, s.y, tr('kamatte.caught'), UI.pink, 1.2));
       this.hearts(6, s.x, s.y + 10);
       this.setPhase('out');
     }
@@ -185,7 +186,7 @@ export class KamatteScene {
     if (this.phase === 'in') return;
 
     // 見出し
-    const title = (this.kind === 'nade' && this.target.def.kamatteTitle) || TITLE[this.kind];
+    const title = (this.kind === 'nade' && this.target.def.kamatteTitle) || TITLE(this.kind);
     drawText(ctx, title, W / 2, b.y + 3, { font: 'small', scale: 2, color: UI.orangeD, outline: UI.white, align: 'center' });
     this.fx.draw(ctx);
     if (this.phase === 'play') this.drawGuide(ctx, b);
@@ -361,8 +362,8 @@ export class KamatteScene {
 
   drawGuide(ctx, b) {
     let msg = '';
-    if (this.kind === 'toy') msg = input.lastDevice === 'keyboard' ? 'けってい で パンチ！' : 'タップ で パンチ！';
-    if (this.kind === 'chase') msg = 'おいかけて つかまえよう！';
+    if (this.kind === 'toy') msg = input.lastDevice === 'keyboard' ? tr('kamatte.toyKey') : tr('kamatte.toyTouch');
+    if (this.kind === 'chase') msg = tr('kamatte.chaseHint');
     if (msg) drawText(ctx, msg, screen.W / 2, b.y + 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
     // のこり時間のバー
     const left = Math.max(0, 1 - this.pt / this.cfg.dur);
@@ -379,7 +380,7 @@ export class KamatteScene {
     const w = digitsWidth(s, 3) + 16;
     panel(ctx, Math.round(W / 2 - w / 2), b.y + 24 - pop, w, 32, UI.cream);
     drawDigits(ctx, s, W / 2, b.y + 30 - pop, { color: UI.orangeD, align: 'center', scale: 3 });
-    const tx = `じかん +${this.cfg.time}びょう`;
+    const tx = tr('kamatte.time', { n: this.cfg.time });
     drawText(ctx, tx, W / 2, b.y + 60, { font: 'small', color: '#2a70c0', outline: UI.white, align: 'center' });
   }
 }
