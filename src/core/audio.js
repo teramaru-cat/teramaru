@@ -143,10 +143,10 @@ async function applyMusic() {
         const src = ac.createBufferSource();
         src.buffer = buf;
         src.loop = true;
-        // 曲の頭の無音は飛ばす（ループで戻ったときも）
+        // 曲の頭と終わりの無音は飛ばす（ループのつなぎ目にすき間ができないように）
         const head = leadingSilence(buf);
         src.loopStart = head;
-        src.loopEnd = buf.duration;
+        src.loopEnd = buf.duration - trailingSilence(buf);
         const gain = ac.createGain();
         gain.gain.value = 0;
         gain.gain.setTargetAtTime(1, ac.currentTime, FADE / 4);
@@ -166,6 +166,13 @@ async function applyMusic() {
 function leadingSilence(buf) {
   const d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) if (Math.abs(d[i]) > 0.003) return Math.max(0, i / buf.sampleRate - 0.05);
+  return 0;
+}
+
+// 終わりの無音の長さ（秒）
+function trailingSilence(buf) {
+  const d = buf.getChannelData(0);
+  for (let i = d.length - 1; i >= 0; i--) if (Math.abs(d[i]) > 0.003) return Math.max(0, (d.length - 1 - i) / buf.sampleRate - 0.05);
   return 0;
 }
 
