@@ -121,7 +121,8 @@ export function drawAnimalBody(ctx, look, cx, bx, by, GROUND) {
     for (let i = 0; i <= n; i++) {
       const k = i / n;
       const sag = Math.sin(k * Math.PI) * 14;
-      ctx.fillRect(E(lx0 + (lx1 - lx0) * k), E(ly0 + (ly1 - ly0) * k + sag), 2, 2);
+      // ここだけ1ドット単位で描いて、ななめの線のギザギザを細かくする（太さは縦に2ドット）
+      ctx.fillRect(Math.round(lx0 + (lx1 - lx0) * k), Math.round(ly0 + (ly1 - ly0) * k + sag), 1, 2);
     }
   } else if (look.type === 'pigeons') {
     [-44, 0, 44].forEach((off, i) => {
