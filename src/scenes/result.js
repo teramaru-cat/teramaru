@@ -15,17 +15,18 @@ import { getTown } from '../game/town.js';
 import { newlyOpened } from '../data/areas.js';
 
 const ROW_GAP = 0.35; // 内訳を1行ずつ出す間隔（秒）
-const PW = 216; // 結果のパネルの幅（左にてらまるが出る）
+const PW = 216; // 結果のパネルの幅（左に、しんさいんとてらまるが出る）
 
-// てらまるの感想。スコアで気分が変わる（同じ気分の中からランダム）
+// しんさいん（蝶ネクタイの白猫）の評価。てらまるはしゃべらない。
+// スコアで評価が変わる（同じ評価の中からランダム）。mood はてらまるの様子（ぴょんぴょん・しょんぼりなど）
 const COMMENTS = {
-  best: [['ベストこうしん！', 'きょうは さいこうの', 'いちにち だにゃ！']],
-  great: [['まんぞく まんぞく！', 'まちじゅう', 'メロメロだにゃ'], ['もう おなか', 'いっぱいだにゃ〜'], ['きょうの てらまる', 'むてき だったにゃ']],
-  good: [['いい いちにち', 'だったにゃ'], ['すりすり', 'いっぱい できたにゃ'], ['なかなか', 'やるにゃ〜']],
-  ok: [['まあまあ', 'かにゃ'], ['あしたは もっと', 'すりすりするにゃ']],
-  low: [['もっと かまって', 'ほしかったにゃ…'], ['きょうは', 'いまいち だにゃ…']],
-  faint: [['おみず のむの', 'わすれてたにゃ…'], ['のど からから', 'だったにゃ…']],
-  kamatte: [['かまってもらえて', 'うれしかったにゃ'], ['また あそんで', 'ほしいにゃ〜']],
+  best: [['ベストこうしん！', 'きょうの てらまるは', 'さいこう だにゃ'], ['ベストこうしん！', 'みごとな', 'てらまりんぐ だにゃ']],
+  great: [['まちじゅう メロメロ！', 'おみごと だにゃ'], ['かわいさ', 'まんてん だにゃ！'], ['きょうの てらまるは', 'むてき だったにゃ']],
+  good: [['なかなか', 'やるにゃ'], ['すりすり じょうず', 'だったにゃ'], ['いい ちょうし', 'だにゃ']],
+  ok: [['まあまあ', 'だにゃ'], ['もっと すりすり', 'できるはず だにゃ']],
+  low: [['まだまだ', 'だにゃ…'], ['あいきょうが', 'たりないにゃ…']],
+  faint: [['おみずは', 'こまめに のむにゃ'], ['たおれちゃ', 'だめ だにゃ…']],
+  kamatte: [['かまってもらえて', 'よかったにゃ'], ['あまえじょうず', 'だにゃ']],
 };
 
 function pickComment(sc, st, newBest) {
@@ -188,13 +189,31 @@ export class ResultScene {
       this.menu.draw(ctx);
     }
 
+    this.judgeTop = this.drawJudge(ctx, this.t >= this.catIn + 0.6);
     this.drawCat(ctx);
   }
 
-  // てらまるの立つ場所（パネルの左の空き）
-  catX() { return Math.round((screen.W - PW - 6) / 2); }
+  // パネルの左の空き：左にしんさいん、右にてらまる
+  midX() { return Math.round((screen.W - PW - 6) / 2); }
+  catX() { return this.midX() + 16; }
+  judgeX() { return this.midX() - 20; }
 
-  // てらまるが左から歩いてきて、正面を向いて感想を言う
+  // しんさいん：はじめから座っていて、てらまるが来たら評価を言う（言っている間は少しうなずく）
+  drawJudge(ctx, talking) {
+    const k = 2;
+    const feet = screen.H - 14;
+    const img = SPR.judge[0];
+    const w = img.width * k;
+    const h = img.height * k;
+    const x = this.judgeX();
+    const y = feet - (talking && Math.floor(this.t * 3) % 2 ? 1 : 0);
+    ctx.fillStyle = 'rgba(40,30,20,0.25)';
+    ctx.fillRect(x - 12, feet - 2, 24, 4);
+    ctx.drawImage(img, x - w / 2, y - h, w, h);
+    return feet - h;
+  }
+
+  // てらまるが左から歩いてきて、正面を向く（しゃべらない。気分は動きとハート・汗で見せる）
   drawCat(ctx) {
     const H = screen.H;
     const k = 2;
@@ -233,20 +252,21 @@ export class ResultScene {
       const k2 = (this.t * 0.8) % 1;
       ctx.drawImage(SPR.drop, x + 9, Math.round(y - h + 6 + k2 * 6));
     }
-    // ふきだし
+    // ふきだし（しんさいんの評価）
+    const jx = this.judgeX();
     const lines = this.comment.lines;
     const bw = Math.max(...lines.map((l) => textWidth(l, 'small'))) + 10;
     const bh = lines.length * 10 + 6;
-    const bx = Math.max(3, Math.min(screen.W - PW - 9 - bw, gx - Math.round(bw / 2)));
-    const by = feet - h - 12 - bh;
+    const bx = Math.max(3, Math.min(screen.W - PW - 9 - bw, jx - Math.round(bw / 2)));
+    const by = Math.min(feet - h, this.judgeTop) - 12 - bh;
     panel(ctx, bx, by, bw, bh, UI.white);
     ctx.fillStyle = UI.ink;
-    ctx.fillRect(gx - 3, by + bh - 1, 7, 1);
-    ctx.fillRect(gx - 2, by + bh, 5, 2);
-    ctx.fillRect(gx - 1, by + bh + 2, 3, 2);
+    ctx.fillRect(jx - 3, by + bh - 1, 7, 1);
+    ctx.fillRect(jx - 2, by + bh, 5, 2);
+    ctx.fillRect(jx - 1, by + bh + 2, 3, 2);
     ctx.fillStyle = UI.white;
-    ctx.fillRect(gx - 2, by + bh - 1, 5, 1);
-    ctx.fillRect(gx - 1, by + bh, 3, 2);
+    ctx.fillRect(jx - 2, by + bh - 1, 5, 1);
+    ctx.fillRect(jx - 1, by + bh, 3, 2);
     lines.forEach((l, i) => drawText(ctx, l, bx + 5, by + 4 + i * 10, { font: 'small', color: this.comment.mood === 'low' ? '#4a5a7a' : UI.ink }));
   }
 }
