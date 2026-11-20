@@ -434,6 +434,74 @@ function cageSide() {
   return { img: c, ox: 10, oy: 53, solid: { w: 20, h: 10 } };
 }
 
+// ---- 住宅地 ----
+
+// 生け垣（家の前の、低い植えこみ）
+function hedge() {
+  const [c, x] = makeCanvas(16, 11);
+  x.fillStyle = '#2f6e2a';
+  x.fillRect(0, 3, 16, 8);
+  x.fillRect(1, 2, 14, 1);
+  x.fillStyle = '#4c9a3c';
+  x.fillRect(1, 3, 14, 6);
+  x.fillStyle = '#6cbc52';
+  for (const [hx, hy] of [[2, 3], [6, 4], [10, 3], [13, 5], [4, 6], [9, 6]]) x.fillRect(hx, hy, 2, 1);
+  x.fillStyle = '#5a3a24';
+  x.fillRect(0, 9, 16, 2);
+  return { img: c, ox: 8, oy: 10, solid: { w: 16, h: 4 } };
+}
+
+// 郵便ポスト（赤くて丸い頭）
+function mailbox() {
+  const [c, x] = makeCanvas(10, 18);
+  x.fillStyle = '#7a1818';
+  x.fillRect(1, 1, 8, 13);
+  x.fillRect(2, 0, 6, 1);
+  x.fillStyle = '#d83a30';
+  x.fillRect(2, 1, 6, 12);
+  x.fillStyle = '#f07060';
+  x.fillRect(2, 1, 6, 1);
+  x.fillStyle = '#3a1010';
+  x.fillRect(3, 4, 4, 1); // 投入口
+  x.fillStyle = '#ffffff';
+  x.fillRect(3, 8, 4, 2); // 〒のふだ
+  x.fillStyle = '#d83a30';
+  x.fillRect(4, 8, 2, 1);
+  x.fillStyle = '#3a3a3a';
+  x.fillRect(4, 14, 2, 4);
+  return { img: c, ox: 5, oy: 17, solid: { w: 6, h: 4 } };
+}
+
+// 止めてある自転車（横向き）
+function bicycle() {
+  const [c, x] = makeCanvas(22, 14);
+  const wheel = (cx) => {
+    x.fillStyle = '#2a2a30';
+    x.fillRect(cx - 3, 6, 7, 1);
+    x.fillRect(cx - 3, 12, 7, 1);
+    x.fillRect(cx - 4, 7, 1, 5);
+    x.fillRect(cx + 4, 7, 1, 5);
+    x.fillStyle = '#a8a8b0';
+    x.fillRect(cx, 7, 1, 5);
+    x.fillRect(cx - 3, 9, 7, 1);
+  };
+  wheel(5);
+  wheel(17);
+  x.fillStyle = '#3a8ad0'; // フレーム
+  x.fillRect(5, 9, 6, 1);
+  x.fillRect(10, 5, 1, 5);
+  x.fillRect(10, 5, 6, 1);
+  x.fillRect(15, 5, 1, 4);
+  x.fillRect(11, 8, 5, 1);
+  x.fillStyle = '#2a2a30';
+  x.fillRect(8, 3, 4, 2); // サドル
+  x.fillRect(15, 2, 1, 3); // ハンドル
+  x.fillRect(14, 1, 4, 1);
+  x.fillStyle = '#c8c8d0';
+  x.fillRect(17, 2, 3, 3); // かご
+  return { img: c, ox: 11, oy: 13, solid: { w: 18, h: 4 } };
+}
+
 export const PROPS = {};
 
 export function buildProps() {
@@ -453,6 +521,9 @@ export function buildProps() {
     fridge: fridge(),
     diningTable: diningTable(),
     cage: cage(),
+    hedge: hedge(),
+    mailbox: mailbox(),
+    bicycle: bicycle(),
     cageSide: cageSide(),
     catTower: catTower(),
   });

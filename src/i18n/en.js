@@ -26,6 +26,7 @@ export default {
     play: 'Play!',
     notReady: ['Coming', 'soon'],
     unlockAt: '{name}:',
+    unlockClear: 'clear to open',
     points: 'pts',
   },
 

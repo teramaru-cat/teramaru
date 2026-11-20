@@ -222,7 +222,70 @@ export class Town {
   }
 }
 
+// 一軒家（住宅地）：大きな瓦の屋根、窓2つ、玄関
+function drawHome(x, b) {
+  const px = b.c * TILE;
+  const py = b.r * TILE;
+  const w = b.w * TILE;
+  const h = b.h * TILE;
+  x.fillStyle = 'rgba(40,30,20,0.22)';
+  x.fillRect(px + 2, py + h, w, 3); // 影
+  // 壁
+  const roofH = Math.floor(h * 0.48);
+  const wallY = py + roofH - 2;
+  const wallH = h - roofH + 2;
+  x.fillStyle = shade(b.wall, -0.3);
+  x.fillRect(px + 3, wallY, w - 6, wallH);
+  x.fillStyle = b.wall;
+  x.fillRect(px + 4, wallY, w - 8, wallH);
+  x.fillStyle = shade(b.wall, -0.1);
+  x.fillRect(px + 4, wallY, w - 8, 3); // 軒下のかげ
+  // 屋根：上がせまい台形（両はしは壁より少しはみ出す）。瓦の横すじ
+  for (let yy = 0; yy < roofH; yy++) {
+    const inset = Math.round((roofH - yy) * 0.55);
+    x.fillStyle = yy % 4 === 3 ? shade(b.roof, -0.2) : b.roof;
+    x.fillRect(px + inset, py + yy, w - inset * 2, 1);
+  }
+  x.fillStyle = shade(b.roof, 0.3);
+  x.fillRect(px + Math.round(roofH * 0.55), py, w - Math.round(roofH * 0.55) * 2, 1); // 棟
+  x.fillStyle = shade(b.roof, -0.4);
+  x.fillRect(px, py + roofH - 2, w, 2); // 軒先
+  // 窓（左右に1つずつ。カーテン）
+  const winY = wallY + 7;
+  for (const wx of [px + 10, px + w - 26]) {
+    x.fillStyle = shade(b.wall, -0.45);
+    x.fillRect(wx - 1, winY - 1, 18, 14);
+    x.fillStyle = '#a8d4e8';
+    x.fillRect(wx, winY, 16, 12);
+    x.fillStyle = '#d8f0fa';
+    x.fillRect(wx + 1, winY + 1, 4, 1);
+    x.fillStyle = '#f0e0e8';
+    x.fillRect(wx, winY, 3, 12); // カーテン
+    x.fillRect(wx + 13, winY, 3, 12);
+    x.fillStyle = shade(b.wall, -0.45);
+    x.fillRect(wx + 7, winY, 1, 12);
+    x.fillStyle = shade(b.wall, -0.25);
+    x.fillRect(wx - 2, winY + 13, 20, 2); // 窓台
+  }
+  // 玄関（ひさし・扉・表札）
+  const dx = px + Math.floor(w / 2) - 6;
+  x.fillStyle = shade(b.roof, -0.2);
+  x.fillRect(dx - 3, py + h - 22, 18, 3);
+  x.fillStyle = '#4a3222';
+  x.fillRect(dx - 1, py + h - 19, 14, 19);
+  x.fillStyle = '#8a5a3a';
+  x.fillRect(dx, py + h - 18, 12, 18);
+  x.fillStyle = '#a87048';
+  x.fillRect(dx + 2, py + h - 16, 3, 6);
+  x.fillRect(dx + 7, py + h - 16, 3, 6);
+  x.fillStyle = '#f0d070';
+  x.fillRect(dx + 9, py + h - 8, 1, 2);
+  x.fillStyle = '#f6f2ea';
+  x.fillRect(dx + 15, py + h - 14, 4, 3); // 表札
+}
+
 function drawBuilding(x, b) {
+  if (b.kind === 'home') { drawHome(x, b); return; }
   const px = b.c * TILE;
   const py = b.r * TILE;
   const w = b.w * TILE;

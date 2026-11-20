@@ -17,6 +17,7 @@
 import { SHOTENGAI } from './maps/shotengai.js';
 import { PARK } from './maps/park.js';
 import { HOME } from './maps/home.js';
+import { JUTAKU } from './maps/jutaku.js';
 import { tr } from '../i18n/index.js';
 
 // しくみ（ステージごとに、オン・オフや数を変える）
@@ -53,7 +54,8 @@ export const AREAS = [
     stages: [
       {
         id: 'jutaku',
-        map: null,
+        // 一軒家とアパートの住宅地。会社員・杖のおばあちゃん・子ども。しくみは爪とぎとおねだりだけ
+        map: JUTAKU,
         targets: { salaryman: 3, grandma: 3, child: 3 },
         rules: { ...BASIC },
         unlock: { after: 'home' },
@@ -113,7 +115,8 @@ export function isOpen(id, save) {
   const st = STAGES[id];
   if (!st || !isReady(id)) return false;
   const u = st.unlock;
-  return save.unlocked.includes(id) || !u || !isReady(u.after);
+  // 一度遊んだステージも開いたまま（あとから前にステージが増えても、閉じないように）
+  return save.unlocked.includes(id) || save.bestScore[id] != null || !u || !isReady(u.after);
 }
 
 // この点数で新しく開くステージ

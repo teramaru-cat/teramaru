@@ -195,6 +195,12 @@ export class StageSelectScene {
       drawText(ctx, tr('select.notReady')[1], cx, by + 10, { font: 'small', color: '#6a6258', align: 'center' });
     } else {
       const u = st.unlock;
+      if (u.score == null) {
+        // 点数のいらない条件（チュートリアルのあと など）：「〜を クリア」
+        drawText(ctx, STAGES[u.after].name, cx, by, { font: 'small', color: '#6a6258', align: 'center' });
+        drawText(ctx, tr('select.unlockClear'), cx, by + 10, { font: 'small', color: '#6a6258', align: 'center' });
+        return;
+      }
       drawText(ctx, tr('select.unlockAt', { name: STAGES[u.after].name }), cx, by, { font: 'small', color: '#6a6258', align: 'center' });
       const need = u.score ?? 0;
       const tw = digitsWidth(String(need)) + 2 + textWidth(tr('select.points'), 'small');

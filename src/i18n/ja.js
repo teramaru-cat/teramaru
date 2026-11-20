@@ -25,6 +25,7 @@ export default {
     play: 'あそぶ！',
     notReady: ['じゅんび', 'ちゅう'],
     unlockAt: '{name}で',
+    unlockClear: 'クリアで ひらく',
     points: 'てん',
   },
 
