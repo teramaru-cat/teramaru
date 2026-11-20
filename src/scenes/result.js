@@ -18,7 +18,7 @@ import { drawVoiceBox } from '../game/voice.js';
 const ROW_GAP = 0.35; // 内訳を1行ずつ出す間隔（秒）
 const PW = 216; // 結果のパネルの幅（左にてらまると、評価の枠が出る）
 
-// ウィルにゃん（ねこたちの意志。姿のないキラキラ。game/voice.js）の評価。てらまるはしゃべらない。
+// ウィルキャッ（ねこたちの意志。姿のないキラキラ。game/voice.js）の評価。てらまるはしゃべらない。
 // スコアで評価が変わる（同じ評価の中からランダム）。mood はてらまるの様子（ぴょんぴょん・しょんぼりなど）
 const COMMENTS = {
   best: [['ベストこうしん！', 'きょうの てらまるは', 'さいこう だにゃ'], ['ベストこうしん！', 'みごとな', 'てらまりんぐ だにゃ']],
@@ -235,7 +235,7 @@ export class ResultScene {
       const k2 = (this.t * 0.8) % 1;
       ctx.drawImage(SPR.drop, x + 9, Math.round(y - h + 6 + k2 * 6));
     }
-    // 評価の枠（ウィルにゃんの声。四角い枠に1文字ずつ）
+    // 評価の枠（ウィルキャッの声。四角い枠に1文字ずつ）
     const lines = this.comment.lines;
     const fw = screen.W - PW - 6 - 8;
     const fh = lines.length * 10 + 8;

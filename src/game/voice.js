@@ -8,7 +8,7 @@ import { UI } from '../art/palette.js';
 
 // 名前（ここを変えれば全部変わる）
 export const VOICE = {
-  name: 'ウィルにゃん', // 枠の名札に出す愛称
+  name: 'ウィルキャッ', // 枠の名札に出す愛称
   fullName: 'ウィル・オブ・キャッツ', // 正式な名前（せかいじゅうの ねこの いし）
 };
 

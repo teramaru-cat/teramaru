@@ -349,7 +349,7 @@ const SFX = {
   tick: (t) => tone(t, 1200, 0.03, { vol: 0.12 }),
   end: (t) => notes(t, [N.G5, N.E5, N.C5, N.G5, N.C6], 0.1, { vol: 0.25 }),
   row: (t) => tone(t, 700, 0.05, { vol: 0.15 }),
-  // ウィルにゃん（キラキラの声）：あらわれる・しゃべる文字・次へ
+  // ウィルキャッ（キラキラの声）：あらわれる・しゃべる文字・次へ
   sparkle: (t) => notes(t, [N.E6, N.G6, 2093, 2637, 2093, 2637], 0.06, { type: 'triangle', vol: 0.14 }),
   voice: (t) => tone(t, 1800 + Math.random() * 400, 0.025, { type: 'triangle', vol: 0.06 }),
   // 予防接種のチクッ

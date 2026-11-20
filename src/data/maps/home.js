@@ -22,11 +22,11 @@ export const HOME = {
   centerLines: [],
   buildings: [],
   props: [
-    // リビング
-    { type: 'sofa', x: 5 * T, y: 3 * T + 14 },
-    { type: 'tv', x: 10 * T + 8, y: 3 * T + 10 },
-    { type: 'lowTable', x: 6 * T + 8, y: 9 * T + 8 },
-    { type: 'catTower', x: 11 * T + 8, y: 12 * T + 14 },
+    // リビング：上の壁にテレビ、じゅうたんにちゃぶ台、下にテレビを向いたソファ（うしろ姿）
+    { type: 'tv', x: 6 * T + 8, y: 4 * T + 2 },
+    { type: 'lowTable', x: 6 * T + 8, y: 9 * T + 6 },
+    { type: 'sofaBack', x: 6 * T + 8, y: 12 * T + 14 },
+    { type: 'cage', x: 11 * T + 2, y: 4 * T + 6 }, // てらまるの三段ケージ
     { type: 'flowerpot', ...at(1, 3) },
     { type: 'water', ...at(2, 12) }, // てらまるの水皿（チュートリアルではかざり）
     { type: 'litter', x: 4 * T + 8, y: 13 * T + 4 }, // てらまるのトイレ
@@ -40,6 +40,6 @@ export const HOME = {
     { id: 'ownerA', ...at(9, 6) },
     { id: 'ownerB', ...at(17, 9) },
   ],
-  start: at(5, 12),
-  hospital: at(5, 12), // 家では倒れないが、念のため
+  start: at(10, 9),
+  hospital: at(10, 9), // 家では倒れないが、念のため
 };

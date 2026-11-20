@@ -26,6 +26,24 @@ function outline(c, ctx) {
   for (const [x, y] of add) ctx.fillRect(x, y, 1, 1);
 }
 
+// 頭のオプション：glasses（メガネ）・longHair（肩までおろした長い髪）
+function headExtras(R, look, k) {
+  if (look.longHair) {
+    R(2, 4 + k, 1, 8, look.hair);
+    R(9, 4 + k, 1, 8, look.hair);
+    R(1, 6 + k, 1, 6, look.hair);
+    R(10, 6 + k, 1, 6, look.hair);
+  }
+  if (look.glasses) {
+    // 色つきのふち（目のよこと、まん中のつなぎ）
+    R(3, 6 + k, 6, 1, look.glasses);
+    R(4, 6 + k, 1, 1, INK);
+    R(7, 6 + k, 1, 1, INK);
+    R(4, 5 + k, 1, 1, '#ffffff'); // レンズの光
+    R(7, 5 + k, 1, 1, '#ffffff');
+  }
+}
+
 // 街の姿（14×26、足元が下の真ん中）。step=true で片足を上げたコマ
 export function makePerson(look, step = false) {
   const [c, ctx] = makeCanvas(14, 26);
@@ -83,6 +101,7 @@ export function makePerson(look, step = false) {
   R(9, 4 + k, 1, 3, look.hair);
   R(4, 6 + k, 1, 1, INK);
   R(7, 6 + k, 1, 1, INK);
+  headExtras(R, look, k);
   if (look.bun) R(5, 1 + k, 2, 2, look.hair);
   if (look.hat === 'chef') {
     R(2, 0, 8, 2, WHITE);
@@ -149,6 +168,7 @@ export function makeCrouch(look) {
   R(4, 6 + k, 1, 1, INK);
   R(7, 6 + k, 1, 1, INK);
   R(5, 8 + k, 2, 1, '#e08080'); // にっこり
+  headExtras(R, look, k);
   if (look.bun) R(5, 1 + k, 2, 2, look.hair);
   if (look.hat === 'chef') {
     R(2, k, 8, 2, WHITE);

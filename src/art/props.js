@@ -1,4 +1,4 @@
-// 街の小物（木・爪とぎ電柱・水皿・猫砂・ベンチ・自販機・噴水・植木鉢）と、家の家具（ソファ・テレビ・テーブル・台所・冷蔵庫・キャットタワー）
+// 街の小物（木・爪とぎ電柱・水皿・猫砂・ベンチ・自販機・噴水・植木鉢）と、家の家具（ソファ・テレビ・テーブル・台所・冷蔵庫・三段ケージ）
 // それぞれ画像と「足元の位置（ox, oy）」「ぶつかる箱（solid）」を返す。
 
 import { makeCanvas, fillCircle, fillEllipse } from '../core/renderer.js';
@@ -160,63 +160,65 @@ function flowerpot() {
 
 // ---- 家の家具（チュートリアル） ----
 
-// ソファ（正面向き。背もたれとひじかけ）
-function sofa() {
-  const [c, x] = makeCanvas(44, 24);
-  x.fillStyle = '#2f5a48';
-  x.fillRect(0, 2, 44, 20);
-  x.fillStyle = '#4a8a6a';
-  x.fillRect(1, 3, 42, 10); // 背もたれ
-  x.fillStyle = '#5aa07c';
-  x.fillRect(1, 3, 42, 2);
-  x.fillStyle = '#3e7a5c';
-  x.fillRect(5, 13, 34, 7); // 座面
-  x.fillStyle = '#4a8a6a';
-  x.fillRect(5, 13, 16, 6);
-  x.fillRect(23, 13, 16, 6);
-  x.fillStyle = '#5aa07c';
-  x.fillRect(5, 13, 16, 1);
-  x.fillRect(23, 13, 16, 1);
-  x.fillStyle = '#3e7a5c';
-  x.fillRect(1, 8, 5, 13); // ひじかけ
-  x.fillRect(38, 8, 5, 13);
-  x.fillStyle = '#5aa07c';
-  x.fillRect(1, 8, 5, 1);
-  x.fillRect(38, 8, 5, 1);
-  // クッション
-  x.fillStyle = '#f0c060';
-  x.fillRect(8, 7, 8, 7);
-  x.fillStyle = '#f8d888';
-  x.fillRect(8, 7, 8, 1);
-  x.fillStyle = '#2a1d17';
-  x.fillRect(2, 22, 2, 2);
-  x.fillRect(40, 22, 2, 2);
-  return { img: c, ox: 22, oy: 23, solid: { w: 42, h: 10 } };
+// テレビ台と大きいテレビ（ソファの方を向いている）
+function tv() {
+  const [c, x] = makeCanvas(48, 36);
+  x.fillStyle = '#1e1e24';
+  x.fillRect(2, 0, 44, 24); // 画面のふち
+  x.fillStyle = '#3a5a7a';
+  x.fillRect(4, 2, 40, 19);
+  // 映っているもの（青空と草原、ねこじゃらし）
+  x.fillStyle = '#7ab8e0';
+  x.fillRect(4, 2, 40, 11);
+  x.fillStyle = '#6aaa50';
+  x.fillRect(4, 13, 40, 8);
+  x.fillStyle = '#f6f2ea';
+  x.fillRect(10, 5, 6, 2);
+  x.fillRect(12, 4, 3, 1);
+  x.fillStyle = '#c8b060';
+  x.fillRect(30, 8, 1, 9);
+  x.fillRect(29, 6, 3, 3);
+  x.fillStyle = '#b0d8f0';
+  x.fillRect(5, 3, 8, 1); // 光の反射
+  x.fillRect(5, 4, 2, 2);
+  x.fillStyle = '#1e1e24';
+  x.fillRect(21, 24, 6, 3); // 足
+  x.fillStyle = '#e04848';
+  x.fillRect(42, 22, 1, 1); // 電源ランプ
+  // テレビ台
+  x.fillStyle = '#5a3c24';
+  x.fillRect(0, 26, 48, 10);
+  x.fillStyle = '#8a6440';
+  x.fillRect(0, 26, 48, 2);
+  x.fillStyle = '#6a4a30';
+  x.fillRect(2, 29, 21, 6);
+  x.fillRect(25, 29, 21, 6);
+  x.fillStyle = '#c8a070';
+  x.fillRect(21, 31, 1, 2);
+  x.fillRect(26, 31, 1, 2);
+  return { img: c, ox: 24, oy: 35, solid: { w: 48, h: 8 } };
 }
 
-// テレビ台とテレビ
-function tv() {
-  const [c, x] = makeCanvas(32, 28);
-  x.fillStyle = '#2a2a30';
-  x.fillRect(4, 0, 24, 16);
-  x.fillStyle = '#4a6a8a';
-  x.fillRect(6, 2, 20, 12);
-  x.fillStyle = '#7aa8d0';
-  x.fillRect(7, 3, 6, 1);
-  x.fillRect(7, 4, 2, 2);
-  x.fillStyle = '#2a2a30';
-  x.fillRect(14, 16, 4, 2);
-  x.fillStyle = '#6a4a30';
-  x.fillRect(0, 18, 32, 10);
-  x.fillStyle = '#8a6440';
-  x.fillRect(0, 18, 32, 2);
-  x.fillStyle = '#5a3c24';
-  x.fillRect(2, 21, 13, 6);
-  x.fillRect(17, 21, 13, 6);
-  x.fillStyle = '#c8a070';
-  x.fillRect(13, 23, 1, 2);
-  x.fillRect(18, 23, 1, 2);
-  return { img: c, ox: 16, oy: 27, solid: { w: 32, h: 8 } };
+// ソファのうしろ姿（テレビの方を向いている）
+function sofaBack() {
+  const [c, x] = makeCanvas(48, 22);
+  x.fillStyle = '#2f5a48';
+  x.fillRect(0, 0, 48, 20);
+  x.fillStyle = '#3e7a5c';
+  x.fillRect(1, 1, 46, 18);
+  x.fillStyle = '#4a8a6a';
+  x.fillRect(1, 1, 6, 18); // ひじかけ
+  x.fillRect(41, 1, 6, 18);
+  x.fillStyle = '#5aa07c';
+  x.fillRect(1, 1, 46, 2);
+  x.fillStyle = '#356a50'; // 背もたれのぬい目
+  x.fillRect(24, 4, 1, 14);
+  x.fillStyle = '#f0c060'; // 上からのぞくクッション
+  x.fillRect(10, 0, 8, 2);
+  x.fillStyle = '#2a1d17';
+  x.fillRect(3, 20, 2, 2);
+  x.fillRect(43, 20, 2, 2);
+  return { img: c, ox: 24, oy: 21, solid: { w: 48, h: 10 } };
 }
 
 // ひくいテーブル（みかんつき）
@@ -303,26 +305,50 @@ function diningTable() {
   return { img: c, ox: 18, oy: 25, solid: { w: 36, h: 9 } };
 }
 
-// キャットタワー（てらまるのお気に入り）
-function catTower() {
-  const [c, x] = makeCanvas(22, 44);
-  x.fillStyle = '#dcc488';
-  x.fillRect(9, 6, 4, 36); // 柱（麻ひも）
-  x.fillStyle = '#b89a5c';
-  for (let y = 7; y < 42; y += 2) x.fillRect(9, y, 4, 1);
-  x.fillStyle = '#8a5a3a';
-  x.fillRect(1, 2, 20, 5); // 上の台
-  x.fillRect(0, 22, 14, 4); // 中の台
-  x.fillRect(2, 40, 18, 4); // 土台
-  x.fillStyle = '#c87850';
-  x.fillRect(2, 2, 18, 3);
-  x.fillRect(1, 22, 12, 2);
-  x.fillRect(3, 40, 16, 2);
-  x.fillStyle = '#f6f2ea'; // ぶら下がるボール
-  x.fillRect(17, 26, 1, 4);
+// 三段ケージ（てらまるのおうち）：白い金網、段ごとの棚、ハンモックとベッド
+function cage() {
+  const [c, x] = makeCanvas(30, 54);
+  x.fillStyle = '#e8e4dc';
+  x.fillRect(0, 50, 30, 4); // 台（キャスター）
+  x.fillStyle = '#5a5a60';
+  x.fillRect(2, 53, 2, 1);
+  x.fillRect(26, 53, 2, 1);
+  // 中（うすい影）
+  x.fillStyle = '#d8d0c4';
+  x.fillRect(1, 1, 28, 49);
+  // 棚（3段）
+  x.fillStyle = '#c8a070';
+  for (const y of [16, 33]) { x.fillRect(1, y, 18, 3); }
+  x.fillStyle = '#a87c50';
+  for (const y of [18, 35]) x.fillRect(1, y, 18, 1);
+  // 上の段：ハンモック
   x.fillStyle = '#f07890';
-  x.fillRect(16, 30, 3, 3);
-  return { img: c, ox: 11, oy: 43, solid: { w: 18, h: 5 } };
+  x.fillRect(5, 9, 18, 2);
+  x.fillRect(7, 11, 14, 2);
+  x.fillStyle = '#ffffff';
+  x.fillRect(9, 9, 2, 2);
+  x.fillRect(15, 11, 2, 2);
+  // まん中：はしご
+  x.fillStyle = '#c8a070';
+  x.fillRect(22, 19, 1, 14);
+  x.fillRect(26, 19, 1, 14);
+  for (let y = 21; y < 33; y += 3) x.fillRect(22, y, 5, 1);
+  // 下の段：ベッド
+  x.fillStyle = '#7a9ac8';
+  x.fillRect(4, 43, 16, 6);
+  x.fillStyle = '#f6f2ea';
+  x.fillRect(6, 44, 12, 3);
+  // 金網（白い格子）
+  x.fillStyle = '#ffffff';
+  for (let xx = 0; xx < 30; xx += 3) x.fillRect(xx, 0, 1, 50);
+  x.fillRect(0, 0, 30, 1);
+  x.fillRect(0, 17, 30, 1);
+  x.fillRect(0, 34, 30, 1);
+  x.fillStyle = '#9a9690'; // ふち
+  x.fillRect(0, 0, 1, 50);
+  x.fillRect(29, 0, 1, 50);
+  x.fillRect(0, 49, 30, 1);
+  return { img: c, ox: 15, oy: 53, solid: { w: 30, h: 8 } };
 }
 
 export const PROPS = {};
@@ -337,12 +363,12 @@ export function buildProps() {
     vending: vending(),
     fountain: fountain(),
     flowerpot: flowerpot(),
-    sofa: sofa(),
+    sofaBack: sofaBack(),
     tv: tv(),
     lowTable: lowTable(),
     counter: counter(),
     fridge: fridge(),
     diningTable: diningTable(),
-    catTower: catTower(),
+    cage: cage(),
   });
 }

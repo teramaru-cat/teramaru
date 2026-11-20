@@ -9,7 +9,7 @@
 //   drops       … 落とすご飯 { item: ITEMS の id, count: 個数 }。なければ null
 //   motion      … still（棒立ち）| stomp（足踏み、period 秒ごとに左右交互）| lively（よく動く。sway で揺れの大きさと速さ）
 //   legs        … てらまりんぐ画面での足の位置（足元の地面の真ん中からのずれ、画面ドット）と太さ r。cane: true は杖
-//   look        … 見た目。人は服などの色、動物・ベンチは type（dog | pigeons | bench、絵は art/animals.js）
+//   look        … 見た目。人は服などの色（glasses: メガネのふちの色、longHair: 長い髪）、動物・ベンチは type（dog | pigeons | bench、絵は art/animals.js）
 //   wander      … 街でうろうろする速さ（ドット/秒）。なければ立ち止まったまま
 //   fixed       … true なら地図の決まった場所にずっといる（地図の fixedTargets に置く）
 //   owner       … 一緒に歩く飼い主の見た目（犬）
@@ -124,7 +124,7 @@ export const TARGETS = {
     motion: 'stomp',
     period: 2.0,
     legs: [{ x: -18, y: 0, r: 7 }, { x: 18, y: 0, r: 7 }],
-    look: { skin: '#f2c9a0', hair: '#3a2a24', top: '#6a9ac8', bottom: '#3a4a6a', shoes: '#f6f2ea', garment: 'coat' },
+    look: { skin: '#f2c9a0', hair: '#3a2a24', glasses: '#9a6a48', top: '#6a9ac8', bottom: '#3a4a6a', shoes: '#f6f2ea', garment: 'coat' }, // 青い服にメガネ
     fixed: true,
     wander: 6,
     leaves: false,
@@ -140,7 +140,7 @@ export const TARGETS = {
     motion: 'stomp',
     period: 1.6,
     legs: [{ x: -16, y: 0, r: 6 }, { x: 16, y: 0, r: 6 }],
-    look: { skin: '#f6d0b0', hair: '#5a3a28', bun: true, top: '#f0a8a0', skirt: '#8a7a5a', legs: '#f6d0b0', shoes: '#f6f2ea', garment: 'skirt' },
+    look: { skin: '#f6d0b0', hair: '#5a3a28', longHair: true, top: '#f0a8a0', skirt: '#8a7a5a', legs: '#f6d0b0', shoes: '#f6f2ea', garment: 'skirt' },
     fixed: true,
     wander: 6,
     leaves: false,
