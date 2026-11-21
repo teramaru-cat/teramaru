@@ -394,6 +394,18 @@ export class RingingScene {
 
     // 足のまわりの輪：回った分だけ点が光る
     for (const L of this.legs) this.drawRing(ctx, L);
+    // 1人ずつハートがある（家族）：その人の足元に、たまったハートを出す
+    const cap = this.def.lapsPerLeg;
+    if (cap) {
+      for (const L of this.legs) {
+        const hy = Math.round(L.y + L.base.r * 0.9 + 14);
+        const hx0 = Math.round(L.x - (cap * 9 - 2) / 2);
+        for (let i = 0; i < cap; i++) {
+          ctx.drawImage(SPR.heartEmpty, hx0 + i * 9, hy);
+          if ((L.credit ?? 0) >= i + 1) ctx.drawImage(SPR.heart, hx0 + i * 9, hy);
+        }
+      }
+    }
 
     // 足とてらまるを奥から順に
     const look = this.def.look;

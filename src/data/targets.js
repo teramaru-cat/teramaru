@@ -121,7 +121,7 @@ export const TARGETS = {
     motion: 'still',
     legs: [{ x: -16, y: 0, r: 6 }, { x: 16, y: 0, r: 6 }],
     look: { skin: '#eccaa8', hair: '#d8d8dc', hat: 'cap', capColor: '#8a6a4a', mustache: '#f0f0f0', top: '#7a8a5a', bottom: '#6a5a48', shoes: '#3a2a20', garment: 'coat' },
-    wander: 5,
+    wander: 9, // ゆっくり歩く
     onedari: { base: 0.40, perTp: 0.010 },
   },
   // 子ども連れの家族（親と子が手をつないで歩く）。てらまりんぐでは親の足2本と、子の短い足2本
