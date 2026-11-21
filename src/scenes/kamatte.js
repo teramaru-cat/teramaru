@@ -17,6 +17,26 @@ import { tr } from '../i18n/index.js';
 
 // なでる手（ドット絵。o＝ふち s＝肌）
 // 頭にのせた手のひら（横から見た形。左が指先）
+// 太い線（両はしが丸い）を、ドットの中心が線から r 以内のところだけ塗る。四角をならべるより ふちの段がそろう
+function capsule(ctx, x0, y0, x1, y1, r, col) {
+  ctx.fillStyle = col;
+  const vx = x1 - x0;
+  const vy = y1 - y0;
+  const L2 = vx * vx + vy * vy || 1;
+  const xa = Math.floor(Math.min(x0, x1) - r - 1);
+  const xb = Math.ceil(Math.max(x0, x1) + r + 1);
+  const ya = Math.floor(Math.min(y0, y1) - r - 1);
+  const yb = Math.ceil(Math.max(y0, y1) + r + 1);
+  for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) {
+    const px = x + 0.5 - x0;
+    const py = y + 0.5 - y0;
+    const u = Math.max(0, Math.min(1, (px * vx + py * vy) / L2));
+    const dx = px - u * vx;
+    const dy = py - u * vy;
+    if (dx * dx + dy * dy <= (r + 0.35) * (r + 0.35)) ctx.fillRect(x, y, 1, 1);
+  }
+}
+
 const PALM = [
   '....oooooooooo..',
   '..oossssssssssoo',
@@ -314,8 +334,8 @@ export class KamatteScene {
     const hy = headY + arm.ty;
     const sx = px + person.shoulder.x;
     const sy = py + person.shoulder.y;
-    const wx = hx + 6; // 手首（手のひらの右はし）
-    const wy = hy - 1;
+    const wx = hx + 6; // そでの先（手のひらの右上。目にかからない高さ）
+    const wy = hy - 4;
     const seg = (x0, y0, x1, y1, r) => {
       const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
       for (let i = 0; i <= n; i++) {
@@ -326,20 +346,14 @@ export class KamatteScene {
     };
 
     // 腕：肩 → そで口 → 手首（肌）が ひと続き。体のうしろから出て、てらまるの上にのる（そで口・手首が頭にかぶってもいい）
+    // 線の かたむきを「1段さがるのに n ドット」のきれいな比にそろえる（段の長さがそろって なめらかに見える）
+    const n = Math.max(1, Math.round(Math.abs(wx - sx) / Math.max(1, Math.abs(wy - sy))));
+    const ex = wx;
+    const ey = Math.abs(wy - sy) < 1 ? sy : sy + Math.sign(wy - sy) * Math.round(Math.abs(wx - sx) / n);
     const drawArm = () => {
-      const len = Math.hypot(wx - sx, wy - sy);
-      const ux = (wx - sx) / len;
-      const uy = (wy - sy) / len;
-      const cuffX = wx - ux * 4; // そで口（手首の少し手前）
-      const cuffY = wy - uy * 4;
-      const skin = look.skin ?? '#f2c9a0';
-      o.fillStyle = UI.ink;
-      seg(sx, sy, cuffX, cuffY, person.armR + 1);
-      seg(cuffX, cuffY, wx, wy, person.armR);
-      o.fillStyle = skin;
-      seg(cuffX, cuffY, wx, wy, person.armR - 1);
-      o.fillStyle = look.top ?? '#3c4a6a';
-      seg(sx, sy, cuffX, cuffY, person.armR);
+      // 服のそでを、手のひらのところまで（肌が見えるのは手だけ）
+      capsule(o, sx, sy, ex, ey, person.armR + 1, UI.ink);
+      capsule(o, sx, sy, ex, ey, person.armR, look.top ?? '#3c4a6a');
     };
     drawArm(); // 体のうしろ
 
