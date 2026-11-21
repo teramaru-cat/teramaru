@@ -16,15 +16,6 @@ import { Effects, PopText, heartAbsorb } from '../game/effects.js';
 import { tr } from '../i18n/index.js';
 
 // なでる手（ドット絵。o＝ふち s＝肌）
-const HAND_BIG = [
-  '.oooooooooo.',
-  'osssssssssso',
-  'osssssssssso',
-  'osssssssssso',
-  'osssssssssso',
-  'osossossosso',
-  '.oooooooooo.',
-];
 const HAND = [
   '.oooooo.',
   'osssssso',
@@ -64,7 +55,7 @@ function drawWall(ctx, x, y, w, h) {
 // 人のなでなでの腕の形（サンプルページ sample/arm.html で見くらべる）
 //   gap：てらまると人のあいだ  k：上腕・前腕の長さ（肩から手までの何倍か）  elbow：ひじの向き
 //   tx, ty：手の位置（頭のてっぺんのまん中から）
-export const ARM_STYLE = { gap: 12, k: 0.56, elbow: 'up', tx: 0, ty: 0 };
+export const ARM_STYLE = { gap: 6, k: 0.56, elbow: 'up', tx: 2, ty: 0 };
 
 const PW = 240; // 枠の大きさ
 const PH = 124;
@@ -377,16 +368,22 @@ export class KamatteScene {
       // 手首（手の右はし）をめざす
       const wx = hx + 3;
       const wy = hy;
-      const L = Math.hypot(headX + arm.tx + 3 - sx, headY + arm.ty - sy) * arm.k; // 上腕・前腕の長さ（いつも同じ）
-      const dx = wx - sx;
-      const dy = wy - sy;
-      const d = Math.min(Math.hypot(dx, dy), L * 2 - 0.01);
-      const base = Math.atan2(dy, dx);
-      const bend = Math.acos(Math.min(1, d / (2 * L)));
-      // ひじの向き（arm.elbow）：up＝上へ張る、down＝下にたたむ
-      const e1 = { x: sx + Math.cos(base + bend) * L, y: sy + Math.sin(base + bend) * L };
-      const e2 = { x: sx + Math.cos(base - bend) * L, y: sy + Math.sin(base - bend) * L };
-      const el = (arm.elbow === 'up') === (e1.y < e2.y) ? e1 : e2;
+      let el;
+      if (person.big) {
+        // 大きい人：上腕は体の絵にふくまれている（体の横にたらす）。ひじから前腕だけを頭へのばす
+        el = { x: px + person.elbow.x, y: py + person.elbow.y };
+      } else {
+        const L = Math.hypot(headX + arm.tx + 3 - sx, headY + arm.ty - sy) * arm.k; // 上腕・前腕の長さ（いつも同じ）
+        const dx = wx - sx;
+        const dy = wy - sy;
+        const d = Math.min(Math.hypot(dx, dy), L * 2 - 0.01);
+        const base = Math.atan2(dy, dx);
+        const bend = Math.acos(Math.min(1, d / (2 * L)));
+        // ひじの向き（arm.elbow）：up＝上へ張る、down＝下にたたむ
+        const e1 = { x: sx + Math.cos(base + bend) * L, y: sy + Math.sin(base + bend) * L };
+        const e2 = { x: sx + Math.cos(base - bend) * L, y: sy + Math.sin(base - bend) * L };
+        el = (arm.elbow === 'up') === (e1.y < e2.y) ? e1 : e2;
+      }
       const seg = (x0, y0, x1, y1, r) => {
         const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
         for (let i = 0; i <= n; i++) {
@@ -399,13 +396,13 @@ export class KamatteScene {
       const thick = person.big ? 1 : 0; // 大きい人は腕も太く
       for (const [r, col] of [[2 + thick, UI.ink], [1 + thick, look.top ?? '#3c4a6a']]) {
         ctx.fillStyle = col;
-        seg(sx, sy, el.x, el.y, r);
+        if (!person.big) seg(sx, sy, el.x, el.y, r);
         seg(el.x, el.y, wx, wy, r);
       }
     }
     if (this.kind === 'nade' && !animal) {
       // 手（ドット絵）
-      drawRows(ctx, petBack ? HAND_BIG : HAND, hx - (petBack ? 6 : 4), hy - (petBack ? 3 : 2), { o: UI.ink, s: this.target.def.look?.skin ?? '#f2c9a0' });
+      drawRows(ctx, HAND, hx - 4, hy - 2, { o: UI.ink, s: this.target.def.look?.skin ?? '#f2c9a0' });
       // 気持ちよさそう
       if (Math.floor(t * 3) % 2 === 0) {
         ctx.fillStyle = UI.pink;

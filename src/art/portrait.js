@@ -417,14 +417,22 @@ export function makeBigBack(look, pose = 'sit') {
     set(armX - 1, y, 'o');
   }
   ell(armX + R(5) / 2, shY + torsoH + 3, R(3), R(2.5), 's'); // 手
-  // 向かって左の肩：腕のつけね（のばす腕はゲームの中で描く）
+  // 向かって左の腕は上腕だけ（ひじまで）。前腕はゲームの中で、ひじから てらまるの頭へ描く
+  const lArmX = Math.round(cx - shW);
+  const elbowY = shY + 3 + R(13);
+  for (let y = shY + 3; y < elbowY; y++) {
+    for (let x = lArmX; x < lArmX + R(5); x++) set(x, y, 't');
+    set(lArmX + R(5), y, 'o');
+  }
+  ell(lArmX + R(5) / 2, elbowY, R(2.5), R(2), 't');
   const baseY = shY + torsoH;
   if (pose === 'sit') {
-    // 正座：おしりと、たたんだ足（横に広い）。下に足の裏が2つ
-    const lowW = R(18);
-    rows(baseY - 2, [waistW + 1, lowW - 2, lowW - 1, lowW, lowW, lowW, lowW, lowW - 1, lowW - 3], look.garment === 'skirt' ? 'K' : 'B');
-    ell(cx - R(6), baseY + 8, R(3.5), R(2), 'f');
-    ell(cx + R(6), baseY + 8, R(3.5), R(2), 'f');
+    // 正座（うしろから）：まるいおしりが かかとの上にのる。おしりの下に くつの裏が2つ、つま先を内がわに向けてならぶ
+    const sole = 'U';
+    ell(cx - R(5), baseY + R(7), R(5), R(2.2), sole);
+    ell(cx + R(5), baseY + R(7), R(5), R(2.2), sole);
+    const lowW = waistW + R(2);
+    rows(baseY - 2, [waistW, waistW + 1, lowW, lowW, lowW, lowW, lowW - 1, lowW - 2, lowW - 4], look.garment === 'skirt' ? 'K' : 'B');
   } else {
     // 立つ：スカート（すそが広がる）と足
     const skirtH = R(22);
@@ -478,6 +486,7 @@ export function makeBigBack(look, pose = 'sit') {
   const pal = {
     o: INK, h: look.hair, s: look.skin, t: look.top, B: look.bottom ?? look.top, f: look.shoes, W: WHITE,
     K: look.skirt, L: look.legs ?? look.skin, C: look.capColor, D: look.bandColor ?? (look.ponytail ? '#e07a8a' : WHITE), X: look.cane,
+    U: '#8a7868', // くつの裏
   };
   const [c, ctx] = makeCanvas(W, bot - top);
   for (let y = top; y < bot; y++) for (let x = 0; x < W; x++) {
@@ -490,6 +499,7 @@ export function makeBigBack(look, pose = 'sit') {
   c.big = true;
   c.standing = pose === 'stand';
   // のばす腕のつけね（向かって左の肩）
-  c.shoulder = { x: Math.round(cx - shW) + R(3), y: shY - top + R(3) };
+  c.shoulder = { x: Math.round(cx - shW) + R(3), y: shY - top + R(4) };
+  c.elbow = { x: lArmX + Math.floor(R(5) / 2), y: elbowY - top }; // ひじ（前腕のつけね）
   return c;
 }
