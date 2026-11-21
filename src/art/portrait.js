@@ -370,9 +370,9 @@ export function makePortrait(look, pose = 'stand') {
 // 小さい絵を拡大せず、この大きさで形（だ円・四角）から1ドットずつ描く。ベタ塗り・ふち1ドット・左右対称。
 // pose：'sit'（正座）| 'stand'（立つ。腰の悪いおばあちゃん）。向かって左の腕は、のばす腕を別に描くので描かない
 export function makeBigBack(look, pose = 'sit') {
-  const k = look.child ? 0.78 : 1; // 子どもは小さく
-  const W = 52;
-  const H = 96;
+  const k = (look.child ? 0.78 : 1) * 1.4; // てらまる（4kgもない猫）より ずっと大きく。子どもは小さめ
+  const W = 76;
+  const H = 140;
   const g = Array.from({ length: H }, () => Array(W).fill('.'));
   const cx = W / 2; // まん中（ドットのさかい）
   const set = (x, y, ch) => { if (y >= 0 && y < H && x >= 0 && x < W) g[y][x] = ch; };
@@ -417,14 +417,7 @@ export function makeBigBack(look, pose = 'sit') {
     set(armX - 1, y, 'o');
   }
   ell(armX + R(5) / 2, shY + torsoH + 3, R(3), R(2.5), 's'); // 手
-  // 向かって左の腕は上腕だけ（ひじまで）。前腕はゲームの中で、ひじから てらまるの頭へ描く
   const lArmX = Math.round(cx - shW);
-  const elbowY = shY + 3 + R(13);
-  for (let y = shY + 3; y < elbowY; y++) {
-    for (let x = lArmX; x < lArmX + R(5); x++) set(x, y, 't');
-    set(lArmX + R(5), y, 'o');
-  }
-  ell(lArmX + R(5) / 2, elbowY, R(2.5), R(2), 't');
   const baseY = shY + torsoH;
   if (pose === 'sit') {
     // 正座（うしろから）：まるいおしりが かかとの上にのる。おしりの下に くつの裏が2つ、つま先を内がわに向けてならぶ
@@ -498,8 +491,8 @@ export function makeBigBack(look, pose = 'sit') {
   c.hd = true;
   c.big = true;
   c.standing = pose === 'stand';
-  // のばす腕のつけね（向かって左の肩）
-  c.shoulder = { x: Math.round(cx - shW) + R(3), y: shY - top + R(4) };
-  c.elbow = { x: lArmX + Math.floor(R(5) / 2), y: elbowY - top }; // ひじ（前腕のつけね）
+  // のばす腕のつけね（向かって左の肩。体の内がわ：腕は体のうしろから出てくる）
+  c.shoulder = { x: lArmX + R(5), y: shY - top + R(4) };
+  c.armR = Math.max(2, Math.round(R(5) / 2)); // 腕の太さ（半分）
   return c;
 }

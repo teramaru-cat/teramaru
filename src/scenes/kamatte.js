@@ -16,6 +16,15 @@ import { Effects, PopText, heartAbsorb } from '../game/effects.js';
 import { tr } from '../i18n/index.js';
 
 // なでる手（ドット絵。o＝ふち s＝肌）
+const HAND_BIG = [
+  '.ooooooooo.',
+  'ossssssssso',
+  'ossssssssso',
+  'ossssssssso',
+  'ossssssssso',
+  'osossossoso',
+  '.ooooooooo.',
+];
 const HAND = [
   '.oooooo.',
   'osssssso',
@@ -55,7 +64,7 @@ function drawWall(ctx, x, y, w, h) {
 // 人のなでなでの腕の形（サンプルページ sample/arm.html で見くらべる）
 //   gap：てらまると人のあいだ  k：上腕・前腕の長さ（肩から手までの何倍か）  elbow：ひじの向き
 //   tx, ty：手の位置（頭のてっぺんのまん中から）
-export const ARM_STYLE = { gap: 6, k: 0.56, elbow: 'up', tx: 2, ty: 0 };
+export const ARM_STYLE = { gap: 6, k: 0.6, elbow: 'up', tx: 1, ty: 0 };
 
 const PW = 240; // 枠の大きさ
 const PH = 124;
@@ -265,22 +274,80 @@ export class KamatteScene {
     else this.drawPair(ctx, b);
   }
 
-  // 人のなでなで：てらまるが主役の アップ。人・てらまる・腕を、半分の大きさの絵に等倍で描いてから、
-  // まとめて2倍にする（この場面の中のドットの大きさは全部そろう）
+  // 人のなでなで：てらまるが主役の アップ。半分の大きさの絵に等倍で描いてから、まとめて2倍にする
+  // （この場面の中のドットの大きさは全部そろう）。
+  // てらまる（4kgもない猫）はブロック塀の上で、こっちを向いておすわり。となりに大きな人のうしろ姿（胸から下は画面の外）。
+  // かさねる順：塀 → 腕（人と猫のうしろ） → 人 → てらまる → 手
   drawPetZoom(ctx, b) {
     const w = PW / 2;
     const h = PH / 2;
     if (!this.zoom) this.zoom = makeCanvas(w, h);
     const [off, o] = this.zoom;
     o.clearRect(0, 0, w, h);
+    const t = this.pt;
+    const look = this.target.def.look ?? {};
+    const arm = this.armStyle ?? ARM_STYLE;
     const person = SPR.peopleBig[this.target.id];
-    const wallH = person.standing ? WALL_HIGH : 0;
-    // いちばん高い頭がちょうど入るように、地面の位置を決める（立つ人は足もとが下で切れる）
-    // いちばん高い頭が上はしの すぐ下に来るように（見出しは左上にずらす）。立つ人のときは足もと・塀の下が切れる
-    const tallest = Math.max(person.height, SPR.catHD.down.height + wallH);
-    const ground = Math.max(h - 2, tallest + 3);
-    // drawPair は「b.y + PH - 6 が地面、b.x + 108 が てらまる」なので、その位置に合わせた箱を渡す
-    this.drawPair(o, { x: 52 - 108, y: ground - (PH - 6) });
+    const cat = SPR.catHD.down;
+    const catX = 46; // てらまるのまん中
+    const catTop = 25; // 絵のいちばん上（耳の先の上）。足もとは画面の下はし
+    const catBottom = catTop + cat.height;
+    const px = catX + arm.gap; // 人の絵の左はし
+    const py = -9; // 人の頭のてっぺんは少し画面の外（アップの写真のように）。肩が てらまるの頭の高さに来る
+    const ground = py + person.height;
+
+    drawWall(o, catX - 18, catBottom, 36, h - catBottom + 4);
+
+    // 腕：肩（体の内がわ）から てらまるの頭へ。上腕・前腕の長さは変えず、ひじを下へ少し曲げる
+    const squish = Math.sin(t * 9) > 0.3 ? 1 : 0; // なでられて頭が1ドット下がる
+    const headY = catTop + 4 + squish; // 頭のてっぺん（耳のあいだ）
+    const hx = Math.round(catX + arm.tx + Math.sin(t * 6) * 3);
+    const hy = headY + arm.ty;
+    const sx = px + person.shoulder.x;
+    const sy = py + person.shoulder.y;
+    const wx = hx + 5;
+    const wy = hy + 1;
+    const L = Math.hypot(catX + arm.tx + 5 - sx, headY + arm.ty + 1 - sy) * arm.k;
+    const d = Math.min(Math.hypot(wx - sx, wy - sy), L * 2 - 0.01);
+    const base = Math.atan2(wy - sy, wx - sx);
+    const bend = Math.acos(Math.min(1, d / (2 * L)));
+    const e1 = { x: sx + Math.cos(base + bend) * L, y: sy + Math.sin(base + bend) * L };
+    const e2 = { x: sx + Math.cos(base - bend) * L, y: sy + Math.sin(base - bend) * L };
+    const el = e1.y > e2.y ? e1 : e2;
+    const seg = (x0, y0, x1, y1, r) => {
+      const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+      for (let i = 0; i <= n; i++) {
+        const x = Math.round(x0 + ((x1 - x0) * i) / n);
+        const y = Math.round(y0 + ((y1 - y0) * i) / n);
+        o.fillRect(x - r, y - r, r * 2 + 1, r * 2 + 1);
+      }
+    };
+    for (const [r, col] of [[person.armR + 1, UI.ink], [person.armR, look.top ?? '#3c4a6a']]) {
+      o.fillStyle = col;
+      seg(sx, sy, el.x, el.y, r);
+      seg(el.x, el.y, wx, wy, r);
+    }
+
+    // 人（家族は子どもも、右どなりに）
+    o.drawImage(person, px, py);
+    if (this.target.def.kid) {
+      const kid = SPR.kidsBig[this.target.id];
+      o.drawImage(kid, px + person.width - 18, ground - kid.height);
+    }
+
+    // てらまる
+    const neck = 16;
+    const cx = Math.round(catX - cat.width / 2);
+    o.drawImage(cat, 0, neck, cat.width, cat.height - neck, cx, catTop + neck, cat.width, cat.height - neck);
+    o.drawImage(cat, 0, 0, cat.width, neck, cx, catTop + squish, cat.width, neck);
+
+    // 手（頭の上）・気持ちよさそうなほっぺ
+    drawRows(o, HAND_BIG, hx - 5, hy - 3, { o: UI.ink, s: look.skin ?? '#f2c9a0' });
+    if (Math.floor(t * 3) % 2 === 0) {
+      o.fillStyle = UI.pink;
+      o.fillRect(cx + 5, catTop + 11 + squish, 2, 1);
+      o.fillRect(cx + cat.width - 7, catTop + 11 + squish, 2, 1);
+    }
     ctx.drawImage(off, b.x, b.y, PW, PH);
   }
 
