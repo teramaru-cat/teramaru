@@ -52,6 +52,11 @@ function drawWall(ctx, x, y, w, h) {
   }
 }
 
+// 人のなでなでの腕の形（サンプルページ sample/arm.html で見くらべる）
+//   gap：てらまると人のあいだ  k：上腕・前腕の長さ（肩から手までの何倍か）  elbow：ひじの向き
+//   tx, ty：手の位置（頭のてっぺんのまん中から）
+export const ARM_STYLE = { gap: 12, k: 0.56, elbow: 'up', tx: 0, ty: 0 };
+
 const PW = 240; // 枠の大きさ
 const PH = 124;
 const TITLE = (kind) => tr(`kamatte.${kind}`);
@@ -294,7 +299,8 @@ export class KamatteScene {
     const wallH = onWall ? WALL_HIGH : 0;
     const catX = petBack ? b.x + 108 : b.x + 70;
     if (onWall) drawWall(ctx, catX - 18, b.y + PH - 6 - wallH, 36, wallH);
-    const px = petBack ? catX + 12 : b.x + (this.kind === 'nade' ? 92 : animal ? 140 : 150);
+    const arm = this.armStyle ?? ARM_STYLE;
+    const px = petBack ? catX + arm.gap : b.x + (this.kind === 'nade' ? 92 : animal ? 140 : 150);
     const py = b.y + PH - 6 - person.height * pS;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
     ctx.fillRect(px + 4, b.y + PH - 8, person.width * pS - 8, 4);
@@ -354,21 +360,21 @@ export class KamatteScene {
       const sy = py + (person.shoulder?.y ?? (person.shoulderY + 1) * pS);
       const headX = catX; // 頭のまん中
       const headY = Math.round(cyy) + 4; // 頭のてっぺん（耳のあいだ）
-      hx = Math.round(headX + Math.sin(t * 6) * 3);
-      hy = headY + squish;
+      hx = Math.round(headX + arm.tx + Math.sin(t * 6) * 3);
+      hy = headY + arm.ty + squish;
       // 手首（手の右はし）をめざす
       const wx = hx + 3;
       const wy = hy;
-      const L = Math.hypot(headX + 3 - sx, headY - sy) * 0.56; // 上腕・前腕の長さ（いつも同じ）
+      const L = Math.hypot(headX + arm.tx + 3 - sx, headY + arm.ty - sy) * arm.k; // 上腕・前腕の長さ（いつも同じ）
       const dx = wx - sx;
       const dy = wy - sy;
       const d = Math.min(Math.hypot(dx, dy), L * 2 - 0.01);
       const base = Math.atan2(dy, dx);
       const bend = Math.acos(Math.min(1, d / (2 * L)));
-      // ひじは少し上へ。前腕が上から頭にのる（顔をかくさない）
+      // ひじの向き（arm.elbow）：up＝上へ張る、down＝下にたたむ
       const e1 = { x: sx + Math.cos(base + bend) * L, y: sy + Math.sin(base + bend) * L };
       const e2 = { x: sx + Math.cos(base - bend) * L, y: sy + Math.sin(base - bend) * L };
-      const el = e1.y < e2.y ? e1 : e2;
+      const el = (arm.elbow === 'up') === (e1.y < e2.y) ? e1 : e2;
       const seg = (x0, y0, x1, y1, r) => {
         const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
         for (let i = 0; i <= n; i++) {

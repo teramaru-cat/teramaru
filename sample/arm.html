@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>なでなでの腕 見くらべ</title>
+  <style>
+    :root { --bg: #f6efe2; --ink: #3a2a20; --card: #fffaf0; --line: #e2d4bc; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
+    main { max-width: 1520px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 20px; margin: 4px 0 4px; }
+    p.note { margin: 0 0 16px; font-size: 14px; }
+    section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+    h2 { font-size: 16px; margin: 0 0 8px; }
+    h2 span { font-weight: normal; font-size: 13px; margin-left: 8px; color: #7a6450; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    canvas.view { width: 480px; max-width: 100%; image-rendering: pixelated; border-radius: 6px; }
+    /* ゲームの画面（スプライトを作るために動かすだけ。見せない） */
+    #screen, #rotate { display: none !important; }
+  </style>
+</head>
+<body>
+  <canvas id="screen" width="320" height="180"></canvas>
+  <div id="rotate"><canvas id="rotate-cat" width="22" height="11"></canvas></div>
+  <main>
+    <h1>なでなでの腕 見くらべ</h1>
+    <p class="note">ゲームの絵をそのまま使って動かしています。いいと思う番号を教えてください。</p>
+    <div id="list"></div>
+  </main>
+  <script type="module" src="src/main.js"></script>
+  <script type="module">
+    import { KamatteScene } from './src/scenes/kamatte.js';
+
+    // 腕の形の候補（gap：てらまると人のあいだ、k：腕の長さ、elbow：ひじの向き、tx・ty：手の位置）
+    const STYLES = [
+      { name: '① いまの形', sub: 'ひじを上げて、前腕を頭にのせる', arm: { gap: 12, k: 0.56, elbow: 'up', tx: 0, ty: 0 } },
+      { name: '② たたむ（ななめ）', sub: 'ひじを下にたたみ、前腕がななめに頭へ', arm: { gap: 8, k: 0.6, elbow: 'down', tx: 1, ty: 0 } },
+      { name: '③ たたむ（ぴったり）', sub: 'となりにくっついて、ひじを体の横に。前腕は てらまるの肩の前を通る', arm: { gap: 4, k: 0.66, elbow: 'down', tx: 2, ty: 1 } },
+      { name: '④ ほっぺをなでる', sub: 'ひじをたたんで、手は顔の横', arm: { gap: 6, k: 0.62, elbow: 'down', tx: 7, ty: 8 } },
+      { name: '⑤ 首から背中をなでる', sub: 'ひじをたたんで、手は首のうしろ', arm: { gap: 6, k: 0.62, elbow: 'down', tx: 6, ty: 14 } },
+    ];
+    const WHO = ['salaryman', 'grandma', 'family'];
+
+    function waitGame() {
+      return new Promise((ok) => {
+        const tick = () => (window.teramaru?.scenes ? ok(window.teramaru) : setTimeout(tick, 50));
+        tick();
+      });
+    }
+
+    const game = await waitGame();
+    await new Promise((ok) => setTimeout(ok, 300));
+    game.startPlay('jutaku');
+    await new Promise((ok) => setTimeout(ok, 300));
+    const play = game.scenes.top();
+    const targetOf = (id) => play.spawner.targets.find((x) => x.id === id);
+
+    const views = [];
+    const list = document.getElementById('list');
+    for (const st of STYLES) {
+      const sec = document.createElement('section');
+      sec.innerHTML = `<h2>${st.name}<span>${st.sub}</span></h2>`;
+      const row = document.createElement('div');
+      row.className = 'row';
+      for (const id of WHO) {
+        const t = targetOf(id);
+        if (!t) continue;
+        const sc = new KamatteScene(game, play, t, 'nade');
+        sc.armStyle = st.arm;
+        sc.phase = 'play';
+        const cv = document.createElement('canvas');
+        cv.className = 'view';
+        cv.width = 240;
+        cv.height = 124;
+        const ctx = cv.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        row.appendChild(cv);
+        views.push({ sc, ctx });
+      }
+      sec.appendChild(row);
+      list.appendChild(sec);
+    }
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      for (const v of views) {
+        v.sc.pt += dt;
+        v.ctx.clearRect(0, 0, 240, 124);
+        v.sc.drawStage(v.ctx, { x: 0, y: 0 });
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
