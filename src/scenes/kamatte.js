@@ -45,6 +45,7 @@ const PALM = [
   'osossossssssssso',
   '.o.oo.ooooooooo.',
 ];
+const PALM_R = PALM.map((r) => [...r].reverse().join('')); // 左右反転（指先が右）
 const HAND_BIG = [
   '.ooooooooo.',
   'ossssssssso',
@@ -314,72 +315,77 @@ export class KamatteScene {
     const [off, o] = this.zoom;
     o.clearRect(0, 0, w, h);
     const t = this.pt;
-    const look = this.target.def.look ?? {};
+    const def = this.target.def;
     const arm = this.armStyle ?? ARM_STYLE;
     const person = SPR.peopleBig[this.target.id];
+    const kid = def.kid ? SPR.kidsBig[this.target.id] : null;
     const cat = SPR.catHD.down;
-    const catX = 46; // てらまるのまん中
+    // 子連れは てらまるが まん中（右に親、左に子ども）。ひとりのときは少し左に
+    const catX = kid ? w / 2 : 46;
     const catTop = 26; // 絵のいちばん上（耳の先の上）。頭は人の肩より少し下
     const catBottom = catTop + cat.height;
-    const px = catX + arm.gap; // 人の絵の左はし
-    const py = 20 - person.shoulder.y; // 肩は上から3分の1ほど。頭は下半分だけ写る（大きな人の うしろ頭・肩・背中・腕）
+    const py = 20 - person.shoulder.y; // 肩は上から3分の1ほど。頭は下半分だけ写る
     const ground = py + person.height;
-
-    drawWall(o, catX - 18, catBottom, 36, h - catBottom + 4);
-
-    // 腕：肩（体の内がわ）から てらまるの頭へ、まっすぐのばす（ひじは曲げない）。描くのは てらまるのあと
     const squish = Math.sin(t * 9) > 0.3 ? 1 : 0; // なでられて頭が1ドット下がる
     const headY = catTop + 4 + squish; // 頭のてっぺん（耳のあいだ）
-    const hx = Math.round(catX + arm.tx + Math.sin(t * 6) * 3);
-    const hy = headY + arm.ty;
-    const sx = px + person.shoulder.x;
-    const sy = py + person.shoulder.y;
-    const wx = hx + 6; // そでの先（手のひらの右上。目にかからない高さ）
-    const wy = hy - 4;
-    const seg = (x0, y0, x1, y1, r) => {
-      const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
-      for (let i = 0; i <= n; i++) {
-        const x = Math.round(x0 + ((x1 - x0) * i) / n);
-        const y = Math.round(y0 + ((y1 - y0) * i) / n);
-        o.fillRect(x - r, y - r, r * 2 + 1, r * 2 + 1);
-      }
-    };
 
-    // 腕：肩 → そで口 → 手首（肌）が ひと続き。体のうしろから出て、てらまるの上にのる（そで口・手首が頭にかぶってもいい）
-    // 線の かたむきを「1段さがるのに n ドット」のきれいな比にそろえる（段の長さがそろって なめらかに見える）
-    const n = Math.max(1, Math.round(Math.abs(wx - sx) / Math.max(1, Math.abs(wy - sy))));
-    const ex = wx;
-    const ey = Math.abs(wy - sy) < 1 ? sy : sy + Math.sign(wy - sy) * Math.round(Math.abs(wx - sx) / n);
-    const drawArm = () => {
-      // 服のそでを、手のひらのところまで（肌が見えるのは手だけ）
-      capsule(o, sx, sy, ex, ey, person.armR + 1, UI.ink);
-      capsule(o, sx, sy, ex, ey, person.armR, look.top ?? '#3c4a6a');
-    };
-    drawArm(); // 体のうしろ
-
-    // 人（家族は子どもも、右どなりに）
-    o.drawImage(person, px, py);
-    if (this.target.def.kid) {
-      const kid = SPR.kidsBig[this.target.id];
-      o.drawImage(kid, px + person.width - 24, ground - kid.height); // （たいてい画面の右の外）
+    // なでる人：右（親・ひとり）は ふつう、左（子ども）は左右反転。
+    // hand：手のひらをのせる所。腕は肩からまっすぐ、そでは手のひらまで（肌は手だけ）
+    const people = [];
+    people.push({ img: person, look: def.look ?? {}, flip: false, x: catX + arm.gap, y: py,
+      hand: { x: Math.round(catX + arm.tx + Math.sin(t * 6) * 3), y: headY + arm.ty } });
+    if (kid) {
+      // 子どもは てらまるの肩から背中のあたりを なでる（顔にはかからない）
+      people.push({ img: kid, look: def.kid, flip: true, x: catX - arm.gap - kid.width, y: ground - kid.height,
+        hand: { x: Math.round(catX - 9 + Math.sin(t * 5 + 1) * 2), y: catTop + 21 } });
+    }
+    for (const P of people) {
+      const sh = P.img.shoulder;
+      const dir = P.flip ? -1 : 1; // 腕が出るがわ（1＝絵の左から てらまるへ）
+      P.sx = P.flip ? P.x + P.img.width - sh.x : P.x + sh.x;
+      P.sy = P.y + sh.y;
+      P.side = P.flip ? P.x + P.img.width - P.img.sideX : P.x + P.img.sideX; // 体のはし（腕が出てくる）
+      const wx = P.hand.x + 6 * dir; // そでの先（手のひらの人がわ・上）
+      const wy = P.hand.y - 4;
+      // 線のかたむきを「1段さがるのに n ドット」のきれいな比にそろえる（段の長さがそろって なめらか）
+      const n = Math.max(1, Math.round(Math.abs(wx - P.sx) / Math.max(1, Math.abs(wy - P.sy))));
+      P.ex = wx;
+      P.ey = Math.abs(wy - P.sy) < 1 ? P.sy : P.sy + Math.sign(wy - P.sy) * Math.round(Math.abs(wx - P.sx) / n);
+      P.drawArm = () => {
+        capsule(o, P.sx, P.sy, P.ex, P.ey, P.img.armR + 1, UI.ink);
+        capsule(o, P.sx, P.sy, P.ex, P.ey, P.img.armR, P.look.top ?? '#3c4a6a');
+      };
     }
 
-    // てらまる
+    // かさねる順：台 → 腕（体のうしろ）→ 人 → てらまる → 腕（体の外の部分）→ 手
+    drawWall(o, catX - 18, catBottom, 36, h - catBottom + 4);
+    for (const P of people) P.drawArm();
+    for (const P of people) {
+      if (!P.flip) { o.drawImage(P.img, P.x, P.y); continue; }
+      o.save();
+      o.translate(P.x + P.img.width, P.y);
+      o.scale(-1, 1);
+      o.drawImage(P.img, 0, 0);
+      o.restore();
+    }
     const neck = 16;
     const cx = Math.round(catX - cat.width / 2);
     o.drawImage(cat, 0, neck, cat.width, cat.height - neck, cx, catTop + neck, cat.width, cat.height - neck);
     o.drawImage(cat, 0, 0, cat.width, neck, cx, catTop + squish, cat.width, neck);
-
-    // 手（頭の上）・気持ちよさそうなほっぺ
-    // 体の外に出ている腕だけを、てらまるの上にもう一度描く
-    o.save();
-    o.beginPath();
-    o.rect(0, 0, px + person.sideX, h);
-    o.clip();
-    drawArm();
-    o.restore();
-    // 手：手のひらを頭にぺたっとのせる（指は前＝向かって左へ、少し下へ丸める）
-    drawRows(o, PALM, hx - 9, hy - 4, { o: UI.ink, s: look.skin ?? '#f2c9a0' });
+    for (const P of people) {
+      o.save();
+      o.beginPath();
+      if (P.flip) o.rect(P.side, 0, w - P.side, h);
+      else o.rect(0, 0, P.side, h);
+      o.clip();
+      P.drawArm();
+      o.restore();
+      // 手のひら（指は てらまるのほうへ、少し下へ丸める）
+      const skin = P.look.skin ?? '#f2c9a0';
+      if (P.flip) drawRows(o, PALM_R, P.hand.x - PALM_R[0].length + 10, P.hand.y - 4, { o: UI.ink, s: skin });
+      else drawRows(o, PALM, P.hand.x - 9, P.hand.y - 4, { o: UI.ink, s: skin });
+    }
+    // 気持ちよさそうなほっぺ
     if (Math.floor(t * 3) % 2 === 0) {
       o.fillStyle = UI.pink;
       o.fillRect(cx + 5, catTop + 11 + squish, 2, 1);
@@ -387,6 +393,7 @@ export class KamatteScene {
     }
     ctx.drawImage(off, b.x, b.y, PW, PH);
   }
+
 
   // なでなで・おもちゃ：右に人（大きく）、左にてらまる（大きく）
   drawPair(ctx, b) {
