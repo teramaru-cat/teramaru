@@ -47,7 +47,10 @@ export class Town {
     });
     this.solid = Array.from({ length: this.rows }, () => Array(this.cols).fill(false));
     for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) if (SOLID_GROUND.includes(this.grid[r][c])) this.solid[r][c] = true;
+    // 一軒家（三角の屋根）は、屋根の横のあいたところを通れるように、形で当たりを見る（homes）
+    this.homes = [];
     for (const b of stage.buildings) {
+      if (b.kind === 'home') { this.homes.push(homeShape(b)); continue; }
       for (let r = b.r; r < b.r + b.h; r++) for (let c = b.c; c < b.c + b.w; c++) this.solid[r][c] = true;
     }
     this.props = stage.props.map((p) => ({ ...p, def: PROPS[p.type] }));
@@ -65,6 +68,7 @@ export class Town {
     const r0 = Math.floor(top / TILE);
     const r1 = Math.floor((y - 0.01) / TILE);
     for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) if (this.solid[r]?.[c]) return true;
+    for (const hm of this.homes) if (hm.hits(left, right, top, y)) return true;
     for (const p of this.props) {
       const s = p.def.solid;
       if (!s) continue;
@@ -222,6 +226,26 @@ export class Town {
   }
 }
 
+// 一軒家の形：上は屋根の台形（上ほどせまい）、下は壁。足元の箱がその形に重なるか
+const ROOF_K = 0.55; // 屋根の斜め（1ドット下がるごとに、はしが何ドット広がるか）
+function homeShape(b) {
+  const px = b.c * TILE;
+  const py = b.r * TILE;
+  const w = b.w * TILE;
+  const h = b.h * TILE;
+  const roofH = Math.floor(h * 0.48);
+  return {
+    hits(left, right, top, bottom) {
+      if (right <= px || left >= px + w || bottom <= py || top >= py + h) return false;
+      // 箱のいちばん下の行で見る（そこが屋根のいちばん広いところ）
+      const yy = Math.min(bottom, py + h) - py;
+      if (yy >= roofH) return true;
+      const inset = Math.round((roofH - yy) * ROOF_K);
+      return right > px + inset && left < px + w - inset;
+    },
+  };
+}
+
 // 一軒家（住宅地）：大きな瓦の屋根、窓2つ、玄関
 function drawHome(x, b) {
   const px = b.c * TILE;
@@ -242,12 +266,12 @@ function drawHome(x, b) {
   x.fillRect(px + 4, wallY, w - 8, 3); // 軒下のかげ
   // 屋根：上がせまい台形（両はしは壁より少しはみ出す）。瓦の横すじ
   for (let yy = 0; yy < roofH; yy++) {
-    const inset = Math.round((roofH - yy) * 0.55);
+    const inset = Math.round((roofH - yy) * ROOF_K);
     x.fillStyle = yy % 4 === 3 ? shade(b.roof, -0.2) : b.roof;
     x.fillRect(px + inset, py + yy, w - inset * 2, 1);
   }
   x.fillStyle = shade(b.roof, 0.3);
-  x.fillRect(px + Math.round(roofH * 0.55), py, w - Math.round(roofH * 0.55) * 2, 1); // 棟
+  x.fillRect(px + Math.round(roofH * ROOF_K), py, w - Math.round(roofH * ROOF_K) * 2, 1); // 棟
   x.fillStyle = shade(b.roof, -0.4);
   x.fillRect(px, py + roofH - 2, w, 2); // 軒先
   // 窓（左右に1つずつ。カーテン）

@@ -226,7 +226,8 @@ export function box(ctx, x, y, w, h, col) {
 export function drawLeg(ctx, look, leg, x, y, lift, topY) {
   if (leg.pair) {
     // 2本でひとまとまり（家族の1人の足）
-    for (const dx of leg.pair) drawLeg(ctx, look, { ...leg, pair: null }, x + dx, y, lift, topY);
+    // lift が [左, 右] なら、1本ずつ上げる（子どもの足ぶみ）
+    leg.pair.forEach((dx, i) => drawLeg(ctx, look, { ...leg, pair: null }, x + dx, y, Array.isArray(lift) ? lift[i] : lift, topY));
     return;
   }
   if (look.type) { drawAnimalLeg(ctx, look, leg, x, y, lift); return; }

@@ -114,14 +114,14 @@ export const TARGETS = {
   // 子ども連れの家族（親と子が手をつないで歩く）。てらまりんぐでは親の足2本と、子の短い足2本
   family: {
     kind: 'human',
-    durability: 3,
-    tp: 12,
-    drops: { item: 'candy', count: 3 },
-    motion: 'stomp',
-    period: 1.6,
+    // 2人分なので TP は多め。そのかわり柱が太くて大回り・回る数も多い・子どもの足ぶみに踏まれる
+    durability: 4,
+    tp: 20,
+    drops: { item: 'candy', count: 4 },
+    motion: 'still', // 親は立ったまま
     // 1人の足2本の間はせまくて通れないので、1人＝1本の柱として回る（pair：そのまん中からの左右の足の位置）。
-    // くぐるのは親と子の間だけ
-    legs: [{ x: -21, y: 0, r: 17, pair: [-11, 11] }, { x: 30, y: 4, r: 12, kid: true, pair: [-8, 8] }],
+    // くぐるのは親と子の間だけ。子は step（その場で足ぶみ。下ろした足のそばにいると踏まれる）
+    legs: [{ x: -21, y: 0, r: 17, pair: [-11, 11] }, { x: 30, y: 4, r: 12, kid: true, pair: [-8, 8], step: 0.7 }],
     bodyX: -21, // 親の体のまん中
     kidX: 30, // 子の体のまん中
     look: { skin: '#f2c9a0', hair: '#4a3020', ponytail: true, top: '#e8a040', bottom: '#4a5a7a', shoes: '#3a2a20', garment: 'coat' },

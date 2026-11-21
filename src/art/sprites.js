@@ -192,6 +192,6 @@ export function buildSprites() {
     if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true), makeCrouch(t.look)];
     else if (ANIMAL_ROWS[id]) SPR.people[id] = ANIMAL_ROWS[id].frames.map((rows) => makeSprite(rows, ANIMAL_ROWS[id].pal));
     if (t.owner) SPR.owners = { ...SPR.owners, [id]: [makePerson(t.owner), makePerson(t.owner, true)] };
-    if (t.kid) SPR.kids = { ...SPR.kids, [id]: [makePerson(t.kid), makePerson(t.kid, true)] };
+    if (t.kid) SPR.kids = { ...SPR.kids, [id]: [makePerson(t.kid), makePerson(t.kid, true), makeCrouch(t.kid)] };
   }
 }

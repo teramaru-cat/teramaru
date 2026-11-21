@@ -167,6 +167,14 @@ export class RingingScene {
       L.y = ny;
       L.prevLift = L.lift;
       L.lift = lift < 0.3 ? 0 : lift;
+      // その場で足ぶみ（左右の足を交互に）。柱としては動かない
+      if (L.base.step) {
+        L.prevFeet = L.feet ?? [0, 0];
+        L.feet = [0, 1].map((k) => {
+          const ph = (t / L.base.step + k * 0.5) % 1;
+          return ph < 0.35 ? Math.round(Math.sin((ph / 0.35) * Math.PI) * 6) : 0;
+        });
+      }
     });
   }
 
@@ -188,6 +196,16 @@ export class RingingScene {
         c.y = Math.max(TOP_LIMIT, L.y + (dy / d) * min);
       } else if (landed && d < min + 4 && this.immune <= 0) {
         this.hit(dx / d, dy / d, true);
+      }
+      // 足ぶみの足を下ろしたとき、そのすぐそばにいると踏まれる
+      if (L.feet && this.immune <= 0) {
+        L.base.pair.forEach((fx, k) => {
+          if (!(L.prevFeet[k] > 0 && L.feet[k] === 0)) return;
+          const ddx = c.x - (L.x + fx);
+          const ddy = c.y - L.y;
+          const dd = Math.hypot(ddx, ddy) || 0.01;
+          if (dd < 6 + R + 3 && this.immune <= 0) this.hit(ddx / dd, ddy / dd, true);
+        });
       }
     }
   }
@@ -369,7 +387,7 @@ export class RingingScene {
     const look = this.def.look;
     // 家族：kid の足は子どもの見た目で、短い（上が低い）
     const legLook = (L) => (L.base.kid ? this.def.kid : look);
-    const items = this.legs.map((L) => ({ y: L.y, draw: () => drawLeg(ctx, legLook(L), L.base, L.x, L.y, L.lift, L.base.kid ? KID_TOP : -4) }));
+    const items = this.legs.map((L) => ({ y: L.y, draw: () => drawLeg(ctx, legLook(L), L.base, L.x, L.y, L.feet ?? L.lift, L.base.kid ? KID_TOP : -4) }));
     items.push({ y: this.cat.y, draw: () => this.drawCat(ctx) });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) it.draw();

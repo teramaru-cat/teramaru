@@ -239,6 +239,15 @@ export class KamatteScene {
     } else {
       ctx.drawImage(person, px, py, person.width * S, person.height * S);
     }
+    // 家族：子どもも親のとなりに（なでなでは一緒にしゃがむ）
+    if (this.target.def.kid) {
+      const kid = SPR.kids[this.target.id][this.kind === 'nade' ? 2 : 0];
+      const kx = px + person.width * S - 10;
+      const kbob = Math.floor(t * 4) % 2; // うれしくて ぴょこぴょこ
+      ctx.fillStyle = 'rgba(40,30,20,0.25)';
+      ctx.fillRect(kx + 6, b.y + PH - 8, kid.width * S - 12, 4);
+      ctx.drawImage(kid, kx, b.y + PH - 6 - kid.height * S - kbob, kid.width * S, kid.height * S);
+    }
 
     // てらまる
     let img = SPR.cat.right[0];
