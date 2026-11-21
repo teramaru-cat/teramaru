@@ -3,7 +3,8 @@
 
 import { CAT } from './palette.js';
 import { makeCanvas } from '../core/renderer.js';
-import { makePerson, makeCrouch, refineHD, FOOD_ROWS, FOOD_ICON } from './people.js';
+import { makePerson, makeCrouch, FOOD_ROWS, FOOD_ICON } from './people.js';
+import { makePortrait } from './portrait.js';
 import { TARGETS } from '../data/targets.js';
 import { ANIMAL_ROWS } from './animals.js';
 
@@ -130,6 +131,69 @@ const LYING = [
   '.oooooooooooooooooo...',
 ];
 
+// かまって画面の大きい てらまる（等倍・1ドットずつ）。もようは小さい絵と同じ：
+// 向かって左は黒い模様に茶色の目（耳の内側ピンク）、右は目のまわりが黒で黄緑の目、頭のてっぺんは茶、額から鼻へ白い筋。W＝目の光
+const BIG_PAL = { ...CAT, W: '#ffffff' };
+const CAT_BIG_FRONT = [
+"....oo..............oo....",
+"....obo............obo....",
+"....obbo..........occo....",
+"...obpbbo........occcco...",
+"...obppbbooooooooocccbbo..",
+"...obbbbbccccccccccbbbbo..",
+"..obbbbbbccccwwcccbbbbbbo.",
+"..obbbbbbbcccwwccbbbbbbbo.",
+".obbbbbbbbbccwwcbbbbbbbbbo",
+".obbbbbbbbbbwwwwbbbbbbbbbo",
+".obbbooobbbbwwwwbbbooobbbo",
+".obboeWeobbbwwwwbboggWgobo",
+".obboeeeobbwwwwwwbogggobwo",
+".obbboooobwwwwwwwwboooobwo",
+".obbbbbbbwwwwppwwwwwbbwwwo",
+"..obbbbbwwwwwppwwwwwwwwwo.",
+"..obbbcwwwwowoowowwwcwwwo.",
+"...occcwwwwwowwowwwwccwo..",
+"....occwwwwwwwwwwwwwwcco..",
+".....ooowwwwwwwwwwwwooo...",
+"......ocwwwwwwwwwwwwbo....",
+".....occwwwwwwwwwwwwbbo...",
+".....occwwwwwwwwwwwwbbo...",
+".....owwwwwwwwwwwwwwwwo...",
+".....owwwwwwwwwwwwwwwwo...",
+".....owwwwwwwwwwwwwwwwo...",
+".....owwwwoooooooowwwwo...",
+".....owwwwo......owwwwo...",
+".....owwwwo......owwwwo...",
+".....owwwwo......owwwwo...",
+".....owwwwo......owwwwo...",
+".....oooooo......oooooo...",
+];
+// 横向き（右向き）：背中は茶に黒のしま、おなかと足は白、しっぽは上に
+const CAT_BIG_SIDE = [
+"....................o....o......",
+"..o................obo..obo.....",
+".oco...............obboobbbo....",
+".oco..............obbbbbbbbbo...",
+".oco..............obbbbbbbbbbo..",
+".oco..............obbbbbooobbbo.",
+"..oco.............obbbbboeWobwo.",
+"..occooooooooooooobbbbboeeobwwo.",
+"...occcbbcccbbccbcbbbbbbooobwwpo",
+"...occcbbcccbbccbbbbbbbbwwwwwwo.",
+"...occcbbcccbbccbbbbbbbbwwwwwo..",
+"...occcbbcccbbcccbbbbbbwwwwwo...",
+"...owccbbcccbbcccbbbbbwwwwwo....",
+"...owwwwcccccccccwwwwwwwwwo.....",
+"...owwwwwwwwwwwwwwwwwwwwwwo.....",
+"...owwwwwwwwwwwwwwwwwwwwwwo.....",
+"....owwwwooooooooooowwwwo.......",
+"....owwwo...........owwwo.......",
+"....owwwo...........owwwo.......",
+"....owwwo...........owwwo.......",
+"....owwwo...........owwwo.......",
+"....ooooo...........ooooo.......",
+];
+
 // ---- ハート ----
 const HEART = [
   '.oo.oo.',
@@ -158,8 +222,8 @@ export function buildSprites() {
     left: frames(SIDE_TOP, SIDE_LEGS, LEFT_PAL, true),
   };
   SPR.catLying = makeSprite(LYING, CAT);
-  // かまって画面の大きい てらまる（細かいドット）
-  SPR.catHD = { down: refineHD(SPR.cat.down[0]), right: refineHD(SPR.cat.right[0]) };
+  // かまって画面の大きい てらまる（等倍で描いた絵）
+  SPR.catHD = { down: makeSprite(CAT_BIG_FRONT, BIG_PAL), right: makeSprite(CAT_BIG_SIDE, BIG_PAL) };
   // ほかの猫（形はてらまると同じで、色ちがい）：黒猫・グレーのしま猫
   const STRAY = {
     black: { ...CAT, c: '#3d3640', b: '#2e2a32', w: '#4f4856', e: '#e8d040', g: '#e8d040', p: '#c87080' },
@@ -193,10 +257,10 @@ export function buildSprites() {
   for (const [id, t] of Object.entries(TARGETS)) {
     if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true), makeCrouch(t.look)];
     // かまって画面の大きい絵（細かいドット）：[立ち, しゃがみ]
-    if (t.kind === 'human') SPR.peopleHD = { ...SPR.peopleHD, [id]: [makePerson(t.look, false, true), makeCrouch(t.look, true)] };
+    if (t.kind === 'human') SPR.peopleHD = { ...SPR.peopleHD, [id]: [makePortrait(t.look, 'stand'), makePortrait(t.look, 'crouch')] };
     else if (ANIMAL_ROWS[id]) SPR.people[id] = ANIMAL_ROWS[id].frames.map((rows) => makeSprite(rows, ANIMAL_ROWS[id].pal));
     if (t.owner) SPR.owners = { ...SPR.owners, [id]: [makePerson(t.owner), makePerson(t.owner, true)] };
     if (t.kid) SPR.kids = { ...SPR.kids, [id]: [makePerson(t.kid), makePerson(t.kid, true), makeCrouch(t.kid)] };
-    if (t.kid) SPR.kidsHD = { ...SPR.kidsHD, [id]: [makePerson(t.kid, false, true), makeCrouch(t.kid, true)] };
+    if (t.kid) SPR.kidsHD = { ...SPR.kidsHD, [id]: [makePortrait(t.kid, 'stand'), makePortrait(t.kid, 'crouch')] };
   }
 }

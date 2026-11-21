@@ -2,7 +2,7 @@
 // なでなで（見るだけ）・おもちゃ（タップでパンチ）・追いかけっこ（動かして捕まえる）
 // この間はプレイの時間は止まる。終わったらスコアと残り時間を足す。
 
-import { screen, shade } from '../core/renderer.js';
+import { screen } from '../core/renderer.js';
 import { input, KEY } from '../core/input.js';
 import { audio } from '../core/audio.js';
 import { drawText, textWidth } from '../core/text.js';
@@ -14,6 +14,23 @@ import { BAL } from '../data/balance.js';
 import { claimMove, moveVector, drawSticks } from '../game/control.js';
 import { Effects, PopText, heartAbsorb } from '../game/effects.js';
 import { tr } from '../i18n/index.js';
+
+// なでる手（ドット絵。o＝ふち s＝肌）
+const HAND = [
+  '.ooooooooo.',
+  'ossssssssso',
+  'ossssssssso',
+  'ossssssssso',
+  'osososososo',
+  '.ooooooooo.',
+];
+function drawRows(ctx, rows, x0, y0, pal) {
+  rows.forEach((r, y) => [...r].forEach((ch, x) => {
+    if (!pal[ch]) return;
+    ctx.fillStyle = pal[ch];
+    ctx.fillRect(x0 + x, y0 + y, 1, 1);
+  }));
+}
 
 const PW = 240; // 枠の大きさ
 const PH = 124;
@@ -258,75 +275,67 @@ export class KamatteScene {
     let squish = 0;
     if (this.kind === 'nade') {
       img = SPR.catHD.down;
-      squish = Math.sin(t * 9) > 0.3 ? 3 : 0; // なでられて頭が下がる
+      squish = Math.sin(t * 9) > 0.3 ? 1 : 0; // なでられて頭が下がる
     }
     if (this.kind === 'toy' && this.punch > 0) cy = -14;
     const cw = img.width;
-    const ch = img.height - squish;
+    const ch = img.height;
     const cx = b.x + 70 - cw / 2;
     const cyy = b.y + PH - 6 - ch + cy;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
     ctx.fillRect(b.x + 70 - 18, b.y + PH - 8, 36, 4);
-    ctx.drawImage(img, Math.round(cx), Math.round(cyy), cw, ch);
+    if (squish) {
+      // なでられて頭が1ドット下がる（絵はのばしたりちぢめたりしない）
+      const neck = 19;
+      ctx.drawImage(img, 0, neck, img.width, img.height - neck, Math.round(cx), Math.round(cyy) + neck, img.width, img.height - neck);
+      ctx.drawImage(img, 0, 0, img.width, neck, Math.round(cx), Math.round(cyy) + 1, img.width, neck);
+    } else ctx.drawImage(img, Math.round(cx), Math.round(cyy));
 
     if (this.kind === 'nade' && !animal) {
       // 人の肩から腕がのびて、手が頭の上を行ったり来たり
       const hx = Math.round(b.x + 70 + Math.sin(t * 9) * 8);
       const hy = Math.round(cyy - 7 + squish);
       const look = this.target.def.look ?? {};
-      const sx = px + 8;
-      const sy = py + (person.shoulderY + 1) * pS;
-      const top = look.top ?? '#3c4a6a';
-      const arm = (w, col, dx = 0, dy = 0) => {
-        ctx.strokeStyle = col;
-        ctx.lineWidth = w;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(sx + dx, sy + dy);
-        ctx.lineTo(hx + 6 + dx, hy + 4 + dy);
-        ctx.stroke();
-      };
-      // そで：ふち → 暗い色 → 服の色 → 明るいすじ（立体に）
-      arm(8, UI.ink);
-      arm(6, shade(top, -0.18));
-      arm(4, top, -1, -1);
-      arm(1, shade(top, 0.25), -2, -2);
-      ctx.lineCap = 'butt';
-      // 手（丸みのある手のひら・指のすじ）
-      const skin = look.skin ?? '#f2c9a0';
-      ctx.fillStyle = UI.ink;
-      ctx.fillRect(hx - 8, hy, 14, 8);
-      ctx.fillRect(hx - 7, hy - 1, 12, 10);
-      ctx.fillStyle = skin;
-      ctx.fillRect(hx - 7, hy + 1, 12, 6);
-      ctx.fillRect(hx - 6, hy, 10, 8);
-      ctx.fillStyle = shade(skin, 0.25);
-      ctx.fillRect(hx - 5, hy + 1, 7, 1);
-      ctx.fillStyle = shade(skin, -0.2);
-      ctx.fillRect(hx - 6, hy + 7, 10, 1);
-      ctx.fillRect(hx - 4, hy + 4, 1, 3);
-      ctx.fillRect(hx - 1, hy + 4, 1, 3);
-      ctx.fillRect(hx + 2, hy + 4, 1, 3);
+      const sx = px + (person.shoulder?.x ?? 8);
+      const sy = py + (person.shoulder?.y ?? (person.shoulderY + 1) * pS);
+      // 腕：ドットの格子にそって描く（ふち → 服の色。ぼかしなし）
+      const ex = hx + 4;
+      const ey = hy + 4;
+      const n = Math.max(Math.abs(ex - sx), Math.abs(ey - sy), 1);
+      for (const [r, col] of [[3, UI.ink], [2, look.top ?? '#3c4a6a']]) {
+        ctx.fillStyle = col;
+        for (let i = 0; i <= n; i++) {
+          const x = Math.round(sx + ((ex - sx) * i) / n);
+          const y = Math.round(sy + ((ey - sy) * i) / n);
+          ctx.fillRect(x - r, y - r, r * 2 + 1, r * 2 + 1);
+        }
+      }
+      // 手（ドット絵）
+      drawRows(ctx, HAND, hx - 5, hy - 1, { o: UI.ink, s: look.skin ?? '#f2c9a0' });
       // 気持ちよさそう
       if (Math.floor(t * 3) % 2 === 0) {
         ctx.fillStyle = UI.pink;
-        ctx.fillRect(Math.round(cx) + 4, Math.round(cyy) + 20, 4, 2);
-        ctx.fillRect(Math.round(cx) + cw - 8, Math.round(cyy) + 20, 4, 2);
+        ctx.fillRect(Math.round(cx) + 3, Math.round(cyy) + 16, 3, 1);
+        ctx.fillRect(Math.round(cx) + cw - 6, Math.round(cyy) + 16, 3, 1);
       }
     }
     if (this.kind === 'toy') {
       // 猫じゃらし：手から先が揺れる
       // 動物は口にくわえる
-      const hx = animal ? px + 6 : px + 6;
-      const hy = animal ? py + 16 : py + 40;
+      const hx = animal ? px + 6 : px + (person.hand?.x ?? 6);
+      const hy = animal ? py + 16 : py + (person.hand?.y ?? 40);
       const tipX = Math.round(b.x + 100 + Math.sin(t * 5) * 16);
       const tipY = Math.round(b.y + 52 + Math.cos(t * 7) * 12);
-      ctx.strokeStyle = '#6a4a2a';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(hx, hy);
-      ctx.quadraticCurveTo((hx + tipX) / 2, Math.min(hy, tipY) - 16, tipX, tipY);
-      ctx.stroke();
+      // ひも：ドットの格子にそって描く（ぼかしなし）
+      ctx.fillStyle = '#6a4a2a';
+      const qx = (hx + tipX) / 2;
+      const qy = Math.min(hy, tipY) - 16;
+      for (let i = 0; i <= 60; i++) {
+        const u = i / 60;
+        const x = (1 - u) * (1 - u) * hx + 2 * (1 - u) * u * qx + u * u * tipX;
+        const y = (1 - u) * (1 - u) * hy + 2 * (1 - u) * u * qy + u * u * tipY;
+        ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+      }
       // ふさふさの先
       ctx.fillStyle = '#a07820';
       ctx.fillRect(tipX - 7, tipY - 4, 14, 9);
