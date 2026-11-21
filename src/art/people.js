@@ -31,7 +31,8 @@ function outline(c, ctx) {
 // look のオプション：glasses（メガネのふちの色。目のまわりに丸いふち）・longHair（肩までの髪）・
 //   ponytail（ポニーテール）・bun（おだんご）・mustache（口ひげの色）・hat（chef | cap | band）
 const CHEEK = '#f4a8a0';
-const MOUTH = '#b84848';
+const MOUTH = '#a05a4a'; // 口（赤すぎると血に見えるので、茶色がかった色）
+const SMILE = '#6a3a30'; // 笑った口の線
 function drawHead(R, look, y0, mood = 'smile') {
   const H = look.hair;
   // うしろ髪（顔より先に描く）
@@ -70,9 +71,10 @@ function drawHead(R, look, y0, mood = 'smile') {
   R(2, y0 + 7, 1, 1, CHEEK);
   R(9, y0 + 7, 1, 1, CHEEK);
   if (mood === 'happy') {
-    R(4, y0 + 7, 1, 1, MOUTH);
-    R(7, y0 + 7, 1, 1, MOUTH);
-    R(5, y0 + 8, 2, 1, MOUTH);
+    // にっこり：口の線だけ（中は塗らない）
+    R(4, y0 + 7, 1, 1, SMILE);
+    R(7, y0 + 7, 1, 1, SMILE);
+    R(5, y0 + 8, 2, 1, SMILE);
   } else {
     R(5, y0 + 8, 2, 1, MOUTH);
   }

@@ -250,7 +250,7 @@ export class RingingScene {
           const cap = this.def.lapsPerLeg;
           if (cap) {
             // 1人ずつハートの数が決まっている（家族）：その人のまわりは cap 周まで数える（1周でハート1つ）
-            if ((L.credit ?? 0) < cap) { L.credit = Math.min(cap, (L.credit ?? 0) + 1); this.gauge = Math.min(dur, this.legs.reduce((s, l) => s + (l.credit ?? 0), 0)); }
+            if ((L.credit ?? 0) < cap) { L.credit = Math.min(cap, (L.credit ?? 0) + 1); L.gotAt = this.t; this.gauge = Math.min(dur, this.legs.reduce((s, l) => s + (l.credit ?? 0), 0)); }
           } else {
             this.gauge = Math.min(dur, this.gauge + 1);
           }
@@ -394,15 +394,16 @@ export class RingingScene {
 
     // 足のまわりの輪：回った分だけ点が光る
     for (const L of this.legs) this.drawRing(ctx, L);
-    // 1人ずつハートがある（家族）：その人の足元に、たまったハートを出す
-    const cap = this.def.lapsPerLeg;
-    if (cap) {
+    // 1人ずつハートがある（家族）：回るたびに、その人の足元にハートが1つずつ増える（空の枠は出さない）
+    if (this.def.lapsPerLeg) {
       for (const L of this.legs) {
+        const n = Math.floor(L.credit ?? 0);
+        if (!n) continue;
         const hy = Math.round(L.y + L.base.r * 0.9 + 14);
-        const hx0 = Math.round(L.x - (cap * 9 - 2) / 2);
-        for (let i = 0; i < cap; i++) {
-          ctx.drawImage(SPR.heartEmpty, hx0 + i * 9, hy);
-          if ((L.credit ?? 0) >= i + 1) ctx.drawImage(SPR.heart, hx0 + i * 9, hy);
+        const hx0 = Math.round(L.x - (n * 9 - 2) / 2);
+        for (let i = 0; i < n; i++) {
+          const fresh = i === n - 1 && this.t - (L.gotAt ?? -9) < 0.25; // 増えたばかり：ぴょこっと上に
+          ctx.drawImage(SPR.heart, hx0 + i * 9, hy - (fresh ? 3 : 0));
         }
       }
     }
