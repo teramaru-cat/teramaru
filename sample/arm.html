@@ -32,12 +32,12 @@
   <script type="module">
     import { KamatteScene } from './src/scenes/kamatte.js';
 
-    // 腕の形の候補（gap：てらまると人のあいだ、k：腕の長さ、tx・ty：手の位置）
+    // 腕の形の候補（gap：てらまると人のあいだ、tx・ty：手の位置）
     const STYLES = [
-      { name: '① すぐとなり', sub: '肩から ひじを軽く曲げて、上から頭へ', arm: { gap: 4, k: 0.58, tx: 1, ty: 0 } },
-      { name: '② くっついて', sub: 'てらまるにくっついて、ひじを深めに曲げる', arm: { gap: 0, k: 0.64, tx: 1, ty: 0 } },
-      { name: '③ 少しはなれて', sub: '腕をほぼまっすぐのばす', arm: { gap: 9, k: 0.53, tx: 1, ty: 0 } },
-      { name: '④ 頭のうしろがわ', sub: 'すぐとなりで、手は頭の 人のほう（うしろがわ）', arm: { gap: 4, k: 0.58, tx: 5, ty: 1 } },
+      { name: '① すぐとなり', sub: '腕をまっすぐのばし、手のひらを頭のまん中に', arm: { gap: 6, tx: 1, ty: 0 } },
+      { name: '② くっついて', sub: 'てらまるにくっついて、腕は短め・下向き', arm: { gap: 0, tx: 1, ty: 0 } },
+      { name: '③ 少しはなれて', sub: '腕をよこにのばす', arm: { gap: 12, tx: 1, ty: 0 } },
+      { name: '④ 頭のうしろがわ', sub: 'すぐとなりで、手のひらは頭の 人のほう（うしろがわ）', arm: { gap: 6, tx: 5, ty: 1 } },
     ];
     const WHO = ['salaryman', 'grandma', 'family'];
 

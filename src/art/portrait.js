@@ -393,9 +393,9 @@ export function makeBigBack(look, pose = 'sit', scale = 1.4) {
   const headY = TOP + headR + 1; // 頭のまん中
   const neckY = headY + headR - 1;
   const shY = neckY + 3; // 肩の上
-  const shW = R(17); // 肩の半はば
+  const shW = R(14); // 肩の半はば（頭のはばの1.4倍くらい）
   const torsoH = R(22);
-  const waistW = R(14);
+  const waistW = R(12);
 
   // 髪（うしろ）：肩までの髪・ポニーテールは体より先に
   if (look.longHair) rows(headY, Array(R(20)).fill(R(11)).map((v, i, a) => (i > a.length - 3 ? v - 1 : v)), 'h');
