@@ -307,7 +307,7 @@ export class KamatteScene {
 
     drawWall(o, catX - 18, catBottom, 36, h - catBottom + 4);
 
-    // 腕：肩（体の内がわ）から てらまるの頭へ、まっすぐのばす（ひじは曲げない）
+    // 腕：肩（体の内がわ）から てらまるの頭へ、まっすぐのばす（ひじは曲げない）。描くのは てらまるのあと
     const squish = Math.sin(t * 9) > 0.3 ? 1 : 0; // なでられて頭が1ドット下がる
     const headY = catTop + 4 + squish; // 頭のてっぺん（耳のあいだ）
     const hx = Math.round(catX + arm.tx + Math.sin(t * 6) * 3);
@@ -324,10 +324,24 @@ export class KamatteScene {
         o.fillRect(x - r, y - r, r * 2 + 1, r * 2 + 1);
       }
     };
-    for (const [r, col] of [[person.armR + 1, UI.ink], [person.armR, look.top ?? '#3c4a6a']]) {
-      o.fillStyle = col;
-      seg(sx, sy, wx, wy, r);
-    }
+
+    // 腕：肩 → そで口 → 手首（肌）が ひと続き。体のうしろから出て、てらまるの上にのる（そで口・手首が頭にかぶってもいい）
+    const drawArm = () => {
+      const len = Math.hypot(wx - sx, wy - sy);
+      const ux = (wx - sx) / len;
+      const uy = (wy - sy) / len;
+      const cuffX = wx - ux * 4; // そで口（手首の少し手前）
+      const cuffY = wy - uy * 4;
+      const skin = look.skin ?? '#f2c9a0';
+      o.fillStyle = UI.ink;
+      seg(sx, sy, cuffX, cuffY, person.armR + 1);
+      seg(cuffX, cuffY, wx, wy, person.armR);
+      o.fillStyle = skin;
+      seg(cuffX, cuffY, wx, wy, person.armR - 1);
+      o.fillStyle = look.top ?? '#3c4a6a';
+      seg(sx, sy, cuffX, cuffY, person.armR);
+    };
+    drawArm(); // 体のうしろ
 
     // 人（家族は子どもも、右どなりに）
     o.drawImage(person, px, py);
@@ -343,6 +357,13 @@ export class KamatteScene {
     o.drawImage(cat, 0, 0, cat.width, neck, cx, catTop + squish, cat.width, neck);
 
     // 手（頭の上）・気持ちよさそうなほっぺ
+    // 体の外に出ている腕だけを、てらまるの上にもう一度描く
+    o.save();
+    o.beginPath();
+    o.rect(0, 0, px + person.sideX, h);
+    o.clip();
+    drawArm();
+    o.restore();
     // 手：手のひらを頭にぺたっとのせる（指は前＝向かって左へ、少し下へ丸める）
     drawRows(o, PALM, hx - 9, hy - 4, { o: UI.ink, s: look.skin ?? '#f2c9a0' });
     if (Math.floor(t * 3) % 2 === 0) {

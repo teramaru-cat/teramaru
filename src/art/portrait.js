@@ -393,9 +393,12 @@ export function makeBigBack(look, pose = 'sit', scale = 1.4) {
   const headY = TOP + headR + 1; // 頭のまん中
   const neckY = headY + headR - 1;
   const shY = neckY + 3; // 肩の上
-  const shW = R(14); // 肩の半はば（頭のはばの1.4倍くらい）
+  // 女の人（スカート・長い髪・ポニーテール・おだんご）は きゃしゃに：肩はばをせまく、腕も細く
+  const female = look.garment === 'skirt' || look.longHair || look.ponytail || look.bun;
+  const shW = R(female ? 11 : 14); // 肩の半はば（男の人は頭のはばの1.4倍くらい）
   const torsoH = R(22);
-  const waistW = R(12);
+  const waistW = R(female ? 9.5 : 12);
+  const armW = R(female ? 4 : 5); // 腕のはば
 
   // 髪（うしろ）：肩までの髪・ポニーテールは体より先に
   if (look.longHair) rows(headY, Array(R(20)).fill(R(11)).map((v, i, a) => (i > a.length - 3 ? v - 1 : v)), 'h');
@@ -411,12 +414,12 @@ export function makeBigBack(look, pose = 'sit', scale = 1.4) {
   rows(neckY, [R(3), R(3), R(3)], 's'); // 首のうしろ
   rows(shY, torso, 't');
   // 向かって右の腕（体の横にたらす）。腕と体のさかいに線
-  const armX = Math.round(cx + shW) - R(5);
+  const armX = Math.round(cx + shW) - armW;
   for (let y = shY + 3; y < shY + torsoH + 2; y++) {
-    for (let x = armX; x < armX + R(5); x++) set(x, y, 't');
+    for (let x = armX; x < armX + armW; x++) set(x, y, 't');
     set(armX - 1, y, 'o');
   }
-  ell(armX + R(5) / 2, shY + torsoH + 3, R(3), R(2.5), 's'); // 手
+  ell(armX + armW / 2, shY + torsoH + 3, armW * 0.6, R(2.5), 's'); // 手
   const lArmX = Math.round(cx - shW);
   const baseY = shY + torsoH;
   if (pose === 'sit') {
@@ -492,7 +495,8 @@ export function makeBigBack(look, pose = 'sit', scale = 1.4) {
   c.big = true;
   c.standing = pose === 'stand';
   // のばす腕のつけね（向かって左の肩。体の内がわ：腕は体のうしろから出てくる）
-  c.shoulder = { x: lArmX + R(5), y: shY - top + R(4) };
-  c.armR = Math.max(2, Math.round(R(5) / 2)); // 腕の太さ（半分）
+  c.shoulder = { x: lArmX + armW, y: shY - top + R(4) };
+  c.armR = Math.max(2, Math.round(armW / 2)); // 腕の太さ（半分）
+  c.sideX = lArmX; // 体の左はし（腕はここから出てくる）
   return c;
 }
