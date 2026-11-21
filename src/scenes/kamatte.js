@@ -225,29 +225,31 @@ export class KamatteScene {
     // なでなでは、しゃがんだ絵（のばす腕は別に描く）。動物はそのままの絵を、てらまるの方へ向けて
     const animal = this.target.def.kind !== 'human';
     const frames = SPR.people[this.target.id];
-    const person = animal ? frames[this.kind === 'nade' && Math.floor(t * 3) % 2 ? 1 : 0] : frames[this.kind === 'nade' ? 2 : 0];
+    // 人は細かいドットの大きい絵（3倍の大きさで描いてあるので、そのまま 1倍で出す）
+    const person = animal ? frames[this.kind === 'nade' && Math.floor(t * 3) % 2 ? 1 : 0] : SPR.peopleHD[this.target.id][this.kind === 'nade' ? 1 : 0];
+    const pS = person.hd ? 1 : S;
     const px = b.x + (this.kind === 'nade' ? (animal ? 92 : 86) : (animal ? 140 : 150)); // なでなでは、すぐ横に
-    const py = b.y + PH - 6 - person.height * S;
+    const py = b.y + PH - 6 - person.height * pS;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
-    ctx.fillRect(px + 4, b.y + PH - 8, person.width * S - 8, 4);
+    ctx.fillRect(px + 4, b.y + PH - 8, person.width * pS - 8, 4);
     if (this.target.def.faces === 'right') {
       // 右向きの絵は、左（てらまるの方）へ向け直す
       ctx.save();
-      ctx.translate(px + person.width * S, py);
+      ctx.translate(px + person.width * pS, py);
       ctx.scale(-1, 1);
-      ctx.drawImage(person, 0, 0, person.width * S, person.height * S);
+      ctx.drawImage(person, 0, 0, person.width * pS, person.height * pS);
       ctx.restore();
     } else {
-      ctx.drawImage(person, px, py, person.width * S, person.height * S);
+      ctx.drawImage(person, px, py, person.width * pS, person.height * pS);
     }
     // 家族：子どもも親のとなりに（なでなでは一緒にしゃがむ）
     if (this.target.def.kid) {
-      const kid = SPR.kids[this.target.id][this.kind === 'nade' ? 2 : 0];
-      const kx = px + person.width * S - 10;
+      const kid = SPR.kidsHD[this.target.id][this.kind === 'nade' ? 1 : 0];
+      const kx = px + person.width * pS - 10;
       const kbob = Math.floor(t * 4) % 2; // うれしくて ぴょこぴょこ
       ctx.fillStyle = 'rgba(40,30,20,0.25)';
-      ctx.fillRect(kx + 6, b.y + PH - 8, kid.width * S - 12, 4);
-      ctx.drawImage(kid, kx, b.y + PH - 6 - kid.height * S - kbob, kid.width * S, kid.height * S);
+      ctx.fillRect(kx + 6, b.y + PH - 8, kid.width - 12, 4);
+      ctx.drawImage(kid, kx, b.y + PH - 6 - kid.height - kbob, kid.width, kid.height);
     }
 
     // てらまる
@@ -273,7 +275,7 @@ export class KamatteScene {
       const hy = Math.round(cyy - 7 + squish);
       const look = this.target.def.look ?? {};
       const sx = px + 8;
-      const sy = py + (person.shoulderY + 1) * S;
+      const sy = py + (person.shoulderY + 1) * pS;
       const arm = (w, col) => {
         ctx.strokeStyle = col;
         ctx.lineWidth = w;

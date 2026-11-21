@@ -119,7 +119,7 @@ export class RingingScene {
     this.countPasses();
 
     const dur = this.def.durability;
-    if (this.gauge >= dur && this.legs.every((L) => L.laps >= 1)) { this.startWin(); return; }
+    if (this.gauge >= dur - 1e-6) { this.startWin(); return; } // ハートがそろったら成功
 
     // 時間切れ・お水切れ：その場で街へ戻る（リザルト・病院へ）
     if (this.play.state.timeLeft <= 0) { this.result = 'timeup'; this.setPhase('out'); return; }

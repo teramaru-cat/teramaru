@@ -190,8 +190,11 @@ export function buildSprites() {
   SPR.people = {};
   for (const [id, t] of Object.entries(TARGETS)) {
     if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true), makeCrouch(t.look)];
+    // かまって画面の大きい絵（細かいドット）：[立ち, しゃがみ]
+    if (t.kind === 'human') SPR.peopleHD = { ...SPR.peopleHD, [id]: [makePerson(t.look, false, true), makeCrouch(t.look, true)] };
     else if (ANIMAL_ROWS[id]) SPR.people[id] = ANIMAL_ROWS[id].frames.map((rows) => makeSprite(rows, ANIMAL_ROWS[id].pal));
     if (t.owner) SPR.owners = { ...SPR.owners, [id]: [makePerson(t.owner), makePerson(t.owner, true)] };
     if (t.kid) SPR.kids = { ...SPR.kids, [id]: [makePerson(t.kid), makePerson(t.kid, true), makeCrouch(t.kid)] };
+    if (t.kid) SPR.kidsHD = { ...SPR.kidsHD, [id]: [makePerson(t.kid, false, true), makeCrouch(t.kid, true)] };
   }
 }
