@@ -442,8 +442,8 @@ export class RingingScene {
       else ctx.fillStyle = i < lit ? UI.orange : 'rgba(58,42,32,0.55)';
       ctx.fillRect(x - 1, y - 1, 2, 2);
     }
-    if (L.laps > 0) {
-      // 回り終わった足には小さいハート
+    if (L.laps > 0 && !this.def.lapsPerLeg) {
+      // 回り終わった足には小さいハート（家族は、足元に1周ごとのハートを別に出すので出さない）
       ctx.drawImage(SPR.heart, Math.round(L.x - 3), Math.round(L.y + L.base.r + 4));
     }
   }
