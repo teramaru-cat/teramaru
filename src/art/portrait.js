@@ -310,6 +310,7 @@ export function makePortrait(look, pose = 'stand') {
     ctx.fillRect(x, y - top, 1, 1);
   }
   c.hd = true;
+  c.standing = pose !== 'crouch';
   // 肩（のばす腕の付け根）と、手の位置（おもちゃ）
   const bodyTop = TOP + HEAD_H - 1 - top;
   c.shoulder = { x: BX + 4, y: bodyTop + 4 };

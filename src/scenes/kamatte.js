@@ -17,12 +17,11 @@ import { tr } from '../i18n/index.js';
 
 // なでる手（ドット絵。o＝ふち s＝肌）
 const HAND = [
-  '.ooooooooo.',
-  'ossssssssso',
-  'ossssssssso',
-  'ossssssssso',
-  'osososososo',
-  '.ooooooooo.',
+  '.oooooo.',
+  'osssssso',
+  'osssssso',
+  'ososssso',
+  '.oooooo.',
 ];
 function drawRows(ctx, rows, x0, y0, pal) {
   rows.forEach((r, y) => [...r].forEach((ch, x) => {
@@ -33,7 +32,9 @@ function drawRows(ctx, rows, x0, y0, pal) {
 }
 
 // ブロック塀（てらまるが すわる台）。ベタ塗りに、ブロックの目地の線だけ
-const WALL_H = 22;
+// 台の高さ：立ってなでる人（腰の悪いおばあちゃん）は高いブロック塀、正座の人は低い石の台（手がとどく高さ）
+const WALL_HIGH = 22;
+const WALL_LOW = 8;
 function drawWall(ctx, x, y, w, h) {
   ctx.fillStyle = 'rgba(40,30,20,0.25)';
   ctx.fillRect(x + 2, y + h, w - 4, 2);
@@ -265,8 +266,12 @@ export class KamatteScene {
     // 人は細かいドットの大きい絵（3倍の大きさで描いてあるので、そのまま 1倍で出す）
     const person = animal ? frames[this.kind === 'nade' && Math.floor(t * 3) % 2 ? 1 : 0] : SPR.peopleHD[this.target.id][this.kind === 'nade' ? 1 : 0];
     const pS = person.hd ? 1 : S;
-    if (this.kind === 'nade' && !animal) drawWall(ctx, b.x + 70 - 22, b.y + PH - 6 - WALL_H, 44, WALL_H);
-    const px = b.x + (this.kind === 'nade' ? (animal ? 92 : 94) : (animal ? 140 : 150)); // なでなでは、すぐ横に
+    // なでなで（人）：てらまるは台の上。人のすぐとなりにすわる
+    const onWall = this.kind === 'nade' && !animal;
+    const wallH = person.standing ? WALL_HIGH : WALL_LOW;
+    const catX = onWall ? b.x + 76 : b.x + 70;
+    if (onWall) drawWall(ctx, catX - 18, b.y + PH - 6 - wallH, 36, wallH);
+    const px = b.x + (this.kind === 'nade' ? (animal ? 92 : 92) : (animal ? 140 : 150)); // なでなでは、すぐ横に
     const py = b.y + PH - 6 - person.height * pS;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
     ctx.fillRect(px + 4, b.y + PH - 8, person.width * pS - 8, 4);
@@ -301,52 +306,69 @@ export class KamatteScene {
     if (this.kind === 'toy' && this.punch > 0) cy = -14;
     const cw = img.width;
     const ch = img.height;
-    const cx = b.x + 70 - cw / 2;
+    const cx = catX - cw / 2;
     // なでなで（人）は、てらまるがブロック塀の上におすわり（人の手がとどく高さ）
-    const lift = this.kind === 'nade' && !animal ? WALL_H : 0;
+    const lift = onWall ? wallH : 0;
     const cyy = b.y + PH - 6 - ch + cy - lift;
     if (!lift) {
       ctx.fillStyle = 'rgba(40,30,20,0.25)';
-      ctx.fillRect(b.x + 70 - 18, b.y + PH - 8, 36, 4);
+      ctx.fillRect(catX - 18, b.y + PH - 8, 36, 4);
     }
     // 腕は てらまるのうしろを通す（手だけ頭の上に、あとで描く）
     let hx = 0;
     let hy = 0;
     if (this.kind === 'nade' && !animal) {
-      // 人の肩から腕がのびて、手が頭の上を行ったり来たり
-      hx = Math.round(b.x + 70 + Math.sin(t * 9) * 8);
-      hy = Math.round(cyy - 7 + squish);
+      // 腕は「上腕＋ひじ＋前腕」。長さは変えず、ひじを曲げのばしして手を頭の上で前後させる（ゴムのようにのびない）
       const look = this.target.def.look ?? {};
       const sx = px + (person.shoulder?.x ?? 8);
       const sy = py + (person.shoulder?.y ?? (person.shoulderY + 1) * pS);
-      // 腕：ドットの格子にそって描く（ふち → 服の色。ぼかしなし）
-      const ex = hx + 4;
-      const ey = hy + 4;
-      const n = Math.max(Math.abs(ex - sx), Math.abs(ey - sy), 1);
-      for (const [r, col] of [[3, UI.ink], [2, look.top ?? '#3c4a6a']]) {
-        ctx.fillStyle = col;
+      const headX = catX; // 頭のまん中
+      const headY = Math.round(cyy) + 4; // 頭のてっぺん（耳のあいだ）
+      hx = Math.round(headX + Math.sin(t * 6) * 3);
+      hy = headY + squish;
+      // 手首（手の右はし）をめざす
+      const wx = hx + 3;
+      const wy = hy;
+      const L = Math.hypot(headX + 3 - sx, headY - sy) * 0.56; // 上腕・前腕の長さ（いつも同じ）
+      const dx = wx - sx;
+      const dy = wy - sy;
+      const d = Math.min(Math.hypot(dx, dy), L * 2 - 0.01);
+      const base = Math.atan2(dy, dx);
+      const bend = Math.acos(Math.min(1, d / (2 * L)));
+      // ひじは外がわ（人のほう）に張り出す。高いところの猫をなでるときの、人の腕の自然な形
+      const e1 = { x: sx + Math.cos(base + bend) * L, y: sy + Math.sin(base + bend) * L };
+      const e2 = { x: sx + Math.cos(base - bend) * L, y: sy + Math.sin(base - bend) * L };
+      const el = e1.x > e2.x ? e1 : e2;
+      const seg = (x0, y0, x1, y1, r) => {
+        const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
         for (let i = 0; i <= n; i++) {
-          const x = Math.round(sx + ((ex - sx) * i) / n);
-          const y = Math.round(sy + ((ey - sy) * i) / n);
+          const x = Math.round(x0 + ((x1 - x0) * i) / n);
+          const y = Math.round(y0 + ((y1 - y0) * i) / n);
           ctx.fillRect(x - r, y - r, r * 2 + 1, r * 2 + 1);
         }
+      };
+      // ふち → 服の色（ドットの格子にそって。ぼかしなし）
+      for (const [r, col] of [[2, UI.ink], [1, look.top ?? '#3c4a6a']]) {
+        ctx.fillStyle = col;
+        seg(sx, sy, el.x, el.y, r);
+        seg(el.x, el.y, wx, wy, r);
       }
     }
     if (squish) {
       // なでられて頭が1ドット下がる（絵はのばしたりちぢめたりしない）
-      const neck = 19;
+      const neck = 16;
       ctx.drawImage(img, 0, neck, img.width, img.height - neck, Math.round(cx), Math.round(cyy) + neck, img.width, img.height - neck);
       ctx.drawImage(img, 0, 0, img.width, neck, Math.round(cx), Math.round(cyy) + 1, img.width, neck);
     } else ctx.drawImage(img, Math.round(cx), Math.round(cyy));
 
     if (this.kind === 'nade' && !animal) {
       // 手（ドット絵）
-      drawRows(ctx, HAND, hx - 5, hy - 1, { o: UI.ink, s: this.target.def.look?.skin ?? '#f2c9a0' });
+      drawRows(ctx, HAND, hx - 4, hy - 2, { o: UI.ink, s: this.target.def.look?.skin ?? '#f2c9a0' });
       // 気持ちよさそう
       if (Math.floor(t * 3) % 2 === 0) {
         ctx.fillStyle = UI.pink;
-        ctx.fillRect(Math.round(cx) + 3, Math.round(cyy) + 16, 3, 1);
-        ctx.fillRect(Math.round(cx) + cw - 6, Math.round(cyy) + 16, 3, 1);
+        ctx.fillRect(Math.round(cx) + 5, Math.round(cyy) + 11, 2, 1);
+        ctx.fillRect(Math.round(cx) + cw - 7, Math.round(cyy) + 11, 2, 1);
       }
     }
     if (this.kind === 'toy') {
