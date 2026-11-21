@@ -56,7 +56,7 @@ export const AREAS = [
         id: 'jutaku',
         // 一軒家とアパートの住宅地。会社員・杖のおばあちゃん・子ども。しくみは爪とぎとおねだりだけ
         map: JUTAKU,
-        targets: { salaryman: 5, grandma: 4, family: 4 },
+        targets: { salaryman: 4, grandma: 3, grandpa: 3, family: 4 },
         rules: { ...BASIC },
         unlock: { after: 'home' },
       },

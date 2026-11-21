@@ -16,7 +16,7 @@ import { tr, has } from '../i18n/index.js';
 //   wander      … 街でうろうろする速さ（ドット/秒）。なければ立ち止まったまま
 //   fixed       … true なら地図の決まった場所にずっといる（地図の fixedTargets に置く）
 //   owner       … 一緒に歩く飼い主の見た目（犬）
-//   lapsPerHeart… これがあると、ハートは足（柱）1本に1つ。その柱をこの数だけ回るとハート1つ（家族）
+//   lapsPerLeg  … これがあると、足（柱）1本ごとに、この周回数までしか数えない（家族：1人2つずつ）
 //   kid         … 手をつないで歩く子どもの見た目（家族）。legs に kid: true の足が子の足。bodyX・kidX は親と子の体のまん中
 //   onedari     … おねだりの成功確率 { base: 基本, perTp: TP 1 あたりの上がり幅 }
 //   ふつうの値を変えたいときだけ書くもの（KINDS を上書き）：
@@ -112,13 +112,25 @@ export const TARGETS = {
     look: { skin: '#e8b890', hair: '#2a2a30', hat: 'band', bandColor: '#3a6ab0', top: '#f0e0b0', apron: '#3a8a4a', bottom: '#6b5a40', shoes: '#3a2a20', garment: 'apron' },
     onedari: { base: 0.35, perTp: 0.010 },
   },
+  // おじいちゃん（鳥打帽・白い口ひげ）。ゆっくり歩く
+  grandpa: {
+    kind: 'human',
+    durability: 3,
+    tp: 9,
+    drops: { item: 'onigiri', count: 3 },
+    motion: 'still',
+    legs: [{ x: -16, y: 0, r: 6 }, { x: 16, y: 0, r: 6 }],
+    look: { skin: '#eccaa8', hair: '#d8d8dc', hat: 'cap', capColor: '#8a6a4a', mustache: '#f0f0f0', top: '#7a8a5a', bottom: '#6a5a48', shoes: '#3a2a20', garment: 'coat' },
+    wander: 5,
+    onedari: { base: 0.40, perTp: 0.010 },
+  },
   // 子ども連れの家族（親と子が手をつないで歩く）。てらまりんぐでは親の足2本と、子の短い足2本
   family: {
     kind: 'human',
-    // ハートは1人に1つ（親と子で2つ）。それぞれ2周でハート1つ。
+    // ハートは合計4つで、親2つ・子2つ（それぞれ2周まで数える）。
     // 2人分なので TP は多め。そのかわり柱が太くて大回り・回る数も多い・子どもの足ぶみに踏まれる
-    durability: 2,
-    lapsPerHeart: 2,
+    durability: 4,
+    lapsPerLeg: 2,
     tp: 20,
     drops: { item: 'candy', count: 4 },
     motion: 'still', // 親は立ったまま

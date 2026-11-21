@@ -29,7 +29,7 @@ function outline(c, ctx) {
 // ---- 頭（顔がわかる大きさ：はば10・高さ10。目は2×2で光が入る、口・ほっぺ） ----
 // y0 は髪のいちばん上。mood：'smile'（ふつう、にこっ）| 'happy'（口をあけて笑う。なでなで）
 // look のオプション：glasses（メガネのふちの色。目のまわりに丸いふち）・longHair（肩までの髪）・
-//   ponytail（ポニーテール）・bun（おだんご）・hat（chef | cap | band）
+//   ponytail（ポニーテール）・bun（おだんご）・mustache（口ひげの色）・hat（chef | cap | band）
 const CHEEK = '#f4a8a0';
 const MOUTH = '#b84848';
 function drawHead(R, look, y0, mood = 'smile') {
@@ -76,6 +76,7 @@ function drawHead(R, look, y0, mood = 'smile') {
   } else {
     R(5, y0 + 8, 2, 1, MOUTH);
   }
+  if (look.mustache) R(4, y0 + 7, 4, 1, look.mustache); // 口ひげ
   // メガネ：目のまわりに丸いふち（左右の四角の角を落とす）
   if (look.glasses) {
     const G = look.glasses;

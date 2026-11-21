@@ -175,6 +175,7 @@ export default {
     fishmonger: { name: 'Fishmonger' },
     butcher: { name: 'Butcher' },
     greengrocer: { name: 'Greengrocer' },
+    grandpa: { name: 'Grandpa' },
     family: { name: 'Family with Kid' },
     ownerA: { name: 'Owner' },
     ownerB: { name: 'Owner' },

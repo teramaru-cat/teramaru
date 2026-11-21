@@ -214,16 +214,11 @@ export class RingingScene {
     this.stun = BAL.ring.stun * BAL.tummy.stun[this.play.tummyLevel()];
     this.immune = 1.2;
     this.gauge = Math.max(0, this.gauge - BAL.ring.hitPenalty);
-    const lph = this.def.lapsPerHeart;
-    if (lph) {
-      // 1人に1つのハート：へった分だけ、多くたまっている人から周回をへらす
-      let n = Math.round(BAL.ring.hitPenalty * lph);
-      while (n-- > 0) {
-        const L = this.legs.reduce((m, l) => ((l.credit ?? 0) > (m.credit ?? 0) ? l : m), this.legs[0]);
-        if (!(L.credit > 0)) break;
-        L.credit--;
-      }
-      this.gauge = this.legs.reduce((s, l) => s + (l.credit ?? 0), 0) / lph;
+    if (this.def.lapsPerLeg) {
+      // 1人ずつのハート：へった分だけ、多くたまっている人からへらす
+      const L = this.legs.reduce((m, l) => ((l.credit ?? 0) > (m.credit ?? 0) ? l : m), this.legs[0]);
+      L.credit = Math.max(0, (L.credit ?? 0) - BAL.ring.hitPenalty);
+      this.gauge = this.legs.reduce((s, l) => s + (l.credit ?? 0), 0);
     }
     this.cat.x += nx * 8;
     this.cat.y = Math.max(TOP_LIMIT, this.cat.y + ny * 8);
@@ -252,10 +247,10 @@ export class RingingScene {
           L.acc -= Math.sign(L.acc) * TAU;
           L.laps++;
           audio.sfx('lap', this.legs.reduce((s, l) => s + l.laps, 0));
-          const lph = this.def.lapsPerHeart;
-          if (lph) {
-            // 1人に1つのハート（家族）：その人を lph 周でハート1つ。たまったら、その人はもう数えない
-            if ((L.credit ?? 0) < lph) { L.credit = (L.credit ?? 0) + 1; this.gauge = Math.min(dur, this.gauge + 1 / lph); }
+          const cap = this.def.lapsPerLeg;
+          if (cap) {
+            // 1人ずつハートの数が決まっている（家族）：その人のまわりは cap 周まで数える（1周でハート1つ）
+            if ((L.credit ?? 0) < cap) { L.credit = Math.min(cap, (L.credit ?? 0) + 1); this.gauge = Math.min(dur, this.legs.reduce((s, l) => s + (l.credit ?? 0), 0)); }
           } else {
             this.gauge = Math.min(dur, this.gauge + 1);
           }
