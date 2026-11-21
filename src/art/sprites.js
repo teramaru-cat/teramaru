@@ -345,12 +345,12 @@ export function buildSprites() {
     if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true), makeCrouch(t.look)];
     // かまって画面の大きい絵（細かいドット）：[立ち, しゃがみ]
     if (t.kind === 'human') SPR.peopleHD = { ...SPR.peopleHD, [id]: [makePortrait(t.look, 'stand'), makePortrait(t.look, t.look.cane ? 'backStand' : 'backSit')] }; // なでなでは うしろ姿。杖の人は腰が悪いので立ったまま
-    // 人のなでなで（アップ）の大きいうしろ姿（胸から下は画面の外）
-    if (t.kind === 'human') SPR.peopleBig = { ...SPR.peopleBig, [id]: makeBigBack(t.look, 'stand') };
+    // 人のなでなで（アップ）の大きいうしろ姿（肩・背中・腕だけ写る。頭と胸から下は画面の外）
+    if (t.kind === 'human') SPR.peopleBig = { ...SPR.peopleBig, [id]: makeBigBack(t.look, 'stand', 2.2) };
     else if (ANIMAL_ROWS[id]) SPR.people[id] = ANIMAL_ROWS[id].frames.map((rows) => makeSprite(rows, ANIMAL_ROWS[id].pal));
     if (t.owner) SPR.owners = { ...SPR.owners, [id]: [makePerson(t.owner), makePerson(t.owner, true)] };
     if (t.kid) SPR.kids = { ...SPR.kids, [id]: [makePerson(t.kid), makePerson(t.kid, true), makeCrouch(t.kid)] };
     if (t.kid) SPR.kidsHD = { ...SPR.kidsHD, [id]: [makePortrait(t.kid, 'stand'), makePortrait(t.kid, 'backSit')] };
-    if (t.kid) SPR.kidsBig = { ...SPR.kidsBig, [id]: makeBigBack(t.kid, 'stand') };
+    if (t.kid) SPR.kidsBig = { ...SPR.kidsBig, [id]: makeBigBack(t.kid, 'stand', 2.2) };
   }
 }

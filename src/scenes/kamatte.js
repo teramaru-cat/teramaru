@@ -64,7 +64,7 @@ function drawWall(ctx, x, y, w, h) {
 // 人のなでなでの腕の形（サンプルページ sample/arm.html で見くらべる）
 //   gap：てらまると人のあいだ  k：上腕・前腕の長さ（肩から手までの何倍か）  elbow：ひじの向き
 //   tx, ty：手の位置（頭のてっぺんのまん中から）
-export const ARM_STYLE = { gap: 6, k: 0.6, elbow: 'up', tx: 1, ty: 0 };
+export const ARM_STYLE = { gap: 4, k: 0.58, elbow: 'up', tx: 1, ty: 0 };
 
 const PW = 240; // 枠の大きさ
 const PH = 124;
@@ -290,10 +290,10 @@ export class KamatteScene {
     const person = SPR.peopleBig[this.target.id];
     const cat = SPR.catHD.down;
     const catX = 46; // てらまるのまん中
-    const catTop = 25; // 絵のいちばん上（耳の先の上）。足もとは画面の下はし
+    const catTop = 26; // 絵のいちばん上（耳の先の上）。頭は人の肩より少し下
     const catBottom = catTop + cat.height;
     const px = catX + arm.gap; // 人の絵の左はし
-    const py = -9; // 人の頭のてっぺんは少し画面の外（アップの写真のように）。肩が てらまるの頭の高さに来る
+    const py = 20 - person.shoulder.y; // 肩は上から3分の1ほど。頭は下半分だけ写る（大きな人の うしろ頭・肩・背中・腕）
     const ground = py + person.height;
 
     drawWall(o, catX - 18, catBottom, 36, h - catBottom + 4);
@@ -305,9 +305,9 @@ export class KamatteScene {
     const hy = headY + arm.ty;
     const sx = px + person.shoulder.x;
     const sy = py + person.shoulder.y;
-    const wx = hx + 5;
-    const wy = hy + 1;
-    const L = Math.hypot(catX + arm.tx + 5 - sx, headY + arm.ty + 1 - sy) * arm.k;
+    const wx = hx + person.armR + 3;
+    const wy = hy - 1;
+    const L = Math.hypot(catX + arm.tx + person.armR + 3 - sx, headY + arm.ty - 1 - sy) * arm.k;
     const d = Math.min(Math.hypot(wx - sx, wy - sy), L * 2 - 0.01);
     const base = Math.atan2(wy - sy, wx - sx);
     const bend = Math.acos(Math.min(1, d / (2 * L)));
@@ -332,7 +332,7 @@ export class KamatteScene {
     o.drawImage(person, px, py);
     if (this.target.def.kid) {
       const kid = SPR.kidsBig[this.target.id];
-      o.drawImage(kid, px + person.width - 18, ground - kid.height);
+      o.drawImage(kid, px + person.width - 24, ground - kid.height); // （たいてい画面の右の外）
     }
 
     // てらまる
@@ -342,7 +342,18 @@ export class KamatteScene {
     o.drawImage(cat, 0, 0, cat.width, neck, cx, catTop + squish, cat.width, neck);
 
     // 手（頭の上）・気持ちよさそうなほっぺ
-    drawRows(o, HAND_BIG, hx - 5, hy - 3, { o: UI.ink, s: look.skin ?? '#f2c9a0' });
+    // 手：腕の太さに合わせた大きさ（ベタ塗り・ふち1ドット、下に指のすじ）
+    const hw = person.armR * 2 + 5;
+    const hh = person.armR + 4;
+    const hx0 = hx - Math.floor(hw / 2) + 2;
+    const hy0 = hy - hh + 3;
+    o.fillStyle = UI.ink;
+    o.fillRect(hx0 + 1, hy0, hw - 2, hh);
+    o.fillRect(hx0, hy0 + 1, hw, hh - 2);
+    o.fillStyle = look.skin ?? '#f2c9a0';
+    o.fillRect(hx0 + 1, hy0 + 1, hw - 2, hh - 2);
+    o.fillStyle = UI.ink;
+    for (let x = hx0 + 3; x < hx0 + hw - 2; x += 3) o.fillRect(x, hy0 + hh - 3, 1, 2);
     if (Math.floor(t * 3) % 2 === 0) {
       o.fillStyle = UI.pink;
       o.fillRect(cx + 5, catTop + 11 + squish, 2, 1);

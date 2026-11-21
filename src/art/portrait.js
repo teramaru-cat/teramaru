@@ -369,10 +369,10 @@ export function makePortrait(look, pose = 'stand') {
 // てらまるより ずっと大きい人（本物に近い比率：頭は小さめ、肩はばが広い）。
 // 小さい絵を拡大せず、この大きさで形（だ円・四角）から1ドットずつ描く。ベタ塗り・ふち1ドット・左右対称。
 // pose：'sit'（正座）| 'stand'（立つ。腰の悪いおばあちゃん）。向かって左の腕は、のばす腕を別に描くので描かない
-export function makeBigBack(look, pose = 'sit') {
-  const k = (look.child ? 0.78 : 1) * 1.4; // てらまる（4kgもない猫）より ずっと大きく。子どもは小さめ
-  const W = 76;
-  const H = 140;
+export function makeBigBack(look, pose = 'sit', scale = 1.4) {
+  const k = (look.child ? 0.78 : 1) * scale; // てらまる（4kgもない猫）より ずっと大きく。子どもは小さめ
+  const W = Math.ceil(54 * scale);
+  const H = Math.ceil(100 * scale);
   const g = Array.from({ length: H }, () => Array(W).fill('.'));
   const cx = W / 2; // まん中（ドットのさかい）
   const set = (x, y, ch) => { if (y >= 0 && y < H && x >= 0 && x < W) g[y][x] = ch; };
