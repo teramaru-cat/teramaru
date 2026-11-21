@@ -73,8 +73,9 @@ function drawHead(R, look, y0, mood = 'smile') {
   R(9, y0 + 7, 1, 1, CHEEK);
   if (mood === 'happy') {
     // にっこり：口の線だけ（中は塗らない）。角は少しうすい色でつないで、なめらかなカーブに
-    R(4, y0 + 7, 1, 1, SMILE_SOFT);
-    R(7, y0 + 7, 1, 1, SMILE_SOFT);
+    // 目とくっつかないよう、口は目から1段あけた あごの段だけ（角はうすい色）
+    R(4, y0 + 8, 1, 1, SMILE_SOFT);
+    R(7, y0 + 8, 1, 1, SMILE_SOFT);
     R(5, y0 + 8, 2, 1, SMILE);
   } else {
     R(5, y0 + 8, 2, 1, MOUTH);

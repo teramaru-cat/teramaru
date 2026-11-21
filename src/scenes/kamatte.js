@@ -5,7 +5,7 @@
 import { screen } from '../core/renderer.js';
 import { input, KEY } from '../core/input.js';
 import { audio } from '../core/audio.js';
-import { drawText } from '../core/text.js';
+import { drawText, textWidth } from '../core/text.js';
 import { panel } from '../core/ui.js';
 import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
@@ -187,7 +187,8 @@ export class KamatteScene {
 
     // 見出し
     const title = (this.kind === 'nade' && this.target.def.kamatteTitle) || TITLE(this.kind);
-    drawText(ctx, title, W / 2, b.y + 3, { font: 'small', scale: 2, color: UI.orangeD, outline: UI.white, align: 'center' });
+    // 点数を出すときは見出しのかわりに上の段へ（人の頭にかぶらないように）
+    if (this.phase !== 'out') drawText(ctx, title, W / 2, b.y + 3, { font: 'small', scale: 2, color: UI.orangeD, outline: UI.white, align: 'center' });
     this.fx.draw(ctx);
     if (this.phase === 'play') this.drawGuide(ctx, b);
     if (this.phase === 'out') this.drawScore(ctx, b);
@@ -383,13 +384,17 @@ export class KamatteScene {
   }
 
   drawScore(ctx, b) {
+    // 上の段に「+点数」と「じかん +n びょう」を横にならべる（キャラの頭より上）
     const W = screen.W;
-    const pop = Math.round(Math.max(0, 1 - this.pt * 6) * 8);
+    const pop = Math.round(Math.max(0, 1 - this.pt * 6) * 4);
     const s = `+${this.total}`;
-    const w = digitsWidth(s, 3) + 16;
-    panel(ctx, Math.round(W / 2 - w / 2), b.y + 24 - pop, w, 32, UI.cream);
-    drawDigits(ctx, s, W / 2, b.y + 30 - pop, { color: UI.orangeD, align: 'center', scale: 3 });
+    const pw = digitsWidth(s, 2) + 12;
     const tx = tr('kamatte.time', { n: this.cfg.time });
-    drawText(ctx, tx, W / 2, b.y + 60, { font: 'small', color: '#2a70c0', outline: UI.white, align: 'center' });
+    const tw = textWidth(tx, 'small');
+    const x0 = Math.round(W / 2 - (pw + 6 + tw) / 2);
+    panel(ctx, x0, b.y + 4 - pop, pw, 22, UI.cream);
+    drawDigits(ctx, s, x0 + pw / 2, b.y + 8 - pop, { color: UI.orangeD, align: 'center', scale: 2 });
+    drawText(ctx, tx, x0 + pw + 6, b.y + 11, { font: 'small', color: '#2a70c0', outline: UI.white });
   }
+
 }
