@@ -248,10 +248,12 @@ export class RingingScene {
           // 1周でハート1つ。ハートはその足の足元に出す（足元のハートの合計＝左上のゲージ）。
           // lapsPerLeg があれば、1本の足はその周回数まで（家族：1人2つずつ）
           const cap = this.def.lapsPerLeg ?? Infinity;
-          if ((L.credit ?? 0) < cap && this.gauge < dur) {
-            L.credit = (L.credit ?? 0) + 1;
+          // 増やす量は、ゲージの残りと足の上限をこえない（半分へった後でも足元とゲージがずれないように）
+          const add = Math.min(1, cap - (L.credit ?? 0), dur - this.gauge);
+          if (add > 0.001) {
+            L.credit = (L.credit ?? 0) + add;
             L.gotAt = this.t;
-            this.gauge = Math.min(dur, this.legs.reduce((s, l) => s + (l.credit ?? 0), 0));
+            this.gauge = this.legs.reduce((s, l) => s + (l.credit ?? 0), 0);
           }
           this.fx.add(new PopText(L.x, L.y - 34, pick(LAP_WORDS()), UI.orangeD));
         }
