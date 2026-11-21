@@ -224,6 +224,11 @@ export function box(ctx, x, y, w, h, col) {
 
 // 1本の足（x, y は地面に着いている点。lift は持ち上がっている高さ）
 export function drawLeg(ctx, look, leg, x, y, lift, topY) {
+  if (leg.pair) {
+    // 2本でひとまとまり（家族の1人の足）
+    for (const dx of leg.pair) drawLeg(ctx, look, { ...leg, pair: null }, x + dx, y, lift, topY);
+    return;
+  }
   if (look.type) { drawAnimalLeg(ctx, look, leg, x, y, lift); return; }
   const fy = y - lift;
   if (lift > 0.5) {

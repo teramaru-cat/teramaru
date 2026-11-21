@@ -10,7 +10,8 @@ import { tr, has } from '../i18n/index.js';
 //   tp          … メロメロにしたときにもらえる TP
 //   drops       … 落とすご飯 { item: ITEMS の id, count: 個数 }。なければ null
 //   motion      … still（棒立ち）| stomp（足踏み、period 秒ごとに左右交互）| lively（よく動く。sway で揺れの大きさと速さ）
-//   legs        … てらまりんぐ画面での足の位置（足元の地面の真ん中からのずれ、画面ドット）と太さ r。cane: true は杖
+//   legs        … てらまりんぐ画面での足の位置（足元の地面の真ん中からのずれ、画面ドット）と太さ r。cane: true は杖。
+//                 pair: [左, 右] なら、そこに足を2本描いて、まとめて1本として回る（せまくて間を通れない2本）
 //   look        … 見た目。人は服などの色（glasses: メガネのふちの色、longHair: 長い髪、ponytail: ポニーテール、bun: おだんご）、動物・ベンチは type（dog | pigeons | bench、絵は art/animals.js）
 //   wander      … 街でうろうろする速さ（ドット/秒）。なければ立ち止まったまま
 //   fixed       … true なら地図の決まった場所にずっといる（地図の fixedTargets に置く）
@@ -118,9 +119,11 @@ export const TARGETS = {
     drops: { item: 'candy', count: 3 },
     motion: 'stomp',
     period: 1.6,
-    legs: [{ x: -32, y: 0, r: 7 }, { x: -10, y: 0, r: 7 }, { x: 16, y: 4, r: 5, kid: true }, { x: 32, y: 4, r: 5, kid: true }],
-    bodyX: -21, // 親の体のまん中（足の位置の真ん中）
-    kidX: 24, // 子の体のまん中
+    // 1人の足2本の間はせまくて通れないので、1人＝1本の柱として回る（pair：そのまん中からの左右の足の位置）。
+    // くぐるのは親と子の間だけ
+    legs: [{ x: -21, y: 0, r: 17, pair: [-11, 11] }, { x: 30, y: 4, r: 12, kid: true, pair: [-8, 8] }],
+    bodyX: -21, // 親の体のまん中
+    kidX: 30, // 子の体のまん中
     look: { skin: '#f2c9a0', hair: '#4a3020', ponytail: true, top: '#e8a040', bottom: '#4a5a7a', shoes: '#3a2a20', garment: 'coat' },
     kid: { skin: '#f6d0a8', hair: '#3a2a20', top: '#60a0e0', bottom: '#e05050', legs: '#f6d0a8', socks: '#f6f2ea', shoes: '#f080a0', garment: 'shorts', child: true },
     wander: 8,
