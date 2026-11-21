@@ -201,6 +201,86 @@ const CAT_BIG_SIDE = [
 "....ooooo...........ooooo.......",
 ];
 
+// うしろ姿のおすわり（なでなで用）：頭のうしろは向かって左が茶・右が黒、背中は茶と黒のかたまり。しっぽは床にそって右へ（2コマでゆらす）
+const CAT_BIG_BACK_A = [
+  "......o..........o........",
+  ".....obo........obo.......",
+  ".....obbo......obbo.......",
+  ".....obbboooooobbbo.......",
+  ".....occccccbbbbbbo.......",
+  "....occcccccbbbbbbbo......",
+  "....occcccccbbbbbbbo......",
+  "...occccccccbbbbbbbbo.....",
+  "...occccccccbbbbbbbbo.....",
+  "...occccccccbbbbbbbbo.....",
+  "...occccccccbbbbbbbbo.....",
+  "...occccccccbbbbbbbbo.....",
+  "....occcccccbbbbbbbo......",
+  "....occcwwwwwwwwbbbo......",
+  ".....occwwwwwwwwbbo.......",
+  "......owwwwwwwwwwo........",
+  "......occcccbbbbbo........",
+  "......occcccbbbbbo........",
+  ".....owcccccbbbbbwo.......",
+  ".....owcccccbbbbbwo.......",
+  ".....owcccccbbbbbwo.......",
+  "....owwcccccbbbbbwwo......",
+  "....owwcccccbbbbbwwo......",
+  "....owwcccccbbbbbwwo......",
+  "....owwcccccwwcccwwo......",
+  "....owwcccccwwcccwwo......",
+  "...owwwwwbbbbbcccwwwo.....",
+  "...owwwwwbbbbbcccwwwo.....",
+  "...owwwwwbbbbbcccwwwo.....",
+  "...owwwwwbbbbbwwwwwwo.....",
+  "..owwwwwwwwwwwwwwwwwwo....",
+  "..owwwwwwwwwwwwwwwwwwo..oo",
+  "..owwwwwwwwwwwwwwwwwwooobb",
+  "..owwwwwwwwwwwwwwwwwccccbo",
+  "..owwwwwwwwwwwwwwwwwwcccco",
+  "...oooooooooooooooooooooo.",
+  "..........................",
+];
+const CAT_BIG_BACK_B = [
+  "......o..........o........",
+  ".....obo........obo.......",
+  ".....obbo......obbo.......",
+  ".....obbboooooobbbo.......",
+  ".....occccccbbbbbbo.......",
+  "....occcccccbbbbbbbo......",
+  "....occcccccbbbbbbbo......",
+  "...occccccccbbbbbbbbo.....",
+  "...occccccccbbbbbbbbo.....",
+  "...occccccccbbbbbbbbo.....",
+  "...occccccccbbbbbbbbo.....",
+  "...occccccccbbbbbbbbo.....",
+  "....occcccccbbbbbbbo......",
+  "....occcwwwwwwwwbbbo......",
+  ".....occwwwwwwwwbbo.......",
+  "......owwwwwwwwwwo........",
+  "......occcccbbbbbo........",
+  "......occcccbbbbbo........",
+  ".....owcccccbbbbbwo.......",
+  ".....owcccccbbbbbwo.......",
+  ".....owcccccbbbbbwo.......",
+  "....owwcccccbbbbbwwo......",
+  "....owwcccccbbbbbwwo......",
+  "....owwcccccbbbbbwwo......",
+  "....owwcccccwwcccwwo......",
+  "....owwcccccwwcccwwo......",
+  "...owwwwwbbbbbcccwwwo.....",
+  "...owwwwwbbbbbcccwwwo.....",
+  "...owwwwwbbbbbcccwwwo.....",
+  "...owwwwwbbbbbwwwwwwo.....",
+  "..owwwwwwwwwwwwwwwwwwo..oo",
+  "..owwwwwwwwwwwwwwwwwwo.obb",
+  "..owwwwwwwwwwwwwwwwwwoocco",
+  "..owwwwwwwwwwwwwwwwwcccbo.",
+  "..owwwwwwwwwwwwwwwwwwccco.",
+  "...ooooooooooooooooooooo..",
+  "..........................",
+];
+
 // ---- ハート ----
 const HEART = [
   '.oo.oo.',
@@ -230,7 +310,7 @@ export function buildSprites() {
   };
   SPR.catLying = makeSprite(LYING, CAT);
   // かまって画面の大きい てらまる（等倍で描いた絵）
-  SPR.catHD = { down: makeSprite(CAT_BIG_FRONT, BIG_PAL), right: makeSprite(CAT_BIG_SIDE, BIG_PAL) };
+  SPR.catHD = { down: makeSprite(CAT_BIG_FRONT, BIG_PAL), right: makeSprite(CAT_BIG_SIDE, BIG_PAL), back: [makeSprite(CAT_BIG_BACK_A, BIG_PAL), makeSprite(CAT_BIG_BACK_B, BIG_PAL)] };
   // ほかの猫（形はてらまると同じで、色ちがい）：黒猫・グレーのしま猫
   const STRAY = {
     black: { ...CAT, c: '#3d3640', b: '#2e2a32', w: '#4f4856', e: '#e8d040', g: '#e8d040', p: '#c87080' },
@@ -264,10 +344,10 @@ export function buildSprites() {
   for (const [id, t] of Object.entries(TARGETS)) {
     if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true), makeCrouch(t.look)];
     // かまって画面の大きい絵（細かいドット）：[立ち, しゃがみ]
-    if (t.kind === 'human') SPR.peopleHD = { ...SPR.peopleHD, [id]: [makePortrait(t.look, 'stand'), makePortrait(t.look, t.look.cane ? 'standPet' : 'crouch')] }; // 杖の人は腰が悪いので立ったまま なでる
+    if (t.kind === 'human') SPR.peopleHD = { ...SPR.peopleHD, [id]: [makePortrait(t.look, 'stand'), makePortrait(t.look, t.look.cane ? 'backStand' : 'backSit')] }; // なでなでは うしろ姿。杖の人は腰が悪いので立ったまま
     else if (ANIMAL_ROWS[id]) SPR.people[id] = ANIMAL_ROWS[id].frames.map((rows) => makeSprite(rows, ANIMAL_ROWS[id].pal));
     if (t.owner) SPR.owners = { ...SPR.owners, [id]: [makePerson(t.owner), makePerson(t.owner, true)] };
     if (t.kid) SPR.kids = { ...SPR.kids, [id]: [makePerson(t.kid), makePerson(t.kid, true), makeCrouch(t.kid)] };
-    if (t.kid) SPR.kidsHD = { ...SPR.kidsHD, [id]: [makePortrait(t.kid, 'stand'), makePortrait(t.kid, 'crouch')] };
+    if (t.kid) SPR.kidsHD = { ...SPR.kidsHD, [id]: [makePortrait(t.kid, 'stand'), makePortrait(t.kid, 'backSit')] };
   }
 }

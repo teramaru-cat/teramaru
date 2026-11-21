@@ -184,6 +184,35 @@ const CROUCH_CHILD = [
   '.........LLLo..',
 ];
 
+// うしろ姿で正座（なでなで）：おしりの下に足の裏が2つ見える
+const BACK_SIT_ADULT = [
+  '............sss',
+  '............sss',
+  '.....tttttttttt',
+  '...tttttttttttt',
+  '..ttttttttttttt',
+  ...Array(8).fill(ARM),
+  '..sssottttttttt',
+  '..sssoBBBBBBBBB',
+  '...BBBBBBBBBBBB',
+  '..BBBBBBBBBBBBB',
+  '..BBBBBBBBBBBBB',
+  '..BBBBBBBBBBBBB',
+  '......ffff.....',
+];
+const BACK_SIT_CHILD = [
+  '............sss',
+  '.......tttttttt',
+  '.....tttttttttt',
+  '....ttttttttttt',
+  ...Array(5).fill(CHILD_ARM),
+  '....sssottttttt',
+  '....sssBBBBBBBB',
+  '.....BBBBBBBBBB',
+  '.....BBBBBBBBBB',
+  '.......fff.....',
+];
+
 // 服のかざり（半分の表に重ねる。y は体の行）
 function decorate(rows, look, child) {
   const g = rows.map((r) => [...r]);
@@ -207,7 +236,10 @@ function decorate(rows, look, child) {
 function bodyRows(look, pose) {
   const child = !!look.child;
   let half;
-  if (pose === 'crouch') {
+  if (pose === 'backSit') {
+    half = child ? BACK_SIT_CHILD : BACK_SIT_ADULT;
+    if (look.garment === 'skirt') half = half.map((r) => r.replace(/B/g, 'K'));
+  } else if (pose === 'crouch') {
     if (child) half = CROUCH_CHILD;
     else if (look.garment === 'skirt') half = CROUCH_ADULT.map((r) => r.replace(/B/g, 'K'));
     else half = CROUCH_ADULT;
@@ -246,8 +278,12 @@ function drawFace(g, x0, y0, look, happy) {
 // 人を描く。pose：'stand' | 'crouch'
 export function makePortrait(look, pose = 'stand') {
   // pose：'stand'（立ち）| 'crouch'（正座でなでる）| 'standPet'（立ったまま なでる。腰の悪いおばあちゃん）
+  //       'backSit'（うしろ姿で正座してなでる）| 'backStand'（うしろ姿で立ってなでる）
+  const back = pose === 'backSit' || pose === 'backStand';
   const happy = pose !== 'stand';
-  const body = bodyRows(look, pose === 'standPet' ? 'stand' : pose);
+  // うしろ姿：ネクタイ・エプロンの前は見えない
+  const bodyLook = back ? { ...look, tie: null, garment: look.garment === 'apron' || look.garment === 'longApron' ? 'coat' : look.garment } : look;
+  const body = bodyRows(bodyLook, pose === 'standPet' || pose === 'backStand' ? 'stand' : pose);
   const TOP = 9; // 帽子・おだんごの分
   const W = 34;
   const BX = 2; // 体の左はし
@@ -258,24 +294,35 @@ export function makePortrait(look, pose = 'stand') {
     if (ch !== '.' && g[y0 + y] && x0 + x >= 0 && x0 + x < W) g[y0 + y][x0 + x] = ch;
   }));
 
-  if (look.longHair) put(BACK.longHair.rows, HX + BACK.longHair.x, TOP + BACK.longHair.y);
-  if (look.ponytail) put(BACK.ponytail.rows, HX + BACK.ponytail.x, TOP + BACK.ponytail.y);
+  if (!back && look.longHair) put(BACK.longHair.rows, HX + BACK.longHair.x, TOP + BACK.longHair.y);
+  if (!back && look.ponytail) put(BACK.ponytail.rows, HX + BACK.ponytail.x, TOP + BACK.ponytail.y);
   put(body, BX, TOP + HEAD_H - 1);
   if (pose !== 'stand') {
     // 向かって左の腕（と手）を消して、体のはしにする
     const y0 = TOP + HEAD_H - 1;
     const armEnd = look.child ? 7 : 5; // 腕と体のさかいの線の列
-    const last = pose === 'crouch' ? 16 : 24;
+    const last = pose === 'crouch' || pose === 'backSit' ? 16 : 24;
     for (let y = y0 + 2; y < y0 + last; y++) for (let x = BX; x <= BX + armEnd; x++) {
       if (!'tso'.includes(g[y][x])) continue;
       g[y][x] = x === BX + armEnd && g[y][x + 1] !== '.' && g[y][x + 1] !== 'o' ? g[y][x + 1] : '.';
     }
   }
-  put(HEAD, HX, TOP);
-  if (look.longHair) put(OVER.longFront.rows, HX, TOP + OVER.longFront.y);
-  if (look.bun) put(OVER.bun.rows, HX, TOP + OVER.bun.y);
-  if (look.hat) put(OVER[look.hat].rows, HX, TOP + OVER[look.hat].y);
-  drawFace(g, HX, TOP, look, happy);
+  if (back) {
+    // うしろ姿の頭：髪でおおわれ、耳だけ肌（首のうしろは体の首の行）
+    put(HEAD.map((r) => r.replace(/s/g, 'h')), HX, TOP);
+    for (const ex of [1, HEAD_W - 2]) for (let y = 13; y <= 16; y++) if (!look.longHair) g[TOP + y][HX + ex] = 's';
+    if (look.longHair) put(mirror(Array(12).fill('...hhhhhhhhhh')), HX, TOP + 17); // 肩までの髪
+    if (look.ponytail) put(mirror(['...........hh', '...........hh', '...........hh', '...........hh', '...........hh', '...........hh', '............h']), HX, TOP + HEAD_H - 1); // 背中にたれる
+    if (look.bun) put(OVER.bun.rows, HX, TOP + OVER.bun.y);
+    if (look.hat === 'cap') put(OVER.cap.rows.slice(0, 8), HX, TOP);
+    else if (look.hat) put(OVER[look.hat].rows, HX, TOP + OVER[look.hat].y);
+  } else {
+    put(HEAD, HX, TOP);
+    if (look.longHair) put(OVER.longFront.rows, HX, TOP + OVER.longFront.y);
+    if (look.bun) put(OVER.bun.rows, HX, TOP + OVER.bun.y);
+    if (look.hat) put(OVER[look.hat].rows, HX, TOP + OVER[look.hat].y);
+    drawFace(g, HX, TOP, look, happy);
+  }
 
   // 杖（向かって右の手に）
   if (look.cane) {
@@ -310,7 +357,7 @@ export function makePortrait(look, pose = 'stand') {
     ctx.fillRect(x, y - top, 1, 1);
   }
   c.hd = true;
-  c.standing = pose !== 'crouch';
+  c.standing = pose !== 'crouch' && pose !== 'backSit';
   // 肩（のばす腕の付け根）と、手の位置（おもちゃ）
   const bodyTop = TOP + HEAD_H - 1 - top;
   c.shoulder = { x: BX + 4, y: bodyTop + 4 };

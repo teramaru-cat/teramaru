@@ -32,9 +32,8 @@ function drawRows(ctx, rows, x0, y0, pal) {
 }
 
 // ブロック塀（てらまるが すわる台）。ベタ塗りに、ブロックの目地の線だけ
-// 台の高さ：立ってなでる人（腰の悪いおばあちゃん）は高いブロック塀、正座の人は低い石の台（手がとどく高さ）
+// 立ってなでる人（腰の悪いおばあちゃん）のときの、ブロック塀の高さ
 const WALL_HIGH = 22;
-const WALL_LOW = 8;
 function drawWall(ctx, x, y, w, h) {
   ctx.fillStyle = 'rgba(40,30,20,0.25)';
   ctx.fillRect(x + 2, y + h, w - 4, 2);
@@ -266,12 +265,14 @@ export class KamatteScene {
     // 人は細かいドットの大きい絵（3倍の大きさで描いてあるので、そのまま 1倍で出す）
     const person = animal ? frames[this.kind === 'nade' && Math.floor(t * 3) % 2 ? 1 : 0] : SPR.peopleHD[this.target.id][this.kind === 'nade' ? 1 : 0];
     const pS = person.hd ? 1 : S;
-    // なでなで（人）：てらまるは台の上。人のすぐとなりにすわる
-    const onWall = this.kind === 'nade' && !animal;
-    const wallH = person.standing ? WALL_HIGH : WALL_LOW;
-    const catX = onWall ? b.x + 76 : b.x + 70;
+    // なでなで（人）：てらまるがまん中。人はそのとなりに、ならんですわる（どちらも うしろ姿）。
+    // 立ってなでる人（腰の悪いおばあちゃん）のときは、てらまるはブロック塀の上
+    const petBack = this.kind === 'nade' && !animal;
+    const onWall = petBack && person.standing;
+    const wallH = onWall ? WALL_HIGH : 0;
+    const catX = petBack ? b.x + 108 : b.x + 70;
     if (onWall) drawWall(ctx, catX - 18, b.y + PH - 6 - wallH, 36, wallH);
-    const px = b.x + (this.kind === 'nade' ? (animal ? 92 : 92) : (animal ? 140 : 150)); // なでなでは、すぐ横に
+    const px = petBack ? catX + 6 : b.x + (this.kind === 'nade' ? 92 : animal ? 140 : 150);
     const py = b.y + PH - 6 - person.height * pS;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
     ctx.fillRect(px + 4, b.y + PH - 8, person.width * pS - 8, 4);
@@ -300,7 +301,8 @@ export class KamatteScene {
     let cy = 0;
     let squish = 0;
     if (this.kind === 'nade') {
-      img = SPR.catHD.down;
+      // 人になでられるときは うしろ姿（しっぽをゆらす）。動物とは正面
+      img = petBack ? SPR.catHD.back[Math.floor(t * 3) % 2] : SPR.catHD.down;
       squish = Math.sin(t * 9) > 0.3 ? 1 : 0; // なでられて頭が下がる
     }
     if (this.kind === 'toy' && this.punch > 0) cy = -14;
@@ -308,13 +310,20 @@ export class KamatteScene {
     const ch = img.height;
     const cx = catX - cw / 2;
     // なでなで（人）は、てらまるがブロック塀の上におすわり（人の手がとどく高さ）
-    const lift = onWall ? wallH : 0;
+    const lift = wallH;
     const cyy = b.y + PH - 6 - ch + cy - lift;
     if (!lift) {
       ctx.fillStyle = 'rgba(40,30,20,0.25)';
       ctx.fillRect(catX - 18, b.y + PH - 8, 36, 4);
     }
-    // 腕は てらまるのうしろを通す（手だけ頭の上に、あとで描く）
+    if (squish) {
+      // なでられて頭が1ドット下がる（絵はのばしたりちぢめたりしない）
+      const neck = 16;
+      ctx.drawImage(img, 0, neck, img.width, img.height - neck, Math.round(cx), Math.round(cyy) + neck, img.width, img.height - neck);
+      ctx.drawImage(img, 0, 0, img.width, neck, Math.round(cx), Math.round(cyy) + 1, img.width, neck);
+    } else ctx.drawImage(img, Math.round(cx), Math.round(cyy));
+
+    // 腕と手は てらまるの上に（うしろから見て、肩から頭へ手をのばす）
     let hx = 0;
     let hy = 0;
     if (this.kind === 'nade' && !animal) {
@@ -335,10 +344,10 @@ export class KamatteScene {
       const d = Math.min(Math.hypot(dx, dy), L * 2 - 0.01);
       const base = Math.atan2(dy, dx);
       const bend = Math.acos(Math.min(1, d / (2 * L)));
-      // ひじは外がわ（人のほう）に張り出す。高いところの猫をなでるときの、人の腕の自然な形
+      // ひじは上に少し上げ、前腕が上から頭にのる形（頭をかくさない）
       const e1 = { x: sx + Math.cos(base + bend) * L, y: sy + Math.sin(base + bend) * L };
       const e2 = { x: sx + Math.cos(base - bend) * L, y: sy + Math.sin(base - bend) * L };
-      const el = e1.x > e2.x ? e1 : e2;
+      const el = e1.y < e2.y ? e1 : e2;
       const seg = (x0, y0, x1, y1, r) => {
         const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
         for (let i = 0; i <= n; i++) {
@@ -354,18 +363,11 @@ export class KamatteScene {
         seg(el.x, el.y, wx, wy, r);
       }
     }
-    if (squish) {
-      // なでられて頭が1ドット下がる（絵はのばしたりちぢめたりしない）
-      const neck = 16;
-      ctx.drawImage(img, 0, neck, img.width, img.height - neck, Math.round(cx), Math.round(cyy) + neck, img.width, img.height - neck);
-      ctx.drawImage(img, 0, 0, img.width, neck, Math.round(cx), Math.round(cyy) + 1, img.width, neck);
-    } else ctx.drawImage(img, Math.round(cx), Math.round(cyy));
-
     if (this.kind === 'nade' && !animal) {
       // 手（ドット絵）
       drawRows(ctx, HAND, hx - 4, hy - 2, { o: UI.ink, s: this.target.def.look?.skin ?? '#f2c9a0' });
       // 気持ちよさそう
-      if (Math.floor(t * 3) % 2 === 0) {
+      if (!petBack && Math.floor(t * 3) % 2 === 0) {
         ctx.fillStyle = UI.pink;
         ctx.fillRect(Math.round(cx) + 5, Math.round(cyy) + 11, 2, 1);
         ctx.fillRect(Math.round(cx) + cw - 7, Math.round(cyy) + 11, 2, 1);
