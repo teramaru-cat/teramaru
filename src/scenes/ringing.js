@@ -214,6 +214,17 @@ export class RingingScene {
     this.stun = BAL.ring.stun * BAL.tummy.stun[this.play.tummyLevel()];
     this.immune = 1.2;
     this.gauge = Math.max(0, this.gauge - BAL.ring.hitPenalty);
+    const lph = this.def.lapsPerHeart;
+    if (lph) {
+      // 1人に1つのハート：へった分だけ、多くたまっている人から周回をへらす
+      let n = Math.round(BAL.ring.hitPenalty * lph);
+      while (n-- > 0) {
+        const L = this.legs.reduce((m, l) => ((l.credit ?? 0) > (m.credit ?? 0) ? l : m), this.legs[0]);
+        if (!(L.credit > 0)) break;
+        L.credit--;
+      }
+      this.gauge = this.legs.reduce((s, l) => s + (l.credit ?? 0), 0) / lph;
+    }
     this.cat.x += nx * 8;
     this.cat.y = Math.max(TOP_LIMIT, this.cat.y + ny * 8);
     this.fx.add(new PopText(this.cat.x, this.cat.y - 44, stomped ? tr('ring.stomp') : tr('ring.bump'), UI.red));
@@ -241,7 +252,13 @@ export class RingingScene {
           L.acc -= Math.sign(L.acc) * TAU;
           L.laps++;
           audio.sfx('lap', this.legs.reduce((s, l) => s + l.laps, 0));
-          this.gauge = Math.min(dur, this.gauge + 1);
+          const lph = this.def.lapsPerHeart;
+          if (lph) {
+            // 1人に1つのハート（家族）：その人を lph 周でハート1つ。たまったら、その人はもう数えない
+            if ((L.credit ?? 0) < lph) { L.credit = (L.credit ?? 0) + 1; this.gauge = Math.min(dur, this.gauge + 1 / lph); }
+          } else {
+            this.gauge = Math.min(dur, this.gauge + 1);
+          }
           this.fx.add(new PopText(L.x, L.y - 34, pick(LAP_WORDS()), UI.orangeD));
         }
       }

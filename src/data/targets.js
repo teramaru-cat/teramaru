@@ -16,6 +16,7 @@ import { tr, has } from '../i18n/index.js';
 //   wander      … 街でうろうろする速さ（ドット/秒）。なければ立ち止まったまま
 //   fixed       … true なら地図の決まった場所にずっといる（地図の fixedTargets に置く）
 //   owner       … 一緒に歩く飼い主の見た目（犬）
+//   lapsPerHeart… これがあると、ハートは足（柱）1本に1つ。その柱をこの数だけ回るとハート1つ（家族）
 //   kid         … 手をつないで歩く子どもの見た目（家族）。legs に kid: true の足が子の足。bodyX・kidX は親と子の体のまん中
 //   onedari     … おねだりの成功確率 { base: 基本, perTp: TP 1 あたりの上がり幅 }
 //   ふつうの値を変えたいときだけ書くもの（KINDS を上書き）：
@@ -114,8 +115,10 @@ export const TARGETS = {
   // 子ども連れの家族（親と子が手をつないで歩く）。てらまりんぐでは親の足2本と、子の短い足2本
   family: {
     kind: 'human',
+    // ハートは1人に1つ（親と子で2つ）。それぞれ2周でハート1つ。
     // 2人分なので TP は多め。そのかわり柱が太くて大回り・回る数も多い・子どもの足ぶみに踏まれる
-    durability: 4,
+    durability: 2,
+    lapsPerHeart: 2,
     tp: 20,
     drops: { item: 'candy', count: 4 },
     motion: 'still', // 親は立ったまま
