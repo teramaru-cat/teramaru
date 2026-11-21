@@ -33,6 +33,7 @@ function outline(c, ctx) {
 const CHEEK = '#f4a8a0';
 const MOUTH = '#a05a4a'; // 口（赤すぎると血に見えるので、茶色がかった色）
 const SMILE = '#6a3a30'; // 笑った口の線
+const SMILE_SOFT = '#d09a88'; // 口の線の角（うすくして、カーブをなめらかに見せる）
 function drawHead(R, look, y0, mood = 'smile') {
   const H = look.hair;
   // うしろ髪（顔より先に描く）
@@ -71,9 +72,9 @@ function drawHead(R, look, y0, mood = 'smile') {
   R(2, y0 + 7, 1, 1, CHEEK);
   R(9, y0 + 7, 1, 1, CHEEK);
   if (mood === 'happy') {
-    // にっこり：口の線だけ（中は塗らない）
-    R(4, y0 + 7, 1, 1, SMILE);
-    R(7, y0 + 7, 1, 1, SMILE);
+    // にっこり：口の線だけ（中は塗らない）。角は少しうすい色でつないで、なめらかなカーブに
+    R(4, y0 + 7, 1, 1, SMILE_SOFT);
+    R(7, y0 + 7, 1, 1, SMILE_SOFT);
     R(5, y0 + 8, 2, 1, SMILE);
   } else {
     R(5, y0 + 8, 2, 1, MOUTH);

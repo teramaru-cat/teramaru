@@ -118,7 +118,8 @@ export const TARGETS = {
     durability: 3,
     tp: 9,
     drops: { item: 'onigiri', count: 3 },
-    motion: 'still',
+    motion: 'stomp', // ゆっくり足ぶみ
+    period: 2.6,
     legs: [{ x: -16, y: 0, r: 6 }, { x: 16, y: 0, r: 6 }],
     look: { skin: '#eccaa8', hair: '#d8d8dc', hat: 'cap', capColor: '#8a6a4a', mustache: '#f0f0f0', top: '#7a8a5a', bottom: '#6a5a48', shoes: '#3a2a20', garment: 'coat' },
     wander: 9, // ゆっくり歩く

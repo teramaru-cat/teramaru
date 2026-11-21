@@ -214,12 +214,10 @@ export class RingingScene {
     this.stun = BAL.ring.stun * BAL.tummy.stun[this.play.tummyLevel()];
     this.immune = 1.2;
     this.gauge = Math.max(0, this.gauge - BAL.ring.hitPenalty);
-    if (this.def.lapsPerLeg) {
-      // 1人ずつのハート：へった分だけ、多くたまっている人からへらす
-      const L = this.legs.reduce((m, l) => ((l.credit ?? 0) > (m.credit ?? 0) ? l : m), this.legs[0]);
-      L.credit = Math.max(0, (L.credit ?? 0) - BAL.ring.hitPenalty);
-      this.gauge = this.legs.reduce((s, l) => s + (l.credit ?? 0), 0);
-    }
+    // 足元のハートも、いちばん多くたまっている足からへらす（合計はゲージと同じ）
+    const most = this.legs.reduce((m, l) => ((l.credit ?? 0) > (m.credit ?? 0) ? l : m), this.legs[0]);
+    most.credit = Math.max(0, (most.credit ?? 0) - BAL.ring.hitPenalty);
+    this.gauge = this.legs.reduce((s, l) => s + (l.credit ?? 0), 0);
     this.cat.x += nx * 8;
     this.cat.y = Math.max(TOP_LIMIT, this.cat.y + ny * 8);
     this.fx.add(new PopText(this.cat.x, this.cat.y - 44, stomped ? tr('ring.stomp') : tr('ring.bump'), UI.red));
@@ -247,12 +245,13 @@ export class RingingScene {
           L.acc -= Math.sign(L.acc) * TAU;
           L.laps++;
           audio.sfx('lap', this.legs.reduce((s, l) => s + l.laps, 0));
-          const cap = this.def.lapsPerLeg;
-          if (cap) {
-            // 1人ずつハートの数が決まっている（家族）：その人のまわりは cap 周まで数える（1周でハート1つ）
-            if ((L.credit ?? 0) < cap) { L.credit = Math.min(cap, (L.credit ?? 0) + 1); L.gotAt = this.t; this.gauge = Math.min(dur, this.legs.reduce((s, l) => s + (l.credit ?? 0), 0)); }
-          } else {
-            this.gauge = Math.min(dur, this.gauge + 1);
+          // 1周でハート1つ。ハートはその足の足元に出す（足元のハートの合計＝左上のゲージ）。
+          // lapsPerLeg があれば、1本の足はその周回数まで（家族：1人2つずつ）
+          const cap = this.def.lapsPerLeg ?? Infinity;
+          if ((L.credit ?? 0) < cap && this.gauge < dur) {
+            L.credit = (L.credit ?? 0) + 1;
+            L.gotAt = this.t;
+            this.gauge = Math.min(dur, this.legs.reduce((s, l) => s + (l.credit ?? 0), 0));
           }
           this.fx.add(new PopText(L.x, L.y - 34, pick(LAP_WORDS()), UI.orangeD));
         }
@@ -394,17 +393,18 @@ export class RingingScene {
 
     // 足のまわりの輪：回った分だけ点が光る
     for (const L of this.legs) this.drawRing(ctx, L);
-    // 1人ずつハートがある（家族）：回るたびに、その人の足元にハートが1つずつ増える（空の枠は出さない）
-    if (this.def.lapsPerLeg) {
-      for (const L of this.legs) {
-        const n = Math.floor(L.credit ?? 0);
-        if (!n) continue;
-        const hy = Math.round(L.y + L.base.r * 0.9 + 14);
-        const hx0 = Math.round(L.x - (n * 9 - 2) / 2);
-        for (let i = 0; i < n; i++) {
-          const fresh = i === n - 1 && this.t - (L.gotAt ?? -9) < 0.25; // 増えたばかり：ぴょこっと上に
-          ctx.drawImage(SPR.heart, hx0 + i * 9, hy - (fresh ? 3 : 0));
-        }
+    // 回るたびに、その足の足元にハートが1つずつ増える（空の枠は出さない。合計は左上のゲージと同じ。半分は半分のハート）
+    for (const L of this.legs) {
+      const c = L.credit ?? 0;
+      const n = Math.ceil(c - 0.01);
+      if (n <= 0) continue;
+      const hy = Math.round(L.y + L.base.r * 0.9 + 14);
+      const hx0 = Math.round(L.x - (n * 9 - 2) / 2);
+      for (let i = 0; i < n; i++) {
+        const fresh = i === n - 1 && this.t - (L.gotAt ?? -9) < 0.25; // 増えたばかり：ぴょこっと上に
+        const half = c - i < 0.99;
+        if (half) ctx.drawImage(SPR.heart, 0, 0, 4, 6, hx0 + i * 9, hy, 4, 6);
+        else ctx.drawImage(SPR.heart, hx0 + i * 9, hy - (fresh ? 3 : 0));
       }
     }
 
@@ -441,10 +441,6 @@ export class RingingScene {
       if (L.laps > 0) ctx.fillStyle = i < lit ? UI.orange : UI.pink;
       else ctx.fillStyle = i < lit ? UI.orange : 'rgba(58,42,32,0.55)';
       ctx.fillRect(x - 1, y - 1, 2, 2);
-    }
-    if (L.laps > 0 && !this.def.lapsPerLeg) {
-      // 回り終わった足には小さいハート（家族は、足元に1周ごとのハートを別に出すので出さない）
-      ctx.drawImage(SPR.heart, Math.round(L.x - 3), Math.round(L.y + L.base.r + 4));
     }
   }
 
