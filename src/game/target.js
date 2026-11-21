@@ -93,6 +93,7 @@ export class Target {
     ctx.globalAlpha = a;
     const bob = !this.moving && this.def.motion !== 'still' && Math.floor(this.t * 3) % 2 ? 1 : 0;
     if (this.def.owner) this.drawOwner(ctx, x, y, hw, img);
+    if (this.def.kid) this.drawKid(ctx, x, y, hw);
     if (this.flip) {
       ctx.save();
       ctx.translate(x, 0);
@@ -108,6 +109,28 @@ export class Target {
       const hb = Math.floor(this.t * 3) % 2;
       ctx.drawImage(SPR.heart, x - 3, y - img.height - 8 - hb);
     }
+  }
+
+  // 家族の子ども：親のとなり（向いている方）で、手をつないで歩く
+  drawKid(ctx, x, y, hw) {
+    const fr = SPR.kids[this.id];
+    const k = this.moving ? fr[(Math.floor(this.t * 6) + 1) % 2] : fr[0];
+    const dir = this.flip ? -1 : 1;
+    const kx = x + dir * (hw + 3);
+    ctx.fillStyle = 'rgba(40,30,20,0.25)';
+    ctx.fillRect(kx - 5, y - 1, 10, 2);
+    if (this.flip) {
+      ctx.save();
+      ctx.translate(kx, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(k, -7, y - k.height + 1);
+      ctx.restore();
+    } else {
+      ctx.drawImage(k, kx - 7, y - k.height + 1);
+    }
+    // つないだ手
+    ctx.fillStyle = this.def.look.skin;
+    ctx.fillRect(Math.min(x, kx) + hw - 2, y - 9, 4, 1);
   }
 
   // 犬の飼い主：犬のうしろを歩いて、リードで首輪とつながる

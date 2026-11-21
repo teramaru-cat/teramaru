@@ -41,30 +41,31 @@ export const JUTAKU = {
     { dir: 'h', r: 13.5, c0: 0, c1: 55, skip: [23, 31] },
     { dir: 'v', c: 27.5, r0: 0, r1: 31, skip: [9, 17] },
   ],
+  // 家と家の間は2マスあけて、通りぬけられる（生け垣もそこは切る）
   buildings: [
     // 左上
-    { c: 1, r: 1, w: 7, h: 6, kind: 'home', wall: '#f0e0c0', roof: '#c05050' },
-    { c: 9, r: 1, w: 7, h: 6, kind: 'home', wall: '#dde8d0', roof: '#4060a0' },
-    { c: 17, r: 1, w: 8, h: 6, kind: 'home', wall: '#f4ece0', roof: '#5a8a4a' },
+    { c: 1, r: 1, w: 6, h: 6, kind: 'home', wall: '#f0e0c0', roof: '#c05050' },
+    { c: 9, r: 1, w: 6, h: 6, kind: 'home', wall: '#dde8d0', roof: '#4060a0' },
+    { c: 17, r: 1, w: 7, h: 6, kind: 'home', wall: '#f4ece0', roof: '#5a8a4a' },
     // 右上
-    { c: 30, r: 1, w: 7, h: 7, kind: 'home', wall: '#efe0d8', roof: '#8a5a8a' },
-    { c: 38, r: 1, w: 7, h: 7, kind: 'home', wall: '#e8e4d0', roof: '#c08040' },
+    { c: 30, r: 1, w: 6, h: 7, kind: 'home', wall: '#efe0d8', roof: '#8a5a8a' },
+    { c: 38, r: 1, w: 6, h: 7, kind: 'home', wall: '#e8e4d0', roof: '#c08040' },
     { c: 47, r: 0, w: 8, h: 9, kind: 'apart', wall: '#e0dcd4', roof: '#807870' },
     // 左下
-    { c: 1, r: 17, w: 7, h: 6, kind: 'home', wall: '#e8dcc8', roof: '#3a6a8a' },
-    { c: 9, r: 17, w: 7, h: 6, kind: 'home', wall: '#f6e8d8', roof: '#b04848' },
-    { c: 17, r: 17, w: 8, h: 6, kind: 'home', wall: '#dfe6e8', roof: '#6a6a72' },
+    { c: 1, r: 17, w: 6, h: 6, kind: 'home', wall: '#e8dcc8', roof: '#3a6a8a' },
+    { c: 9, r: 17, w: 6, h: 6, kind: 'home', wall: '#f6e8d8', roof: '#b04848' },
+    { c: 17, r: 17, w: 7, h: 6, kind: 'home', wall: '#dfe6e8', roof: '#6a6a72' },
     // 右下
-    { c: 30, r: 17, w: 7, h: 6, kind: 'home', wall: '#f0e8d0', roof: '#4a7a6a' },
-    { c: 38, r: 17, w: 8, h: 6, kind: 'home', wall: '#f4e0e0', roof: '#a05a3a' },
+    { c: 30, r: 17, w: 6, h: 6, kind: 'home', wall: '#f0e8d0', roof: '#4a7a6a' },
+    { c: 38, r: 17, w: 7, h: 6, kind: 'home', wall: '#f4e0e0', roof: '#a05a3a' },
     { c: 48, r: 17, w: 7, h: 7, kind: 'apart', wall: '#e8e0d0', roof: '#7a7068' },
   ],
   props: [
-    // 生け垣（玄関の前はあける）
-    ...hedges(9, 1, 24, [4, 5, 12, 13, 20, 21]),
-    ...hedges(9, 30, 45, [33, 34, 41, 42]),
-    ...hedges(24, 1, 24, [4, 5, 12, 13, 20, 21]),
-    ...hedges(24, 30, 45, [33, 34, 41, 42]),
+    // 生け垣（玄関の前と、家と家の間の通り道はあける）
+    ...hedges(9, 1, 24, [3, 4, 7, 8, 11, 12, 15, 16, 20, 21]),
+    ...hedges(9, 30, 45, [32, 33, 36, 37, 40, 41, 44, 45]),
+    ...hedges(24, 1, 24, [3, 4, 7, 8, 11, 12, 15, 16, 20, 21]),
+    ...hedges(24, 30, 45, [32, 33, 36, 37, 41, 42, 45]),
     // 電柱（爪とぎ）
     { type: 'scratch', ...at(8, 11), y: 11 * T + 12 },
     { type: 'scratch', ...at(19, 11), y: 11 * T + 12 },
@@ -75,15 +76,14 @@ export const JUTAKU = {
     // 庭の木・自転車・ポスト
     { type: 'tree', ...at(1, 8) },
     { type: 'tree', ...at(24, 8) },
-    { type: 'tree', ...at(45, 8) },
-    { type: 'tree', ...at(8, 23) },
-    { type: 'tree', ...at(37, 23) },
-    { type: 'bicycle', ...at(7, 8) },
-    { type: 'bicycle', ...at(36, 9), y: 9 * T + 4 },
+    { type: 'tree', ...at(1, 23) },
+    { type: 'tree', ...at(35, 23) },
+    { type: 'bicycle', ...at(5, 8) },
+    { type: 'bicycle', ...at(34, 8) },
     { type: 'bicycle', ...at(52, 10) },
     { type: 'mailbox', ...at(25, 10) },
-    { type: 'mailbox', ...at(46, 16) },
-    { type: 'flowerpot', ...at(16, 8) },
+    { type: 'mailbox', ...at(43, 15), y: 15 * T + 6 },
+    { type: 'flowerpot', ...at(14, 8) },
     { type: 'flowerpot', ...at(29, 8) },
     { type: 'vending', ...at(29, 16), y: 16 * T + 12 },
     // 左下の空き地

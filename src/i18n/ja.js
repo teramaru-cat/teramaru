@@ -178,6 +178,7 @@ export default {
     fishmonger: { name: '魚屋さん' },
     butcher: { name: 'お肉屋さん' },
     greengrocer: { name: '八百屋さん' },
+    family: { name: 'こども連れの家族' },
     ownerA: { name: 'かいぬし' },
     ownerB: { name: 'かいぬし' },
     dog: { name: '散歩中の犬', words: ['ペロペロ', 'わんっ'] },

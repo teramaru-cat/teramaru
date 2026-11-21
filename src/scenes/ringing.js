@@ -3,14 +3,14 @@
 // 流れ：in（ズームイン）→ play（回る）→ win（ハートとご飯を吸い込む）→ out（街へ戻る）
 // 画面の端から出ると途中でやめる（そのターゲットにはしばらく近づけない）。
 
-import { screen } from '../core/renderer.js';
+import { screen, shade } from '../core/renderer.js';
 import { input, KEY } from '../core/input.js';
 import { audio } from '../core/audio.js';
 import { drawText, textWidth } from '../core/text.js';
 import { Button, panel } from '../core/ui.js';
 import { UI } from '../art/palette.js';
 import { SPR } from '../art/sprites.js';
-import { drawLeg, drawGarment } from '../art/people.js';
+import { drawLeg, drawGarment, box, E } from '../art/people.js';
 import { BAL } from '../data/balance.js';
 import { ITEMS } from '../data/targets.js';
 import { Cat } from '../game/cat.js';
@@ -23,6 +23,7 @@ import { tr } from '../i18n/index.js';
 const TAU = Math.PI * 2;
 const GROUND_Y = 112; // 足が地面に着いている高さ（画面）
 const TOP_LIMIT = 58; // てらまるはこれより上（服の中）には行けない
+const KID_TOP = 50; // 家族の子どもの足の上（半ズボンのすそ）
 const LAP_WORDS = () => tr('ring.lap'); // 足を1周したときに出る言葉（ランダム）
 
 function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
@@ -366,11 +367,22 @@ export class RingingScene {
 
     // 足とてらまるを奥から順に
     const look = this.def.look;
-    const items = this.legs.map((L) => ({ y: L.y, draw: () => drawLeg(ctx, look, L.base, L.x, L.y, L.lift, -4) }));
+    // 家族：kid の足は子どもの見た目で、短い（上が低い）
+    const legLook = (L) => (L.base.kid ? this.def.kid : look);
+    const items = this.legs.map((L) => ({ y: L.y, draw: () => drawLeg(ctx, legLook(L), L.base, L.x, L.y, L.lift, L.base.kid ? KID_TOP : -4) }));
     items.push({ y: this.cat.y, draw: () => this.drawCat(ctx) });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) it.draw();
-    drawGarment(ctx, look, this.gx, this.bx, this.by, GROUND_Y);
+    drawGarment(ctx, look, this.gx + (this.def.bodyX ?? 0), this.bx, this.by, GROUND_Y);
+    if (this.def.kid) this.drawKidBody(ctx, this.def.kid, this.gx + this.def.kidX + this.bx);
+  }
+
+  // 家族の子ども：親より背が低いので、シャツのすそと半ズボンが見える
+  drawKidBody(ctx, kid, x) {
+    box(ctx, x - 20, KID_TOP - 30, 40, 22, kid.top);
+    box(ctx, x - 18, KID_TOP - 12, 36, 14, kid.bottom);
+    ctx.fillStyle = shade(kid.bottom, -0.25);
+    ctx.fillRect(E(x) - 2, KID_TOP - 6, 2, 8);
   }
 
   drawRing(ctx, L) {

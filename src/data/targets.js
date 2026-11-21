@@ -15,6 +15,7 @@ import { tr, has } from '../i18n/index.js';
 //   wander      … 街でうろうろする速さ（ドット/秒）。なければ立ち止まったまま
 //   fixed       … true なら地図の決まった場所にずっといる（地図の fixedTargets に置く）
 //   owner       … 一緒に歩く飼い主の見た目（犬）
+//   kid         … 手をつないで歩く子どもの見た目（家族）。legs に kid: true の足が子の足。bodyX・kidX は親と子の体のまん中
 //   onedari     … おねだりの成功確率 { base: 基本, perTp: TP 1 あたりの上がり幅 }
 //   ふつうの値を変えたいときだけ書くもの（KINDS を上書き）：
 //   canOnedari  … おねだりできるか
@@ -108,6 +109,22 @@ export const TARGETS = {
     legs: [{ x: -18, y: 0, r: 7 }, { x: 18, y: 0, r: 7 }],
     look: { skin: '#e8b890', hair: '#2a2a30', hat: 'band', bandColor: '#3a6ab0', top: '#f0e0b0', apron: '#3a8a4a', bottom: '#6b5a40', shoes: '#3a2a20', garment: 'apron' },
     onedari: { base: 0.35, perTp: 0.010 },
+  },
+  // 子ども連れの家族（親と子が手をつないで歩く）。てらまりんぐでは親の足2本と、子の短い足2本
+  family: {
+    kind: 'human',
+    durability: 3,
+    tp: 12,
+    drops: { item: 'candy', count: 3 },
+    motion: 'stomp',
+    period: 1.6,
+    legs: [{ x: -32, y: 0, r: 7 }, { x: -10, y: 0, r: 7 }, { x: 16, y: 4, r: 5, kid: true }, { x: 32, y: 4, r: 5, kid: true }],
+    bodyX: -21, // 親の体のまん中（足の位置の真ん中）
+    kidX: 24, // 子の体のまん中
+    look: { skin: '#f2c9a0', hair: '#4a3020', ponytail: true, top: '#e8a040', bottom: '#4a5a7a', shoes: '#3a2a20', garment: 'coat' },
+    kid: { skin: '#f6d0a8', hair: '#3a2a20', top: '#60a0e0', bottom: '#e05050', legs: '#f6d0a8', socks: '#f6f2ea', shoes: '#f080a0', garment: 'shorts', child: true },
+    wander: 8,
+    onedari: { base: 0.30, perTp: 0.009 },
   },
   // てらまるの飼い主（チュートリアルの家だけ）。家の中をゆっくり歩く。メロメロにしても去らない
   ownerA: {

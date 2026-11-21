@@ -113,7 +113,7 @@ export function makePerson(look, step = false) {
 
   // 足
   if (look.child) {
-    R(3, 18, 6, 3, look.bottom); // 半ズボン
+    R(3, 19, 6, 2, look.bottom); // 半ズボン
     R(3, 21, 2, 1 - lift, look.legs);
     R(7, 21, 2, 1, look.legs);
     R(3, 22 - lift, 2, 1, look.socks);
@@ -138,8 +138,8 @@ export function makePerson(look, step = false) {
   }
 
   // 体
-  const top = look.child ? 12 : 9;
-  const bot = look.child ? 18 : 17;
+  const top = look.child ? 15 : 9; // 子どもは体が短くて、背が低い
+  const bot = look.child ? 19 : 17;
   R(2, top, 8, bot - top, look.top);
   R(1, top + 1, 1, bot - top - 2, look.top);
   R(10, top + 1, 1, bot - top - 2, look.top);
