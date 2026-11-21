@@ -32,8 +32,6 @@ function outline(c, ctx) {
 //   ponytail（ポニーテール）・bun（おだんご）・mustache（口ひげの色）・hat（chef | cap | band）
 const CHEEK = '#f4a8a0';
 const MOUTH = '#a05a4a'; // 口（赤すぎると血に見えるので、茶色がかった色）
-const SMILE = '#6a3a30'; // 笑った口の線
-const SMILE_SOFT = '#d09a88'; // 口の線の角（うすくして、カーブをなめらかに見せる）
 function drawHead(R, look, y0, mood = 'smile') {
   const H = look.hair;
   // うしろ髪（顔より先に描く）
@@ -64,22 +62,23 @@ function drawHead(R, look, y0, mood = 'smile') {
   R(5, y0 + 9, 2, 1, look.skin); // 首
   if (look.longHair) { R(1, y0 + 6, 1, 1, H); R(10, y0 + 6, 1, 1, H); }
   // 目（2×2、左上に光）
-  for (const ex of [3, 7]) {
-    R(ex, y0 + 5, 2, 2, INK);
-    R(ex, y0 + 5, 1, 1, '#ffffff');
+  if (mood === 'happy') {
+    // にっこり目（^ ^）
+    for (const ex of [2, 7]) {
+      R(ex, y0 + 6, 1, 1, INK);
+      R(ex + 1, y0 + 5, 1, 1, INK);
+      R(ex + 2, y0 + 6, 1, 1, INK);
+    }
+  } else {
+    for (const ex of [3, 7]) {
+      R(ex, y0 + 5, 2, 2, INK);
+      R(ex, y0 + 5, 1, 1, '#ffffff');
+    }
   }
   // ほっぺと口
   R(2, y0 + 7, 1, 1, CHEEK);
   R(9, y0 + 7, 1, 1, CHEEK);
-  if (mood === 'happy') {
-    // にっこり：口の線だけ（中は塗らない）。角は少しうすい色でつないで、なめらかなカーブに
-    // 目とくっつかないよう、口は目から1段あけた あごの段だけ（角はうすい色）
-    R(4, y0 + 8, 1, 1, SMILE_SOFT);
-    R(7, y0 + 8, 1, 1, SMILE_SOFT);
-    R(5, y0 + 8, 2, 1, SMILE);
-  } else {
-    R(5, y0 + 8, 2, 1, MOUTH);
-  }
+  R(5, y0 + 8, 2, 1, MOUTH); // 口（笑顔は目であらわす）
   if (look.mustache) R(4, y0 + 7, 4, 1, look.mustache); // 口ひげ
   // メガネ：目のまわりに丸いふち（左右の四角の角を落とす）
   if (look.glasses) {
