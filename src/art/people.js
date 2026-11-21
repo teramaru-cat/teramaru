@@ -109,6 +109,29 @@ function drawFace(R, look, y0, mood) {
 
 // ---- 大きく見せる絵（かまって画面）：小さい姿を3倍にして、かどを丸め、ふちは1ドット、顔は細かく描き直す ----
 const K = 3;
+const IRIS = '#5a3a2a';
+const CHEEK_SOFT = '#f6c4b8';
+
+// 色の かたまりごとに、上のふちを明るく、右と下のふちを暗くして立体に見せる
+function shadeHD(ctx, w, h) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  const key = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? -1 : d[(y * w + x) * 4 + 3] === 0 ? -1 : (d[(y * w + x) * 4] << 16) | (d[(y * w + x) * 4 + 1] << 8) | d[(y * w + x) * 4 + 2]);
+  const out = new Uint8ClampedArray(d);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const k = key(x, y);
+    if (k < 0) continue;
+    let f = 0;
+    if (key(x + 1, y) !== k || key(x, y + 1) !== k || key(x, y + 2) !== k) f = -0.16;
+    else if (key(x, y - 1) !== k) f = 0.14;
+    else if (key(x - 1, y) !== k) f = 0.06;
+    if (!f) continue;
+    const i = (y * w + x) * 4;
+    for (let j = 0; j < 3; j++) out[i + j] = f > 0 ? d[i + j] + (255 - d[i + j]) * f : d[i + j] * (1 + f);
+  }
+  img.data.set(out);
+  ctx.putImageData(img, 0, 0);
+}
 function toHD(raw, look, y0, mood) {
   const w = raw.width;
   const h = raw.height;
@@ -120,11 +143,15 @@ function toHD(raw, look, y0, mood) {
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (!solid(x, y)) continue;
     const u = solid(x, y - 1), d = solid(x, y + 1), l = solid(x - 1, y), r = solid(x + 1, y);
-    if (!u && !l) ctx.clearRect(x * K, y * K, 1, 1);
-    if (!u && !r) ctx.clearRect(x * K + K - 1, y * K, 1, 1);
-    if (!d && !l) ctx.clearRect(x * K, y * K + K - 1, 1, 1);
-    if (!d && !r) ctx.clearRect(x * K + K - 1, y * K + K - 1, 1, 1);
+    // 2方向があいている角は、ななめに3ドット落とす（丸く見える）
+    const X0 = x * K, Y0 = y * K, X1 = X0 + K - 1, Y1 = Y0 + K - 1;
+    if (!u && !l) { ctx.clearRect(X0, Y0, 2, 1); ctx.clearRect(X0, Y0, 1, 2); }
+    if (!u && !r) { ctx.clearRect(X1 - 1, Y0, 2, 1); ctx.clearRect(X1, Y0, 1, 2); }
+    if (!d && !l) { ctx.clearRect(X0, Y1, 2, 1); ctx.clearRect(X0, Y1 - 1, 1, 2); }
+    if (!d && !r) { ctx.clearRect(X1 - 1, Y1, 2, 1); ctx.clearRect(X1, Y1 - 1, 1, 2); }
   }
+  shadeHD(ctx, c.width, c.height);
+  if (!look) { outline(c, ctx); c.hd = true; return c; }
   // 顔（細かいドット）。X・Y は頭の左上（小さい姿の (0, y0)）からの、細かいドットの位置
   const ox = K;
   const oy = (y0 + 1) * K;
@@ -138,13 +165,31 @@ function toHD(raw, look, y0, mood) {
     F(10, browY - 1, 4, 1, brow); F(22, browY - 1, 4, 1, brow);
   } else {
     for (const ex of [10, 22]) {
-      F(ex, 16, 4, 3, INK); F(ex + 1, 15, 2, 1, INK); F(ex + 1, 19, 2, 1, INK);
-      F(ex + 1, 16, 1, 1, '#ffffff');
+      F(ex, 15, 4, 5, INK); // ふち
+      F(ex + 1, 16, 2, 3, IRIS); // ひとみ
+      F(ex + 1, 18, 2, 1, shade(IRIS, 0.3));
+      F(ex + 1, 16, 1, 1, '#ffffff'); // 光
+      F(ex, 19, 1, 1, look.skin); F(ex + 3, 19, 1, 1, look.skin); // 下のかどを丸く
+      F(ex === 10 ? ex - 1 : ex + 4, 15, 1, 1, INK); // まつげ（外がわ）
     }
     F(10, browY, 4, 1, brow); F(22, browY, 4, 1, brow);
   }
-  // ほっぺ
-  F(6, 20, 3, 2, CHEEK); F(27, 20, 3, 2, CHEEK);
+  // ほっぺ（まん中がこい、まわりはうすい）
+  for (const cx of [6, 27]) {
+    F(cx, 20, 3, 2, CHEEK_SOFT);
+    F(cx + 1, 20, 1, 2, CHEEK);
+  }
+  // 髪のつや（帽子のない人）
+  if (!look.hat) {
+    const shine = shade(look.hair, 0.35);
+    F(9, 4, 5, 1, shine); F(8, 5, 2, 1, shine); F(22, 4, 3, 1, shine);
+    // 前髪の毛すじ
+    const dark = shade(look.hair, -0.3);
+    F(12, 9, 1, 2, dark); F(23, 9, 1, 2, dark); F(17, 7, 1, 3, dark);
+  }
+  // 耳のかげ・鼻・あごの下のかげ
+  F(3, 19, 1, 2, shade(look.skin, -0.15)); F(32, 19, 1, 2, shade(look.skin, -0.15));
+  F(17, 20, 2, 1, shade(look.skin, -0.12));
   // 口
   if (mood === 'happy') {
     F(16, 22, 4, 1, MOUTH); F(16, 23, 1, 1, MOUTH); F(19, 23, 1, 1, MOUTH);
@@ -167,6 +212,29 @@ function toHD(raw, look, y0, mood) {
   outline(c, ctx);
   c.hd = true;
   return c;
+}
+
+// すでにふちのある小さい絵（てらまる など）を、細かいドットの大きい絵に
+export function refineHD(src) {
+  const w = src.width;
+  const h = src.height;
+  const [raw, rctx] = makeCanvas(w, h);
+  rctx.drawImage(src, 0, 0);
+  // 外がわの太いふち（すきまに接する黒）をはずしてから、3倍にして1ドットのふちを付け直す
+  const img = rctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  const ink = [42, 29, 23];
+  const empty = (x, y) => x < 0 || y < 0 || x >= w || y >= h || d[(y * w + x) * 4 + 3] === 0;
+  const kill = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4;
+    if (d[i + 3] === 0) continue;
+    if (Math.abs(d[i] - ink[0]) + Math.abs(d[i + 1] - ink[1]) + Math.abs(d[i + 2] - ink[2]) > 30) continue;
+    if (empty(x - 1, y) || empty(x + 1, y) || empty(x, y - 1) || empty(x, y + 1)) kill.push(i);
+  }
+  for (const i of kill) d[i + 3] = 0;
+  rctx.putImageData(img, 0, 0);
+  return toHD(raw, null);
 }
 
 export const PERSON_W = 14;

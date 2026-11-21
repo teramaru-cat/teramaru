@@ -2,7 +2,7 @@
 // なでなで（見るだけ）・おもちゃ（タップでパンチ）・追いかけっこ（動かして捕まえる）
 // この間はプレイの時間は止まる。終わったらスコアと残り時間を足す。
 
-import { screen } from '../core/renderer.js';
+import { screen, shade } from '../core/renderer.js';
 import { input, KEY } from '../core/input.js';
 import { audio } from '../core/audio.js';
 import { drawText, textWidth } from '../core/text.js';
@@ -253,16 +253,16 @@ export class KamatteScene {
     }
 
     // てらまる
-    let img = SPR.cat.right[0];
+    let img = SPR.catHD.right;
     let cy = 0;
     let squish = 0;
     if (this.kind === 'nade') {
-      img = SPR.cat.down[0];
+      img = SPR.catHD.down;
       squish = Math.sin(t * 9) > 0.3 ? 3 : 0; // なでられて頭が下がる
     }
     if (this.kind === 'toy' && this.punch > 0) cy = -14;
-    const cw = img.width * S;
-    const ch = img.height * S - squish;
+    const cw = img.width;
+    const ch = img.height - squish;
     const cx = b.x + 70 - cw / 2;
     const cyy = b.y + PH - 6 - ch + cy;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
@@ -276,26 +276,37 @@ export class KamatteScene {
       const look = this.target.def.look ?? {};
       const sx = px + 8;
       const sy = py + (person.shoulderY + 1) * pS;
-      const arm = (w, col) => {
+      const top = look.top ?? '#3c4a6a';
+      const arm = (w, col, dx = 0, dy = 0) => {
         ctx.strokeStyle = col;
         ctx.lineWidth = w;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.lineTo(hx + 6, hy + 2);
+        ctx.moveTo(sx + dx, sy + dy);
+        ctx.lineTo(hx + 6 + dx, hy + 4 + dy);
         ctx.stroke();
       };
+      // そで：ふち → 暗い色 → 服の色 → 明るいすじ（立体に）
       arm(8, UI.ink);
-      arm(5, look.top ?? '#3c4a6a');
+      arm(6, shade(top, -0.18));
+      arm(4, top, -1, -1);
+      arm(1, shade(top, 0.25), -2, -2);
       ctx.lineCap = 'butt';
+      // 手（丸みのある手のひら・指のすじ）
+      const skin = look.skin ?? '#f2c9a0';
       ctx.fillStyle = UI.ink;
-      ctx.fillRect(hx - 8, hy - 1, 16, 8);
-      ctx.fillStyle = look.skin ?? '#f2c9a0';
-      ctx.fillRect(hx - 7, hy, 14, 6);
-      ctx.fillStyle = 'rgba(58,42,32,0.35)';
-      ctx.fillRect(hx - 4, hy + 5, 1, 1);
-      ctx.fillRect(hx - 1, hy + 5, 1, 1);
-      ctx.fillRect(hx + 2, hy + 5, 1, 1);
+      ctx.fillRect(hx - 8, hy, 14, 8);
+      ctx.fillRect(hx - 7, hy - 1, 12, 10);
+      ctx.fillStyle = skin;
+      ctx.fillRect(hx - 7, hy + 1, 12, 6);
+      ctx.fillRect(hx - 6, hy, 10, 8);
+      ctx.fillStyle = shade(skin, 0.25);
+      ctx.fillRect(hx - 5, hy + 1, 7, 1);
+      ctx.fillStyle = shade(skin, -0.2);
+      ctx.fillRect(hx - 6, hy + 7, 10, 1);
+      ctx.fillRect(hx - 4, hy + 4, 1, 3);
+      ctx.fillRect(hx - 1, hy + 4, 1, 3);
+      ctx.fillRect(hx + 2, hy + 4, 1, 3);
       // 気持ちよさそう
       if (Math.floor(t * 3) % 2 === 0) {
         ctx.fillStyle = UI.pink;

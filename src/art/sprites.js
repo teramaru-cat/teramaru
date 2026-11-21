@@ -3,7 +3,7 @@
 
 import { CAT } from './palette.js';
 import { makeCanvas } from '../core/renderer.js';
-import { makePerson, makeCrouch, FOOD_ROWS, FOOD_ICON } from './people.js';
+import { makePerson, makeCrouch, refineHD, FOOD_ROWS, FOOD_ICON } from './people.js';
 import { TARGETS } from '../data/targets.js';
 import { ANIMAL_ROWS } from './animals.js';
 
@@ -158,6 +158,8 @@ export function buildSprites() {
     left: frames(SIDE_TOP, SIDE_LEGS, LEFT_PAL, true),
   };
   SPR.catLying = makeSprite(LYING, CAT);
+  // かまって画面の大きい てらまる（細かいドット）
+  SPR.catHD = { down: refineHD(SPR.cat.down[0]), right: refineHD(SPR.cat.right[0]) };
   // ほかの猫（形はてらまると同じで、色ちがい）：黒猫・グレーのしま猫
   const STRAY = {
     black: { ...CAT, c: '#3d3640', b: '#2e2a32', w: '#4f4856', e: '#e8d040', g: '#e8d040', p: '#c87080' },
