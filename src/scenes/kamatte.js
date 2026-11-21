@@ -2,7 +2,7 @@
 // なでなで（見るだけ）・おもちゃ（タップでパンチ）・追いかけっこ（動かして捕まえる）
 // この間はプレイの時間は止まる。終わったらスコアと残り時間を足す。
 
-import { screen } from '../core/renderer.js';
+import { screen, makeCanvas } from '../core/renderer.js';
 import { input, KEY } from '../core/input.js';
 import { audio } from '../core/audio.js';
 import { drawText, textWidth } from '../core/text.js';
@@ -132,9 +132,11 @@ export class KamatteScene {
   updateNade() {
     for (const p of input.fresh()) p.role = 'none';
     if (Math.floor(this.pt * 2.5) !== Math.floor((this.pt - 1 / 60) * 2.5)) {
-      const s = this.scr(76, 50);
+      // 人のなでなで（アップ）は、てらまるの顔にかからないよう左のあいたところに
+      const human = this.target.def.kind === 'human';
+      const s = human ? this.scr(42, 58) : this.scr(76, 50);
       const words = this.target.def.words;
-      this.fx.add(new PopText(s.x + (Math.random() - 0.5) * 30, s.y, words[Math.random() < 0.5 ? 0 : 1], UI.pink, 0.8));
+      this.fx.add(new PopText(s.x + (Math.random() - 0.5) * (human ? 16 : 30), s.y, words[Math.random() < 0.5 ? 0 : 1], UI.pink, 0.8));
     }
   }
 
@@ -252,7 +254,27 @@ export class KamatteScene {
     ctx.fillStyle = '#cbb894';
     for (let y = 48; y < PH; y += 16) ctx.fillRect(b.x, b.y + y, PW, 1);
     if (this.kind === 'chase') this.drawChase(ctx, b);
+    else if (this.kind === 'nade' && this.target.def.kind === 'human') this.drawPetZoom(ctx, b);
     else this.drawPair(ctx, b);
+  }
+
+  // 人のなでなで：てらまるが主役の アップ。人・てらまる・腕を、半分の大きさの絵に等倍で描いてから、
+  // まとめて2倍にする（この場面の中のドットの大きさは全部そろう）
+  drawPetZoom(ctx, b) {
+    const w = PW / 2;
+    const h = PH / 2;
+    if (!this.zoom) this.zoom = makeCanvas(w, h);
+    const [off, o] = this.zoom;
+    o.clearRect(0, 0, w, h);
+    const person = SPR.peopleHD[this.target.id][1];
+    const wallH = person.standing ? WALL_HIGH : 0;
+    // いちばん高い頭がちょうど入るように、地面の位置を決める（立つ人は足もとが下で切れる）
+    // 上の見出し（なでなで）の下から始まるように。立つ人のときは足もと・塀の下が切れる
+    const tallest = Math.max(person.height, SPR.catHD.down.height + wallH);
+    const ground = Math.max(h - 3, tallest + 11);
+    // drawPair は「b.y + PH - 6 が地面、b.x + 108 が てらまる」なので、その位置に合わせた箱を渡す
+    this.drawPair(o, { x: 52 - 108, y: ground - (PH - 6) });
+    ctx.drawImage(off, b.x, b.y, PW, PH);
   }
 
   // なでなで・おもちゃ：右に人（大きく）、左にてらまる（大きく）
@@ -265,14 +287,14 @@ export class KamatteScene {
     // 人は細かいドットの大きい絵（3倍の大きさで描いてあるので、そのまま 1倍で出す）
     const person = animal ? frames[this.kind === 'nade' && Math.floor(t * 3) % 2 ? 1 : 0] : SPR.peopleHD[this.target.id][this.kind === 'nade' ? 1 : 0];
     const pS = person.hd ? 1 : S;
-    // なでなで（人）：てらまるがまん中。人はそのとなりに、ならんですわる（どちらも うしろ姿）。
+    // なでなで（人）：てらまるがまん中で、こっちを向いておすわり。人はそのとなりに うしろ姿ですわる。
     // 立ってなでる人（腰の悪いおばあちゃん）のときは、てらまるはブロック塀の上
     const petBack = this.kind === 'nade' && !animal;
     const onWall = petBack && person.standing;
     const wallH = onWall ? WALL_HIGH : 0;
     const catX = petBack ? b.x + 108 : b.x + 70;
     if (onWall) drawWall(ctx, catX - 18, b.y + PH - 6 - wallH, 36, wallH);
-    const px = petBack ? catX + 6 : b.x + (this.kind === 'nade' ? 92 : animal ? 140 : 150);
+    const px = petBack ? catX + 12 : b.x + (this.kind === 'nade' ? 92 : animal ? 140 : 150);
     const py = b.y + PH - 6 - person.height * pS;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
     ctx.fillRect(px + 4, b.y + PH - 8, person.width * pS - 8, 4);
@@ -301,8 +323,7 @@ export class KamatteScene {
     let cy = 0;
     let squish = 0;
     if (this.kind === 'nade') {
-      // 人になでられるときは うしろ姿（しっぽをゆらす）。動物とは正面
-      img = petBack ? SPR.catHD.back[Math.floor(t * 3) % 2] : SPR.catHD.down;
+      img = SPR.catHD.down; // こっちを向いて おすわり
       squish = Math.sin(t * 9) > 0.3 ? 1 : 0; // なでられて頭が下がる
     }
     if (this.kind === 'toy' && this.punch > 0) cy = -14;
@@ -344,7 +365,7 @@ export class KamatteScene {
       const d = Math.min(Math.hypot(dx, dy), L * 2 - 0.01);
       const base = Math.atan2(dy, dx);
       const bend = Math.acos(Math.min(1, d / (2 * L)));
-      // ひじは上に少し上げ、前腕が上から頭にのる形（頭をかくさない）
+      // ひじは少し上へ。前腕が上から頭にのる（顔をかくさない）
       const e1 = { x: sx + Math.cos(base + bend) * L, y: sy + Math.sin(base + bend) * L };
       const e2 = { x: sx + Math.cos(base - bend) * L, y: sy + Math.sin(base - bend) * L };
       const el = e1.y < e2.y ? e1 : e2;
@@ -367,7 +388,7 @@ export class KamatteScene {
       // 手（ドット絵）
       drawRows(ctx, HAND, hx - 4, hy - 2, { o: UI.ink, s: this.target.def.look?.skin ?? '#f2c9a0' });
       // 気持ちよさそう
-      if (!petBack && Math.floor(t * 3) % 2 === 0) {
+      if (Math.floor(t * 3) % 2 === 0) {
         ctx.fillStyle = UI.pink;
         ctx.fillRect(Math.round(cx) + 5, Math.round(cyy) + 11, 2, 1);
         ctx.fillRect(Math.round(cx) + cw - 7, Math.round(cyy) + 11, 2, 1);
