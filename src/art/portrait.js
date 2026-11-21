@@ -364,3 +364,132 @@ export function makePortrait(look, pose = 'stand') {
   c.hand = { x: BX + 3, y: bodyTop + (look.child ? 13 : 20) };
   return c;
 }
+
+// ---- 大きいうしろ姿（人のなでなで・アップ用）----
+// てらまるより ずっと大きい人（本物に近い比率：頭は小さめ、肩はばが広い）。
+// 小さい絵を拡大せず、この大きさで形（だ円・四角）から1ドットずつ描く。ベタ塗り・ふち1ドット・左右対称。
+// pose：'sit'（正座）| 'stand'（立つ。腰の悪いおばあちゃん）。向かって左の腕は、のばす腕を別に描くので描かない
+export function makeBigBack(look, pose = 'sit') {
+  const k = look.child ? 0.78 : 1; // 子どもは小さく
+  const W = 52;
+  const H = 96;
+  const g = Array.from({ length: H }, () => Array(W).fill('.'));
+  const cx = W / 2; // まん中（ドットのさかい）
+  const set = (x, y, ch) => { if (y >= 0 && y < H && x >= 0 && x < W) g[y][x] = ch; };
+  // だ円（ドットの中心が中に入るところを塗る）
+  const ell = (ex, ey, rx, ry, ch, yMax = Infinity) => {
+    for (let y = Math.floor(ey - ry); y <= Math.ceil(ey + ry); y++) for (let x = Math.floor(ex - rx); x <= Math.ceil(ex + rx); x++) {
+      const dx = (x + 0.5 - ex) / rx;
+      const dy = (y + 0.5 - ey) / ry;
+      if (dx * dx + dy * dy <= 1 && y <= yMax) set(x, y, ch);
+    }
+  };
+  // 左右対称の段（y ごとの半はば）
+  const rows = (y0, halfs, ch) => halfs.forEach((hw, i) => { for (let x = Math.round(cx - hw); x < Math.round(cx + hw); x++) set(x, y0 + i, ch); });
+
+  const R = (v) => Math.round(v * k);
+  const TOP = 10; // 帽子・おだんごの分
+  const headR = R(10);
+  const headY = TOP + headR + 1; // 頭のまん中
+  const neckY = headY + headR - 1;
+  const shY = neckY + 3; // 肩の上
+  const shW = R(17); // 肩の半はば
+  const torsoH = R(22);
+  const waistW = R(14);
+
+  // 髪（うしろ）：肩までの髪・ポニーテールは体より先に
+  if (look.longHair) rows(headY, Array(R(20)).fill(R(11)).map((v, i, a) => (i > a.length - 3 ? v - 1 : v)), 'h');
+
+  // 体
+  const torso = [];
+  for (let i = 0; i < torsoH; i++) {
+    const t = i / torsoH;
+    // 肩は丸く（はじめの3段で広がる）、そこから腰へ少しすぼまる
+    const hw = i < 3 ? shW - [4, 2, 1][i] : shW - (shW - waistW) * Math.max(0, (t - 0.2) / 0.8);
+    torso.push(hw);
+  }
+  rows(neckY, [R(3), R(3), R(3)], 's'); // 首のうしろ
+  rows(shY, torso, 't');
+  // 向かって右の腕（体の横にたらす）。腕と体のさかいに線
+  const armX = Math.round(cx + shW) - R(5);
+  for (let y = shY + 3; y < shY + torsoH + 2; y++) {
+    for (let x = armX; x < armX + R(5); x++) set(x, y, 't');
+    set(armX - 1, y, 'o');
+  }
+  ell(armX + R(5) / 2, shY + torsoH + 3, R(3), R(2.5), 's'); // 手
+  // 向かって左の肩：腕のつけね（のばす腕はゲームの中で描く）
+  const baseY = shY + torsoH;
+  if (pose === 'sit') {
+    // 正座：おしりと、たたんだ足（横に広い）。下に足の裏が2つ
+    const lowW = R(18);
+    rows(baseY - 2, [waistW + 1, lowW - 2, lowW - 1, lowW, lowW, lowW, lowW, lowW - 1, lowW - 3], look.garment === 'skirt' ? 'K' : 'B');
+    ell(cx - R(6), baseY + 8, R(3.5), R(2), 'f');
+    ell(cx + R(6), baseY + 8, R(3.5), R(2), 'f');
+  } else {
+    // 立つ：スカート（すそが広がる）と足
+    const skirtH = R(22);
+    const sk = [];
+    for (let i = 0; i < skirtH; i++) sk.push(waistW + 1 + Math.round((i / skirtH) * R(5)));
+    rows(baseY - 1, sk, look.garment === 'skirt' ? 'K' : 'B');
+    const ly = baseY - 1 + skirtH;
+    for (const lx of [cx - R(7), cx + R(3)]) {
+      for (let y = ly; y < ly + R(14); y++) for (let x = Math.round(lx); x < Math.round(lx + R(4)); x++) set(x, y, 'L');
+      ell(lx + R(2), ly + R(14) + 1, R(3.5), R(2), 'f');
+    }
+    if (look.cane) {
+      const x = armX + R(7);
+      for (let y = shY + torsoH + 2; y < ly + R(15); y++) set(x, y, 'X');
+      set(x - 1, shY + torsoH + 1, 'X'); set(x - 2, shY + torsoH + 1, 'X');
+    }
+  }
+
+  // 頭（うしろは髪。耳だけ肌）
+  ell(cx - headR - 0.5, headY + 1, 2, 3, look.longHair ? 'h' : 's');
+  ell(cx + headR + 0.5, headY + 1, 2, 3, look.longHair ? 'h' : 's');
+  ell(cx, headY, headR, headR + 0.5, 'h');
+  if (look.ponytail) {
+    ell(cx, headY + headR - 2, R(2.5), R(2), 'D'); // 髪どめ
+    rows(headY + headR, Array(R(14)).fill(R(2.5)).map((v, i, a) => (i > a.length - 4 ? v - 1 : v)), 'h');
+  }
+  if (look.bun) ell(cx, headY - headR, R(4), R(3.5), 'h');
+  if (look.hat === 'cap') {
+    ell(cx, headY, headR + 0.5, headR + 1, 'C', headY - 2);
+    rows(headY - 2, [headR + 0.5], 'o');
+  }
+  if (look.hat === 'chef') {
+    ell(cx, headY - headR - 2, headR + 2, R(7), 'W');
+    rows(headY - headR + 1, Array(R(5)).fill(headR - 0.5), 'W');
+    rows(headY - headR + 1, [headR - 0.5], 'o');
+  }
+  if (look.hat === 'band') rows(headY - R(3), [headR, headR], 'D');
+
+  // まわりに1ドットのふち
+  const add = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (g[y][x] !== '.') continue;
+    if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => g[y + dy]?.[x + dx] && g[y + dy][x + dx] !== '.')) add.push([x, y]);
+  }
+  for (const [x, y] of add) g[y][x] = 'o';
+  let top = 0;
+  while (top < H && g[top].every((ch) => ch === '.')) top++;
+  let bot = H;
+  while (bot > top && g[bot - 1].every((ch) => ch === '.')) bot--;
+
+  const pal = {
+    o: INK, h: look.hair, s: look.skin, t: look.top, B: look.bottom ?? look.top, f: look.shoes, W: WHITE,
+    K: look.skirt, L: look.legs ?? look.skin, C: look.capColor, D: look.bandColor ?? (look.ponytail ? '#e07a8a' : WHITE), X: look.cane,
+  };
+  const [c, ctx] = makeCanvas(W, bot - top);
+  for (let y = top; y < bot; y++) for (let x = 0; x < W; x++) {
+    const col = pal[g[y][x]];
+    if (!col) continue;
+    ctx.fillStyle = col;
+    ctx.fillRect(x, y - top, 1, 1);
+  }
+  c.hd = true;
+  c.big = true;
+  c.standing = pose === 'stand';
+  // のばす腕のつけね（向かって左の肩）
+  c.shoulder = { x: Math.round(cx - shW) + R(3), y: shY - top + R(3) };
+  return c;
+}

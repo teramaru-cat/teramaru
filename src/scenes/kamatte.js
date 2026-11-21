@@ -16,6 +16,15 @@ import { Effects, PopText, heartAbsorb } from '../game/effects.js';
 import { tr } from '../i18n/index.js';
 
 // なでる手（ドット絵。o＝ふち s＝肌）
+const HAND_BIG = [
+  '.oooooooooo.',
+  'osssssssssso',
+  'osssssssssso',
+  'osssssssssso',
+  'osssssssssso',
+  'osossossosso',
+  '.oooooooooo.',
+];
 const HAND = [
   '.oooooo.',
   'osssssso',
@@ -33,7 +42,7 @@ function drawRows(ctx, rows, x0, y0, pal) {
 
 // ブロック塀（てらまるが すわる台）。ベタ塗りに、ブロックの目地の線だけ
 // 立ってなでる人（腰の悪いおばあちゃん）のときの、ブロック塀の高さ
-const WALL_HIGH = 22;
+const WALL_HIGH = 30;
 function drawWall(ctx, x, y, w, h) {
   ctx.fillStyle = 'rgba(40,30,20,0.25)';
   ctx.fillRect(x + 2, y + h, w - 4, 2);
@@ -232,7 +241,9 @@ export class KamatteScene {
     // 見出し
     const title = (this.kind === 'nade' && this.target.def.kamatteTitle) || TITLE(this.kind);
     // 点数を出すときは見出しのかわりに上の段へ（人の頭にかぶらないように）
-    if (this.phase !== 'out') drawText(ctx, title, W / 2, b.y + 3, { font: 'small', scale: 2, color: UI.orangeD, outline: UI.white, align: 'center' });
+    // 人のなでなで（アップ）は、人の頭にかからないよう左上に
+    const petZoom = this.kind === 'nade' && this.target.def.kind === 'human';
+    if (this.phase !== 'out') drawText(ctx, title, petZoom ? b.x + 6 : W / 2, b.y + 3, { font: 'small', scale: 2, color: UI.orangeD, outline: UI.white, align: petZoom ? 'left' : 'center' });
     this.fx.draw(ctx);
     if (this.phase === 'play') this.drawGuide(ctx, b);
     if (this.phase === 'out') this.drawScore(ctx, b);
@@ -271,12 +282,12 @@ export class KamatteScene {
     if (!this.zoom) this.zoom = makeCanvas(w, h);
     const [off, o] = this.zoom;
     o.clearRect(0, 0, w, h);
-    const person = SPR.peopleHD[this.target.id][1];
+    const person = SPR.peopleBig[this.target.id];
     const wallH = person.standing ? WALL_HIGH : 0;
     // いちばん高い頭がちょうど入るように、地面の位置を決める（立つ人は足もとが下で切れる）
-    // 上の見出し（なでなで）の下から始まるように。立つ人のときは足もと・塀の下が切れる
+    // いちばん高い頭が上はしの すぐ下に来るように（見出しは左上にずらす）。立つ人のときは足もと・塀の下が切れる
     const tallest = Math.max(person.height, SPR.catHD.down.height + wallH);
-    const ground = Math.max(h - 3, tallest + 11);
+    const ground = Math.max(h - 2, tallest + 3);
     // drawPair は「b.y + PH - 6 が地面、b.x + 108 が てらまる」なので、その位置に合わせた箱を渡す
     this.drawPair(o, { x: 52 - 108, y: ground - (PH - 6) });
     ctx.drawImage(off, b.x, b.y, PW, PH);
@@ -290,11 +301,12 @@ export class KamatteScene {
     const animal = this.target.def.kind !== 'human';
     const frames = SPR.people[this.target.id];
     // 人は細かいドットの大きい絵（3倍の大きさで描いてあるので、そのまま 1倍で出す）
-    const person = animal ? frames[this.kind === 'nade' && Math.floor(t * 3) % 2 ? 1 : 0] : SPR.peopleHD[this.target.id][this.kind === 'nade' ? 1 : 0];
+    const petBack = this.kind === 'nade' && !animal;
+    // 人のなでなで（アップ）は大きいうしろ姿
+    const person = animal ? frames[this.kind === 'nade' && Math.floor(t * 3) % 2 ? 1 : 0] : petBack ? SPR.peopleBig[this.target.id] : SPR.peopleHD[this.target.id][this.kind === 'nade' ? 1 : 0];
     const pS = person.hd ? 1 : S;
     // なでなで（人）：てらまるがまん中で、こっちを向いておすわり。人はそのとなりに うしろ姿ですわる。
     // 立ってなでる人（腰の悪いおばあちゃん）のときは、てらまるはブロック塀の上
-    const petBack = this.kind === 'nade' && !animal;
     const onWall = petBack && person.standing;
     const wallH = onWall ? WALL_HIGH : 0;
     const catX = petBack ? b.x + 108 : b.x + 70;
@@ -316,8 +328,8 @@ export class KamatteScene {
     }
     // 家族：子どもも親のとなりに（なでなでは一緒にしゃがむ）
     if (this.target.def.kid) {
-      const kid = SPR.kidsHD[this.target.id][this.kind === 'nade' ? 1 : 0];
-      const kx = px + person.width * pS - 10;
+      const kid = petBack ? SPR.kidsBig[this.target.id] : SPR.kidsHD[this.target.id][this.kind === 'nade' ? 1 : 0];
+      const kx = px + person.width * pS - (petBack ? 16 : 10);
       const kbob = Math.floor(t * 4) % 2; // うれしくて ぴょこぴょこ
       ctx.fillStyle = 'rgba(40,30,20,0.25)';
       ctx.fillRect(kx + 6, b.y + PH - 8, kid.width - 12, 4);
@@ -384,7 +396,8 @@ export class KamatteScene {
         }
       };
       // ふち → 服の色（ドットの格子にそって。ぼかしなし）
-      for (const [r, col] of [[2, UI.ink], [1, look.top ?? '#3c4a6a']]) {
+      const thick = person.big ? 1 : 0; // 大きい人は腕も太く
+      for (const [r, col] of [[2 + thick, UI.ink], [1 + thick, look.top ?? '#3c4a6a']]) {
         ctx.fillStyle = col;
         seg(sx, sy, el.x, el.y, r);
         seg(el.x, el.y, wx, wy, r);
@@ -392,7 +405,7 @@ export class KamatteScene {
     }
     if (this.kind === 'nade' && !animal) {
       // 手（ドット絵）
-      drawRows(ctx, HAND, hx - 4, hy - 2, { o: UI.ink, s: this.target.def.look?.skin ?? '#f2c9a0' });
+      drawRows(ctx, petBack ? HAND_BIG : HAND, hx - (petBack ? 6 : 4), hy - (petBack ? 3 : 2), { o: UI.ink, s: this.target.def.look?.skin ?? '#f2c9a0' });
       // 気持ちよさそう
       if (Math.floor(t * 3) % 2 === 0) {
         ctx.fillStyle = UI.pink;

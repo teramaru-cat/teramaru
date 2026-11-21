@@ -4,7 +4,7 @@
 import { CAT } from './palette.js';
 import { makeCanvas } from '../core/renderer.js';
 import { makePerson, makeCrouch, FOOD_ROWS, FOOD_ICON } from './people.js';
-import { makePortrait } from './portrait.js';
+import { makePortrait, makeBigBack } from './portrait.js';
 import { TARGETS } from '../data/targets.js';
 import { ANIMAL_ROWS } from './animals.js';
 
@@ -345,9 +345,12 @@ export function buildSprites() {
     if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true), makeCrouch(t.look)];
     // かまって画面の大きい絵（細かいドット）：[立ち, しゃがみ]
     if (t.kind === 'human') SPR.peopleHD = { ...SPR.peopleHD, [id]: [makePortrait(t.look, 'stand'), makePortrait(t.look, t.look.cane ? 'backStand' : 'backSit')] }; // なでなでは うしろ姿。杖の人は腰が悪いので立ったまま
+    // 人のなでなで（アップ）の大きいうしろ姿。杖の人は腰が悪いので立ったまま
+    if (t.kind === 'human') SPR.peopleBig = { ...SPR.peopleBig, [id]: makeBigBack(t.look, t.look.cane ? 'stand' : 'sit') };
     else if (ANIMAL_ROWS[id]) SPR.people[id] = ANIMAL_ROWS[id].frames.map((rows) => makeSprite(rows, ANIMAL_ROWS[id].pal));
     if (t.owner) SPR.owners = { ...SPR.owners, [id]: [makePerson(t.owner), makePerson(t.owner, true)] };
     if (t.kid) SPR.kids = { ...SPR.kids, [id]: [makePerson(t.kid), makePerson(t.kid, true), makeCrouch(t.kid)] };
     if (t.kid) SPR.kidsHD = { ...SPR.kidsHD, [id]: [makePortrait(t.kid, 'stand'), makePortrait(t.kid, 'backSit')] };
+    if (t.kid) SPR.kidsBig = { ...SPR.kidsBig, [id]: makeBigBack(t.kid, 'sit') };
   }
 }

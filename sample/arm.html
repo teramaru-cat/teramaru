@@ -34,11 +34,10 @@
 
     // 腕の形の候補（gap：てらまると人のあいだ、k：腕の長さ、elbow：ひじの向き、tx・ty：手の位置）
     const STYLES = [
-      { name: '① いまの形', sub: 'ひじを上げて、前腕を頭にのせる', arm: { gap: 12, k: 0.56, elbow: 'up', tx: 0, ty: 0 } },
-      { name: '② たたむ（ななめ）', sub: 'ひじを下にたたみ、前腕がななめに頭へ', arm: { gap: 8, k: 0.6, elbow: 'down', tx: 1, ty: 0 } },
-      { name: '③ たたむ（ぴったり）', sub: 'となりにくっついて、ひじを体の横に。前腕は てらまるの肩の前を通る', arm: { gap: 4, k: 0.66, elbow: 'down', tx: 2, ty: 1 } },
-      { name: '④ ほっぺをなでる', sub: 'ひじをたたんで、手は顔の横', arm: { gap: 6, k: 0.62, elbow: 'down', tx: 7, ty: 8 } },
-      { name: '⑤ 首から背中をなでる', sub: 'ひじをたたんで、手は首のうしろ', arm: { gap: 6, k: 0.62, elbow: 'down', tx: 6, ty: 14 } },
+      { name: '① ひじを上げる', sub: '上腕を上げて、前腕を横から頭にのせる', arm: { gap: 10, k: 0.56, elbow: 'up', tx: 0, ty: 0 } },
+      { name: '② たたむ（ななめ）', sub: 'ひじを下にたたみ、前腕がななめに頭へ（てらまるに少しかぶる）', arm: { gap: 6, k: 0.6, elbow: 'down', tx: 1, ty: 0 } },
+      { name: '③ たたむ（ぴったり）', sub: 'となりにくっついて、ひじを体の横に。前腕は てらまるの肩の前を通って頭へ', arm: { gap: 2, k: 0.66, elbow: 'down', tx: 2, ty: 0 } },
+      { name: '④ 上からそっと', sub: 'ひじを少しだけ曲げ、上から手をおろして頭にのせる', arm: { gap: 8, k: 0.52, elbow: 'up', tx: 1, ty: -1 } },
     ];
     const WHO = ['salaryman', 'grandma', 'family'];
 
