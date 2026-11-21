@@ -151,41 +151,37 @@ const BODY_CHILD = [
   '......fffffff..',
 ];
 
-// しゃがみ（ひざを左右に開く）。向かって左の腕は、のばした腕を別に描くので消す（noArm）
+// ひざをそろえて座る（正座。正面から見ると、ひざが2つならぶ）。
+// 向かって左の腕は、のばした腕を別に描くので消す
 const CROUCH_ADULT = [
   '............sss',
   '............sss',
   '.....tttttttttt',
   '...tttttttttttt',
   '..ttttttttttttt',
-  ...Array(8).fill(ARM),
-  '.BsssoBBBBBBBBB',
-  'BBsssBBBBBBBBBB',
-  'BBBBBBBBBBBBBBo',
-  'BBBBBBBBBBBBoo.',
-  'BBBBBBBBBoo....',
-  '.BBBBBBo.......',
-  '.BBBBB.........',
-  '.BBBBB.........',
-  '.BBBBB.........',
-  'ffffff.........',
-  'ffffff.........',
+  ...Array(7).fill(ARM),
+  '..sssottttttttt',
+  '...s.oBBBBBBBBB',
+  '....BBBBBBBBBBB',
+  '...BBBBBBBBBBBo',
+  '...BBBBBBBBBBBo',
+  '...BBBBBBBBBBBo',
+  '....BBBBBBBBBo.',
+  '......BBBBBBo..',
 ];
-const CROUCH_SKIRT_LEGS = ['KKKKKKKKKKKKKKK', 'KKKKKKKKKKKKKKK', 'KKKKKKKKKKKKKKK', 'KKKKKKKKKKKKKKK', '.LLLL..........', '.LLLL..........', '.LLLL..........', 'ffffff.........', 'ffffff.........'];
 const CROUCH_CHILD = [
   '............sss',
   '.......tttttttt',
   '.....tttttttttt',
   '....ttttttttttt',
-  ...Array(5).fill(CHILD_ARM),
-  '...BsssoBBBBBBB',
-  '..BBsssBBBBBBBB',
-  '..BBBBBBBBBBBBo',
-  '..LLLL.........',
-  '..LLLL.........',
-  '..SSSS.........',
-  '.ffffff........',
-  '.ffffff........',
+  ...Array(4).fill(CHILD_ARM),
+  '....sssottttttt',
+  '.....s.oBBBBBBB',
+  '......BBBBBBBBB',
+  '......LLLLLLLLo',
+  '......LLLLLLLLo',
+  '.......LLLLLLo.',
+  '.........LLLo..',
 ];
 
 // 服のかざり（半分の表に重ねる。y は体の行）
@@ -213,7 +209,7 @@ function bodyRows(look, pose) {
   let half;
   if (pose === 'crouch') {
     if (child) half = CROUCH_CHILD;
-    else if (look.garment === 'skirt') half = [...CROUCH_ADULT.slice(0, 13), ...CROUCH_SKIRT_LEGS];
+    else if (look.garment === 'skirt') half = CROUCH_ADULT.map((r) => r.replace(/B/g, 'K'));
     else half = CROUCH_ADULT;
   } else if (child) half = BODY_CHILD;
   else half = [...BODY_ADULT, ...(look.garment === 'skirt' ? SKIRT : PANTS)];
@@ -249,8 +245,9 @@ function drawFace(g, x0, y0, look, happy) {
 
 // 人を描く。pose：'stand' | 'crouch'
 export function makePortrait(look, pose = 'stand') {
-  const happy = pose === 'crouch';
-  const body = bodyRows(look, pose);
+  // pose：'stand'（立ち）| 'crouch'（正座でなでる）| 'standPet'（立ったまま なでる。腰の悪いおばあちゃん）
+  const happy = pose !== 'stand';
+  const body = bodyRows(look, pose === 'standPet' ? 'stand' : pose);
   const TOP = 9; // 帽子・おだんごの分
   const W = 34;
   const BX = 2; // 体の左はし
@@ -264,15 +261,14 @@ export function makePortrait(look, pose = 'stand') {
   if (look.longHair) put(BACK.longHair.rows, HX + BACK.longHair.x, TOP + BACK.longHair.y);
   if (look.ponytail) put(BACK.ponytail.rows, HX + BACK.ponytail.x, TOP + BACK.ponytail.y);
   put(body, BX, TOP + HEAD_H - 1);
-  if (pose === 'crouch') {
+  if (pose !== 'stand') {
     // 向かって左の腕（と手）を消して、体のはしにする
     const y0 = TOP + HEAD_H - 1;
     const armEnd = look.child ? 7 : 5; // 腕と体のさかいの線の列
-    for (let y = y0 + 2; y < y0 + 16; y++) for (let x = BX; x <= BX + armEnd; x++) {
+    const last = pose === 'crouch' ? 16 : 24;
+    for (let y = y0 + 2; y < y0 + last; y++) for (let x = BX; x <= BX + armEnd; x++) {
       if (!'tso'.includes(g[y][x])) continue;
-      // ひざの上（手があったところ）は、ももの色でうめる
-      if (y >= y0 + 13 || (look.child && y >= y0 + 9)) g[y][x] = g[y][x + 1] === '.' ? '.' : (look.garment === 'skirt' ? 'K' : 'B');
-      else g[y][x] = x === BX + armEnd && g[y][x + 1] !== '.' ? g[y][x + 1] : '.';
+      g[y][x] = x === BX + armEnd && g[y][x + 1] !== '.' && g[y][x + 1] !== 'o' ? g[y][x + 1] : '.';
     }
   }
   put(HEAD, HX, TOP);

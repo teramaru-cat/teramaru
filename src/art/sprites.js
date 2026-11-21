@@ -134,6 +134,7 @@ const LYING = [
 // かまって画面の大きい てらまる（等倍・1ドットずつ）。もようは小さい絵と同じ：
 // 向かって左は黒い模様に茶色の目（耳の内側ピンク）、右は目のまわりが黒で黄緑の目、頭のてっぺんは茶、額から鼻へ白い筋。W＝目の光
 const BIG_PAL = { ...CAT, W: '#ffffff' };
+// おすわり（正面。なでなで用）：目はまるく、口は描かない（小さい絵と同じ、鼻だけ）。しっぽは前に回す
 const CAT_BIG_FRONT = [
 "....oo..............oo....",
 "....obo............obo....",
@@ -145,28 +146,28 @@ const CAT_BIG_FRONT = [
 "..obbbbbbbcccwwccbbbbbbbo.",
 ".obbbbbbbbbccwwcbbbbbbbbbo",
 ".obbbbbbbbbbwwwwbbbbbbbbbo",
-".obbbooobbbbwwwwbbbooobbbo",
-".obboeWeobbbwwwwbboggWgobo",
-".obboeeeobbwwwwwwbogggobwo",
-".obbboooobwwwwwwwwboooobwo",
-".obbbbbbbwwwwppwwwwwbbwwwo",
+".obbbbeebbbbwwwwbbbggbbbbo",
+".obbbeWoebbbwwwwbbgWogbbbo",
+".obbbeeoebbwwwwwwbggogbbwo",
+".obbbbeebbwwwwwwwwbggbbwwo",
+".obbbbbbbwwwwppwwwwbbwwwwo",
 "..obbbbbwwwwwppwwwwwwwwwo.",
-"..obbbcwwwwowoowowwwcwwwo.",
-"...occcwwwwwowwowwwwccwo..",
+"..obbbcwwwwwwwwwwwwwcwwwo.",
+"...occcwwwwwwwwwwwwwccwo..",
 "....occwwwwwwwwwwwwwwcco..",
-".....ooowwwwwwwwwwwwooo...",
-"......ocwwwwwwwwwwwwbo....",
-".....occwwwwwwwwwwwwbbo...",
-".....occwwwwwwwwwwwwbbo...",
-".....owwwwwwwwwwwwwwwwo...",
-".....owwwwwwwwwwwwwwwwo...",
-".....owwwwwwwwwwwwwwwwo...",
-".....owwwwoooooooowwwwo...",
-".....owwwwo......owwwwo...",
-".....owwwwo......owwwwo...",
-".....owwwwo......owwwwo...",
-".....owwwwo......owwwwo...",
-".....oooooo......oooooo...",
+"....occwwwwwwwwwwwwwwbbo..",
+"...occcwwwwwwwwwwwwwwbbbo.",
+"..occccwwwwwwwwwwwwwwbbbo.",
+"..occccwwwwwwwwwwwwwwbbbbo",
+".occcccwwwwwwwwwwwwwwbbbbo",
+".occcccwwwwowwwwowwwwbbbbo",
+".occcccwwwwowwwwowwwwbbbbo",
+".occcccwwwwowwwwowwwwbbbbo",
+".owcccwwwwwowwwwoooooooobo",
+".owwwwwwwwwowwwwocccbbccco",
+".owwwwwwwwwowwwwoooooooooo",
+".owwwwwwwwwowwwwo.........",
+"..ooooooooooooooo.........",
 ];
 // 横向き（右向き）：背中は茶に黒のしま、おなかと足は白、しっぽは上に
 const CAT_BIG_SIDE = [
@@ -175,10 +176,10 @@ const CAT_BIG_SIDE = [
 ".oco...............obboobbbo....",
 ".oco..............obbbbbbbbbo...",
 ".oco..............obbbbbbbbbbo..",
-".oco..............obbbbbooobbbo.",
-"..oco.............obbbbboeWobwo.",
-"..occooooooooooooobbbbboeeobwwo.",
-"...occcbbcccbbccbcbbbbbbooobwwpo",
+".oco..............obbbbbbeebbbo.",
+"..oco.............obbbbbeWoebwo.",
+"..occooooooooooooobbbbbeeoebwwo.",
+"...occcbbcccbbccbcbbbbbbeebbwwpo",
 "...occcbbcccbbccbbbbbbbbwwwwwwo.",
 "...occcbbcccbbccbbbbbbbbwwwwwo..",
 "...occcbbcccbbcccbbbbbbwwwwwo...",
@@ -257,7 +258,7 @@ export function buildSprites() {
   for (const [id, t] of Object.entries(TARGETS)) {
     if (t.kind === 'human') SPR.people[id] = [makePerson(t.look), makePerson(t.look, true), makeCrouch(t.look)];
     // かまって画面の大きい絵（細かいドット）：[立ち, しゃがみ]
-    if (t.kind === 'human') SPR.peopleHD = { ...SPR.peopleHD, [id]: [makePortrait(t.look, 'stand'), makePortrait(t.look, 'crouch')] };
+    if (t.kind === 'human') SPR.peopleHD = { ...SPR.peopleHD, [id]: [makePortrait(t.look, 'stand'), makePortrait(t.look, t.look.cane ? 'standPet' : 'crouch')] }; // 杖の人は腰が悪いので立ったまま なでる
     else if (ANIMAL_ROWS[id]) SPR.people[id] = ANIMAL_ROWS[id].frames.map((rows) => makeSprite(rows, ANIMAL_ROWS[id].pal));
     if (t.owner) SPR.owners = { ...SPR.owners, [id]: [makePerson(t.owner), makePerson(t.owner, true)] };
     if (t.kid) SPR.kids = { ...SPR.kids, [id]: [makePerson(t.kid), makePerson(t.kid, true), makeCrouch(t.kid)] };

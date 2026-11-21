@@ -32,6 +32,26 @@ function drawRows(ctx, rows, x0, y0, pal) {
   }));
 }
 
+// ブロック塀（てらまるが すわる台）。ベタ塗りに、ブロックの目地の線だけ
+const WALL_H = 22;
+function drawWall(ctx, x, y, w, h) {
+  ctx.fillStyle = 'rgba(40,30,20,0.25)';
+  ctx.fillRect(x + 2, y + h, w - 4, 2);
+  ctx.fillStyle = UI.ink;
+  ctx.fillRect(x, y, w, h + 1);
+  ctx.fillStyle = '#c4beb2';
+  ctx.fillRect(x + 1, y + 1, w - 2, h - 1);
+  ctx.fillStyle = '#d8d2c6'; // 上の笠木
+  ctx.fillRect(x + 1, y + 1, w - 2, 3);
+  ctx.fillStyle = '#9c968a'; // 目地
+  ctx.fillRect(x + 1, y + 4, w - 2, 1);
+  for (let r = 0; r < 3; r++) {
+    const ry = y + 5 + r * 6;
+    if (r < 2) ctx.fillRect(x + 1, ry + 5, w - 2, 1);
+    for (let cx = x + (r % 2 ? 8 : 15); cx < x + w - 2; cx += 14) ctx.fillRect(cx, ry, 1, Math.min(5, y + h - ry));
+  }
+}
+
 const PW = 240; // 枠の大きさ
 const PH = 124;
 const TITLE = (kind) => tr(`kamatte.${kind}`);
@@ -245,7 +265,8 @@ export class KamatteScene {
     // 人は細かいドットの大きい絵（3倍の大きさで描いてあるので、そのまま 1倍で出す）
     const person = animal ? frames[this.kind === 'nade' && Math.floor(t * 3) % 2 ? 1 : 0] : SPR.peopleHD[this.target.id][this.kind === 'nade' ? 1 : 0];
     const pS = person.hd ? 1 : S;
-    const px = b.x + (this.kind === 'nade' ? (animal ? 92 : 86) : (animal ? 140 : 150)); // なでなでは、すぐ横に
+    if (this.kind === 'nade' && !animal) drawWall(ctx, b.x + 70 - 22, b.y + PH - 6 - WALL_H, 44, WALL_H);
+    const px = b.x + (this.kind === 'nade' ? (animal ? 92 : 94) : (animal ? 140 : 150)); // なでなでは、すぐ横に
     const py = b.y + PH - 6 - person.height * pS;
     ctx.fillStyle = 'rgba(40,30,20,0.25)';
     ctx.fillRect(px + 4, b.y + PH - 8, person.width * pS - 8, 4);
@@ -281,20 +302,20 @@ export class KamatteScene {
     const cw = img.width;
     const ch = img.height;
     const cx = b.x + 70 - cw / 2;
-    const cyy = b.y + PH - 6 - ch + cy;
-    ctx.fillStyle = 'rgba(40,30,20,0.25)';
-    ctx.fillRect(b.x + 70 - 18, b.y + PH - 8, 36, 4);
-    if (squish) {
-      // なでられて頭が1ドット下がる（絵はのばしたりちぢめたりしない）
-      const neck = 19;
-      ctx.drawImage(img, 0, neck, img.width, img.height - neck, Math.round(cx), Math.round(cyy) + neck, img.width, img.height - neck);
-      ctx.drawImage(img, 0, 0, img.width, neck, Math.round(cx), Math.round(cyy) + 1, img.width, neck);
-    } else ctx.drawImage(img, Math.round(cx), Math.round(cyy));
-
+    // なでなで（人）は、てらまるがブロック塀の上におすわり（人の手がとどく高さ）
+    const lift = this.kind === 'nade' && !animal ? WALL_H : 0;
+    const cyy = b.y + PH - 6 - ch + cy - lift;
+    if (!lift) {
+      ctx.fillStyle = 'rgba(40,30,20,0.25)';
+      ctx.fillRect(b.x + 70 - 18, b.y + PH - 8, 36, 4);
+    }
+    // 腕は てらまるのうしろを通す（手だけ頭の上に、あとで描く）
+    let hx = 0;
+    let hy = 0;
     if (this.kind === 'nade' && !animal) {
       // 人の肩から腕がのびて、手が頭の上を行ったり来たり
-      const hx = Math.round(b.x + 70 + Math.sin(t * 9) * 8);
-      const hy = Math.round(cyy - 7 + squish);
+      hx = Math.round(b.x + 70 + Math.sin(t * 9) * 8);
+      hy = Math.round(cyy - 7 + squish);
       const look = this.target.def.look ?? {};
       const sx = px + (person.shoulder?.x ?? 8);
       const sy = py + (person.shoulder?.y ?? (person.shoulderY + 1) * pS);
@@ -310,8 +331,17 @@ export class KamatteScene {
           ctx.fillRect(x - r, y - r, r * 2 + 1, r * 2 + 1);
         }
       }
+    }
+    if (squish) {
+      // なでられて頭が1ドット下がる（絵はのばしたりちぢめたりしない）
+      const neck = 19;
+      ctx.drawImage(img, 0, neck, img.width, img.height - neck, Math.round(cx), Math.round(cyy) + neck, img.width, img.height - neck);
+      ctx.drawImage(img, 0, 0, img.width, neck, Math.round(cx), Math.round(cyy) + 1, img.width, neck);
+    } else ctx.drawImage(img, Math.round(cx), Math.round(cyy));
+
+    if (this.kind === 'nade' && !animal) {
       // 手（ドット絵）
-      drawRows(ctx, HAND, hx - 5, hy - 1, { o: UI.ink, s: look.skin ?? '#f2c9a0' });
+      drawRows(ctx, HAND, hx - 5, hy - 1, { o: UI.ink, s: this.target.def.look?.skin ?? '#f2c9a0' });
       // 気持ちよさそう
       if (Math.floor(t * 3) % 2 === 0) {
         ctx.fillStyle = UI.pink;
@@ -330,8 +360,8 @@ export class KamatteScene {
       ctx.fillStyle = '#6a4a2a';
       const qx = (hx + tipX) / 2;
       const qy = Math.min(hy, tipY) - 16;
-      for (let i = 0; i <= 60; i++) {
-        const u = i / 60;
+      for (let i = 0; i <= 240; i++) {
+        const u = i / 240;
         const x = (1 - u) * (1 - u) * hx + 2 * (1 - u) * u * qx + u * u * tipX;
         const y = (1 - u) * (1 - u) * hy + 2 * (1 - u) * u * qy + u * u * tipY;
         ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
