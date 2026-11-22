@@ -94,7 +94,7 @@ function drawWall(ctx, x, y, w, h) {
 // 人のなでなでの腕の形（サンプルページ sample/arm.html で見くらべる）
 //   gap：てらまると人のあいだ  k：上腕・前腕の長さ（肩から手までの何倍か）  elbow：ひじの向き
 //   tx, ty：手の位置（頭のてっぺんのまん中から）
-export const ARM_STYLE = { gap: 4, k: 0.58, elbow: 'up', tx: 1, ty: 0 };
+export const ARM_STYLE = { gap: 0, k: 0.58, elbow: 'up', tx: 1, ty: 0 }; // サンプルの②「くっついて」に決定
 
 const PW = 240; // 枠の大きさ
 const PH = 124;
@@ -178,7 +178,8 @@ export class KamatteScene {
     if (Math.floor(this.pt * 2.5) !== Math.floor((this.pt - 1 / 60) * 2.5)) {
       // 人のなでなで（アップ）は、てらまるの顔にかからないよう左のあいたところに
       const human = this.target.def.kind === 'human';
-      const s = human ? this.scr(42, 58) : this.scr(76, 50);
+      // 子連れは左に子どもがいるので、てらまるの頭の上あたりに
+      const s = human ? (this.target.def.kid ? this.scr(104, 30) : this.scr(42, 58)) : this.scr(76, 50);
       const words = this.target.def.words;
       this.fx.add(new PopText(s.x + (Math.random() - 0.5) * (human ? 16 : 30), s.y, words[Math.random() < 0.5 ? 0 : 1], UI.pink, 0.8));
     }
@@ -385,12 +386,10 @@ export class KamatteScene {
       if (P.flip) drawRows(o, PALM_R, P.hand.x - PALM_R[0].length + 10, P.hand.y - 4, { o: UI.ink, s: skin });
       else drawRows(o, PALM, P.hand.x - 9, P.hand.y - 4, { o: UI.ink, s: skin });
     }
-    // 気持ちよさそうなほっぺ
-    if (Math.floor(t * 3) % 2 === 0) {
-      o.fillStyle = UI.pink;
-      o.fillRect(cx + 5, catTop + 11 + squish, 2, 1);
-      o.fillRect(cx + cat.width - 7, catTop + 11 + squish, 2, 1);
-    }
+    // 気持ちよさそうなほっぺ（ずっと出しておく）
+    o.fillStyle = UI.pink;
+    o.fillRect(cx + 5, catTop + 11 + squish, 2, 1);
+    o.fillRect(cx + cat.width - 7, catTop + 11 + squish, 2, 1);
     ctx.drawImage(off, b.x, b.y, PW, PH);
   }
 
