@@ -129,7 +129,7 @@ function drawWall(ctx, x, y, w, h) {
 // 人のなでなでの腕の形（サンプルページ sample/arm.html で見くらべる）
 //   gap：てらまると人のあいだ  k：上腕・前腕の長さ（肩から手までの何倍か）  elbow：ひじの向き
 //   tx, ty：手の位置（頭のてっぺんのまん中から）
-export const TOY_STYLE = 1; // おもちゃの場面の形（sample/toy.html の番号）
+export const TOY_STYLE = 3; // おもちゃの場面の形（sample/toy.html の番号）。③「見上げてパンチ」に決定
 export const ARM_STYLE = { gap: 0, k: 0.58, elbow: 'up', tx: 1, ty: 0 }; // サンプルの②「くっついて」に決定
 
 const PW = 240; // 枠の大きさ
@@ -230,7 +230,8 @@ export class KamatteScene {
       this.punches++;
       audio.sfx('punch');
       this.bonus += this.cfg.tapBonus;
-      const s = this.scr(100 + Math.random() * 30, 46);
+      // 人とのおもちゃ（アップ）は、てらまるの顔にかからないよう右がわに
+      const s = this.target.def.kind === 'human' ? this.scr(160 + Math.random() * 40, 60) : this.scr(100 + Math.random() * 30, 46);
       this.fx.add(new PopText(s.x, s.y, `+${this.cfg.tapBonus}`, UI.orangeD, 0.6));
       if (this.punches % 3 === 0) this.fx.add(new PopText(s.x - 20, s.y - 10, tr('kamatte.punch'), UI.pink, 0.7));
     }
@@ -309,7 +310,7 @@ export class KamatteScene {
     const title = (this.kind === 'nade' && this.target.def.kamatteTitle) || TITLE(this.kind);
     // 点数を出すときは見出しのかわりに上の段へ（人の頭にかぶらないように）
     // 人のなでなで（アップ）は、人の頭にかからないよう左上に
-    const petZoom = this.kind === 'nade' && this.target.def.kind === 'human';
+    const petZoom = (this.kind === 'nade' || this.kind === 'toy') && this.target.def.kind === 'human';
     if (this.phase !== 'out') drawText(ctx, title, petZoom ? b.x + 6 : W / 2, b.y + 3, { font: 'small', scale: 2, color: UI.orangeD, outline: UI.white, align: petZoom ? 'left' : 'center' });
     this.fx.draw(ctx);
     if (this.phase === 'play') this.drawGuide(ctx, b);
@@ -499,8 +500,8 @@ export class KamatteScene {
     } else {
       const catX = 56;
       const catTop = 24;
-      const hx = catX + 4;
-      const hy = 2;
+      const hx = catX + 18; // 手は左上の見出しにかからないよう、少し右
+      const hy = 4;
       const fx = lerp(catX + Math.sin(t * 3) * 9, catX - 11, k);
       const fy = lerp(catTop - 4 + Math.sin(t * 7) * 2, catTop + 10, k);
       armFromTop(w + 4, -18, hx, hy);
@@ -723,7 +724,9 @@ export class KamatteScene {
     let msg = '';
     if (this.kind === 'toy') msg = input.lastDevice === 'keyboard' ? tr('kamatte.toyKey') : tr('kamatte.toyTouch');
     if (this.kind === 'chase') msg = tr('kamatte.chaseHint');
-    if (msg) drawText(ctx, msg, screen.W / 2, b.y + 22, { font: 'small', color: UI.ink, outline: UI.white, align: 'center' });
+    // 人とのおもちゃ（アップ）は、上から出てくる腕にかからないよう左上（見出しの下）に
+    const toLeft = this.kind === 'toy' && this.target.def.kind === 'human';
+    if (msg) drawText(ctx, msg, toLeft ? b.x + 6 : screen.W / 2, b.y + 22, { font: 'small', color: UI.ink, outline: UI.white, align: toLeft ? 'left' : 'center' });
     // のこり時間のバー
     const left = Math.max(0, 1 - this.pt / this.cfg.dur);
     ctx.fillStyle = 'rgba(58,42,32,0.35)';
