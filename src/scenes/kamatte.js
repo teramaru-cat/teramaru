@@ -37,6 +37,41 @@ function capsule(ctx, x0, y0, x1, y1, r, col) {
   }
 }
 
+// 棒やひもをにぎった手（こぶし）
+const FIST = [
+  '.ooooo.',
+  'ossssso',
+  'ossssso',
+  'ossssso',
+  '.ooooo.',
+]
+// 猫じゃらしの ふさふさ（エノコログサの穂。ふちを ぎざぎざにして毛に見せる。ベタ塗り）
+const FLUFF = [
+  '..o....',
+  '.oyo.o.',
+  '.oyyoyo',
+  'oyyyyyo',
+  '.oyyyyo',
+  'oyyyyo.',
+  '.oyyyyo',
+  'oyyyyo.',
+  '.oyyyo.',
+  '..oyo..',
+  '...o...',
+]
+// ひも（少したるむ。ドットの格子にそって1ドット）
+function stringLine(ctx, x0, y0, x1, y1) {
+  ctx.fillStyle = '#6a4a2a';
+  const mx = (x0 + x1) / 2 + 3;
+  const my = Math.max(y0, y1) + 3;
+  for (let i = 0; i <= 80; i++) {
+    const u = i / 80;
+    const x = (1 - u) * (1 - u) * x0 + 2 * (1 - u) * u * mx + u * u * x1;
+    const y = (1 - u) * (1 - u) * y0 + 2 * (1 - u) * u * my + u * u * y1;
+    ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+  }
+}
+
 const PALM = [
   '....oooooooooo..',
   '..oossssssssssoo',
@@ -94,6 +129,7 @@ function drawWall(ctx, x, y, w, h) {
 // 人のなでなでの腕の形（サンプルページ sample/arm.html で見くらべる）
 //   gap：てらまると人のあいだ  k：上腕・前腕の長さ（肩から手までの何倍か）  elbow：ひじの向き
 //   tx, ty：手の位置（頭のてっぺんのまん中から）
+export const TOY_STYLE = 1; // おもちゃの場面の形（sample/toy.html の番号）
 export const ARM_STYLE = { gap: 0, k: 0.58, elbow: 'up', tx: 1, ty: 0 }; // サンプルの②「くっついて」に決定
 
 const PW = 240; // 枠の大きさ
@@ -302,6 +338,7 @@ export class KamatteScene {
     for (let y = 48; y < PH; y += 16) ctx.fillRect(b.x, b.y + y, PW, 1);
     if (this.kind === 'chase') this.drawChase(ctx, b);
     else if (this.kind === 'nade' && this.target.def.kind === 'human') this.drawPetZoom(ctx, b);
+    else if (this.kind === 'toy' && this.target.def.kind === 'human') this.drawToyZoom(ctx, b);
     else this.drawPair(ctx, b);
   }
 
@@ -393,6 +430,95 @@ export class KamatteScene {
     ctx.drawImage(off, b.x, b.y, PW, PH);
   }
 
+
+  // 人とおもちゃ（猫じゃらし）：てらまるが主役のアップ。なでなでと同じく、半分の大きさで描いて2倍にする。
+  // 形は this.toyStyle（サンプルページ sample/toy.html で見くらべる）
+  //   1：正面でパンチ。大きな人のうしろ姿が右に。棒の先の ふさふさを、前足を上げてパンチ
+  //   2：横向きでジャンプ。上から腕だけ。ひもの先の ふさふさに、とびついてパンチ
+  //   3：見上げてパンチ。上から腕だけ。ひもで ふさふさが てらまるの頭の上でゆれる
+  drawToyZoom(ctx, b) {
+    const w = PW / 2;
+    const h = PH / 2;
+    if (!this.zoom) this.zoom = makeCanvas(w, h);
+    const [off, o] = this.zoom;
+    o.clearRect(0, 0, w, h);
+    const t = this.pt;
+    const look = this.target.def.look ?? {};
+    const style = this.toyStyle ?? TOY_STYLE;
+    const hit = this.punch > 0; // パンチ中
+    const skin = look.skin ?? '#f2c9a0';
+    const sleeve = look.top ?? '#3c4a6a';
+    const armR = SPR.peopleBig[this.target.id].armR;
+    const lerp = (a, c, k) => a + (c - a) * k;
+    const k = hit ? 1 : 0;
+
+    // 上の画面の外から腕だけ（2・3）
+    const armFromTop = (sx, sy, hx, hy) => {
+      capsule(o, sx, sy, hx + 3, hy - 1, armR + 1, UI.ink);
+      capsule(o, sx, sy, hx + 3, hy - 1, armR, sleeve);
+    };
+
+    if (style === 1) {
+      const person = SPR.peopleBig[this.target.id];
+      const catX = 44;
+      const catTop = 24;
+      const px = catX + 12;
+      const py = 20 - person.shoulder.y;
+      const sx = px + person.shoulder.x;
+      const sy = py + person.shoulder.y;
+      const hx = catX + 18;
+      const hy = 11;
+      // 棒の先（ゆらゆら。パンチのときは前足のところへ）
+      const a = 2.25 + 0.35 * Math.sin(t * 5);
+      const tip = { x: lerp(hx + Math.cos(a) * 26, catX - 10, k), y: lerp(hy + Math.sin(a) * 26, catTop + 12, k) };
+      drawWall(o, catX - 18, catTop + 37, 36, h);
+      const arm = () => { capsule(o, sx, sy, hx + 3, hy, person.armR + 1, UI.ink); capsule(o, sx, sy, hx + 3, hy, person.armR, sleeve); };
+      arm();
+      o.drawImage(person, px, py);
+      this.drawToyCat(o, catX, catTop, hit);
+      o.save(); o.beginPath(); o.rect(0, 0, px + person.sideX, h); o.clip(); arm(); o.restore();
+      capsule(o, hx, hy, tip.x, tip.y, 0.5, '#8a6a3a'); // 棒
+      drawRows(o, FIST, hx - 3, hy - 2, { o: UI.ink, s: skin });
+      drawRows(o, FLUFF, Math.round(tip.x) - 3, Math.round(tip.y) - 4, { o: UI.ink, y: '#e8cc5a' });
+    } else if (style === 2) {
+      const cat = SPR.catHD.right;
+      const catX = 44;
+      const jump = hit ? 7 : 0;
+      const catTop = h - 1 - cat.height - jump;
+      const hx = catX + 34;
+      const hy = 5;
+      const fx = lerp(catX + 22 + Math.sin(t * 4) * 6, catX + 16, k);
+      const fy = lerp(30 + Math.cos(t * 6) * 3, catTop + 8, k);
+      armFromTop(w + 12, -10, hx, hy);
+      stringLine(o, hx, hy + 2, fx, fy - 4);
+      drawRows(o, FIST, hx - 3, hy - 2, { o: UI.ink, s: skin });
+      o.fillStyle = 'rgba(40,30,20,0.25)';
+      o.fillRect(catX - 14, h - 2, 28, 2);
+      o.drawImage(cat, Math.round(catX - cat.width / 2), catTop);
+      drawRows(o, FLUFF, Math.round(fx) - 3, Math.round(fy) - 4, { o: UI.ink, y: '#e8cc5a' });
+    } else {
+      const catX = 56;
+      const catTop = 24;
+      const hx = catX + 4;
+      const hy = 2;
+      const fx = lerp(catX + Math.sin(t * 3) * 9, catX - 11, k);
+      const fy = lerp(catTop - 4 + Math.sin(t * 7) * 2, catTop + 10, k);
+      armFromTop(w + 4, -18, hx, hy);
+      drawWall(o, catX - 18, catTop + 37, 36, h);
+      this.drawToyCat(o, catX, catTop, hit);
+      stringLine(o, hx, hy + 2, fx, fy - 4);
+      drawRows(o, FIST, hx - 3, hy - 2, { o: UI.ink, s: skin });
+      drawRows(o, FLUFF, Math.round(fx) - 3, Math.round(fy) - 4, { o: UI.ink, y: '#e8cc5a' });
+    }
+    ctx.drawImage(off, b.x, b.y, PW, PH);
+  }
+
+  // 正面の てらまる（パンチのときは前足を上げた絵。左に3列の余白がある）
+  drawToyCat(o, catX, catTop, hit) {
+    const img = hit ? SPR.catHD.paw : SPR.catHD.down;
+    const x = Math.round(catX - SPR.catHD.down.width / 2) - (hit ? 3 : 0);
+    o.drawImage(img, x, catTop);
+  }
 
   // なでなで・おもちゃ：右に人（大きく）、左にてらまる（大きく）
   drawPair(ctx, b) {

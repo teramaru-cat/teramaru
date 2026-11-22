@@ -201,6 +201,47 @@ const CAT_BIG_SIDE = [
 "....ooooo...........ooooo.......",
 ];
 
+// おすわりで 向かって左の前足を上げる（おもちゃにパンチ）。左に3列ぶん前足の場所をあけてある
+const CAT_BIG_PAW = [
+  ".........o..........o......",
+  "........obo........obo.....",
+  "........obbo......obbo.....",
+  "........obpboooooobpbo.....",
+  "........obpbccwwccbpbo.....",
+  ".......obbbbccwwccbbbbo....",
+  ".......obbbbbcwwcbbbbbo....",
+  "......obbbbbbwwwwbbbbbbo...",
+  "......obbbWebwwwwbWgbbbo...",
+  "......obbbeebwwwwbggbbbo...",
+  "......obbbbbbwwwwwccccwo...",
+  "......owwwwwwwppwwccccwo...",
+  ".......owwwwwwwwwwwwwwo....",
+  "...oo..owwwwwwwwwwwwwwo....",
+  "..oppo..owwwwwwwwwwwwo.....",
+  ".owwwwo..owwwwwwwwwwo......",
+  ".owwwwo..owwwwwwwwwwo......",
+  "..owwwwo.owwwwwwwwwco......",
+  "...owwwwowwwwwwwwwwcco.....",
+  "....owwwwwwwwwwwwwwcco.....",
+  ".....owwwwwwwwwwwwwcco.....",
+  "......owwwwwwwwwwwwccco....",
+  ".......owowwwwwwwwwccco....",
+  ".......owwowwwwwwwwccco....",
+  ".......owwwwwwwwwwwccco....",
+  ".......owwwwwwwwwwwccco....",
+  "......owwwwwwwwwwwwcccco...",
+  "......obbwwwwwwwwwocccco...",
+  "......obbwwwwwwwwwowwwwo...",
+  "......obbbwwwwwwwwowwwwo...",
+  ".....obbbbwwwwwwwwowwwwwo..",
+  ".....obbbbwwwwwwwwowwwwwoo.",
+  ".....obbbbwwwwwwwwowwwwwbbo",
+  ".....obbbbwwwwwwwwowwwwwbbb",
+  ".....obbbbwwwwwwwwowwwwwooo",
+  "......oooooooooooooooooo...",
+  "...........................",
+];
+
 // うしろ姿のおすわり（なでなで用）：頭のうしろは向かって左が茶・右が黒、背中は茶と黒のかたまり。しっぽは床にそって右へ（2コマでゆらす）
 const CAT_BIG_BACK_A = [
   "......o..........o........",
@@ -310,7 +351,7 @@ export function buildSprites() {
   };
   SPR.catLying = makeSprite(LYING, CAT);
   // かまって画面の大きい てらまる（等倍で描いた絵）
-  SPR.catHD = { down: makeSprite(CAT_BIG_FRONT, BIG_PAL), right: makeSprite(CAT_BIG_SIDE, BIG_PAL), back: [makeSprite(CAT_BIG_BACK_A, BIG_PAL), makeSprite(CAT_BIG_BACK_B, BIG_PAL)] };
+  SPR.catHD = { paw: makeSprite(CAT_BIG_PAW, BIG_PAL), down: makeSprite(CAT_BIG_FRONT, BIG_PAL), right: makeSprite(CAT_BIG_SIDE, BIG_PAL), back: [makeSprite(CAT_BIG_BACK_A, BIG_PAL), makeSprite(CAT_BIG_BACK_B, BIG_PAL)] };
   // ほかの猫（形はてらまると同じで、色ちがい）：黒猫・グレーのしま猫
   const STRAY = {
     black: { ...CAT, c: '#3d3640', b: '#2e2a32', w: '#4f4856', e: '#e8d040', g: '#e8d040', p: '#c87080' },
