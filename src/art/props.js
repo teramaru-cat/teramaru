@@ -1,4 +1,4 @@
-// 街の小物（木・爪とぎ電柱・水皿・猫砂・ベンチ・自販機・噴水・植木鉢）と、家の家具（ソファ・テレビ・テーブル・台所・冷蔵庫・三段ケージ・キャットタワー）
+// 街の小物（木・爪とぎ電柱・水皿・猫砂・ベンチ・自販機・噴水・植木鉢・公園の遊具）と、家の家具（ソファ・テレビ・テーブル・台所・冷蔵庫・三段ケージ・キャットタワー）
 // それぞれ画像と「足元の位置（ox, oy）」「ぶつかる箱（solid）」を返す。
 
 import { makeCanvas, fillCircle, fillEllipse } from '../core/renderer.js';
@@ -502,6 +502,111 @@ function bicycle() {
   return { img: c, ox: 11, oy: 13, solid: { w: 18, h: 4 } };
 }
 
+// ---- 公園の遊具（ブランコ・すべり台・砂場・ジャングルジム） ----
+const INK = '#2a1d17';
+// 1ドットのふちを付けた四角
+function boxO(x, X, Y, w, h, col) {
+  x.fillStyle = INK;
+  x.fillRect(X - 1, Y - 1, w + 2, h + 2);
+  x.fillStyle = col;
+  x.fillRect(X, Y, w, h);
+}
+
+// ブランコ：赤い柱の門と、くさりでつった座席2つ
+function swing() {
+  const [c, x] = makeCanvas(46, 40);
+  const pole = '#d04a3a';
+  // 柱（左右とも ハの字の2本）
+  for (const [x0, dir] of [[3, 1], [42, -1]]) {
+    for (let y = 2; y < 38; y++) {
+      const off = Math.floor((38 - y) / 10) * dir;
+      x.fillStyle = INK;
+      x.fillRect(x0 + off - 1, y, 4, 1);
+      x.fillStyle = pole;
+      x.fillRect(x0 + off, y, 2, 1);
+    }
+  }
+  boxO(x, 2, 2, 42, 3, pole); // 上の横棒
+  // くさりと座席
+  for (const sx of [12, 28]) {
+    x.fillStyle = '#8a8a92';
+    for (let y = 6; y < 27; y += 2) { x.fillRect(sx, y, 1, 1); x.fillRect(sx + 6, y, 1, 1); }
+    boxO(x, sx - 1, 27, 9, 2, '#f0c040');
+  }
+  return { img: c, ox: 23, oy: 38, solid: { w: 44, h: 3 } };
+}
+
+// すべり台：右にはしご、上に台、左へすべる面
+function slide() {
+  const [c, x] = makeCanvas(52, 40);
+  const metal = '#5aa0d8';
+  // すべる面（左下へ）
+  for (let i = 0; i < 30; i++) {
+    const X = 6 + i;
+    const Y = 36 - Math.floor(i * 0.9);
+    x.fillStyle = INK;
+    x.fillRect(X, Y - 1, 1, 6);
+    x.fillStyle = '#f0c040';
+    x.fillRect(X, Y, 1, 4);
+  }
+  x.fillStyle = INK;
+  x.fillRect(2, 33, 6, 6);
+  x.fillStyle = '#f0c040';
+  x.fillRect(3, 34, 5, 4);
+  // 台
+  boxO(x, 34, 8, 12, 3, metal);
+  // 柱
+  boxO(x, 35, 11, 2, 27, metal);
+  boxO(x, 44, 11, 2, 27, metal);
+  // てすり
+  boxO(x, 34, 2, 1, 6, metal);
+  boxO(x, 45, 2, 1, 6, metal);
+  boxO(x, 34, 2, 12, 1, metal);
+  // はしごの段
+  x.fillStyle = INK;
+  for (let y = 15; y < 37; y += 5) x.fillRect(37, y, 7, 2);
+  x.fillStyle = '#d8d8e0';
+  for (let y = 15; y < 37; y += 5) x.fillRect(37, y, 7, 1);
+  return { img: c, ox: 26, oy: 38, solid: { w: 46, h: 4 } };
+}
+
+// 砂場：木のわくの中に砂。バケツとシャベル（上を歩ける）
+function sandbox() {
+  const [c, x] = makeCanvas(48, 26);
+  boxO(x, 1, 1, 46, 24, '#a87848'); // わく
+  x.fillStyle = '#ecd8a6';
+  x.fillRect(4, 4, 40, 18); // 砂
+  x.fillStyle = '#dcc28a';
+  for (const [X, Y] of [[8, 7], [20, 14], [33, 9], [14, 18], [38, 17], [27, 6]]) x.fillRect(X, Y, 3, 1);
+  // 砂山
+  x.fillStyle = '#dcc28a';
+  x.fillRect(10, 11, 9, 3);
+  x.fillRect(12, 9, 5, 2);
+  // バケツ（赤）とシャベル（青）
+  boxO(x, 31, 12, 6, 6, '#e05a5a');
+  x.fillStyle = INK;
+  x.fillRect(31, 11, 6, 1);
+  boxO(x, 22, 17, 6, 2, '#4a8ad0');
+  boxO(x, 27, 16, 3, 4, '#4a8ad0');
+  return { img: c, ox: 24, oy: 25, solid: null };
+}
+
+// ジャングルジム：色つきの鉄の棒を組んだ立方体
+function jungleGym() {
+  const [c, x] = makeCanvas(40, 40);
+  const cols = ['#e05a5a', '#f0c040', '#4a8ad0', '#5ab060'];
+  // うしろの面（少し上・右にずらす）と前の面
+  const grid = (ox, oy, col) => {
+    for (let i = 0; i < 4; i++) {
+      boxO(x, ox + i * 10, oy, 2, 30, col);
+      boxO(x, ox, oy + i * 10, 32, 2, cols[(i + 1) % 4]);
+    }
+  };
+  grid(6, 2, cols[2]);
+  grid(1, 7, cols[0]);
+  return { img: c, ox: 18, oy: 39, solid: { w: 34, h: 5 } };
+}
+
 export const PROPS = {};
 
 export function buildProps() {
@@ -526,5 +631,9 @@ export function buildProps() {
     bicycle: bicycle(),
     cageSide: cageSide(),
     catTower: catTower(),
+    swing: swing(),
+    slide: slide(),
+    sandbox: sandbox(),
+    jungleGym: jungleGym(),
   });
 }

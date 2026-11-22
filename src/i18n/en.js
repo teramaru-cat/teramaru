@@ -159,6 +159,15 @@ export default {
     mighty: 'GOOD KITTY!',
   },
 
+  intro: {
+    water: ['From here on, you need water', 'Touch a water spot to drink', "Go too long without it and you'll faint"],
+    strays: ['Other cats are around', "Teramaru doesn't like cats. Can't get close", "You can't Teramaring people near a cat"],
+    food: ['Teramaring gets you food', 'Eating fills your tummy and slows you down'],
+    toilet: ['When your tummy is full,', 'use the litter box to empty it'],
+    nextKey: 'OK: next',
+    nextTouch: 'Tap: next',
+  },
+
   area: { tutorial: 'Tutorial', kinjo: 'Neighborhood' },
   stage: { home: "Teramaru's House", jutaku: 'Homes', park: 'Park', shotengai: 'Shops', bossneko: 'Boss Cat' },
 

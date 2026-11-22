@@ -66,6 +66,7 @@ export const AREAS = [
         map: PARK,
         targets: { pigeons: 3, dog: 3, salaryman: 3, grandma: 3, child: 3 },
         rules: { ...BASIC, water: true, strays: 3 },
+        intro: ['water', 'strays'], // はじめて遊ぶときの あそびかた（i18n の intro.*）
         unlock: { after: 'jutaku', score: 1500 },
       },
       {
@@ -74,6 +75,7 @@ export const AREAS = [
         map: SHOTENGAI,
         targets: { greengrocer: 3, fishmonger: 3, butcher: 3, baker: 3, grandma: 3, child: 3, salaryman: 3 },
         rules: { ...BASIC, water: true, food: true },
+        intro: ['food', 'toilet'],
         unlock: { after: 'park', score: 1500 },
       },
       {

@@ -22,7 +22,8 @@ import { KamatteScene } from './kamatte.js';
 import { audio } from '../core/audio.js';
 import { ResultScene } from './result.js';
 import { PauseScene } from './pause.js';
-import { Tutorial } from '../game/tutorial.js';
+import { Tutorial, drawHowTo } from '../game/tutorial.js';
+import { save } from '../core/save.js';
 import { tr } from '../i18n/index.js';
 
 export class PlayScene {
@@ -73,6 +74,9 @@ export class PlayScene {
     this.flash = 0; // 白いフェード
     this.lastCam = { x: 0, y: 0 };
     this.tutorial = this.stage.tutorial ? new Tutorial(this) : null; // チュートリアルの流れ（game/tutorial.js）
+    // そのステージで初めて出てくる しくみ の「あそびかた」（はじめて遊ぶときだけ。読んでいる間は時間が止まる）
+    const seen = game.save.seenIntro ?? [];
+    this.intro = this.stage.intro && !seen.includes(this.stage.id) ? { pages: this.stage.intro, i: 0, t: 0 } : null;
   }
 
   enter() { input.releaseAll(); audio.music('play'); this.feverMusic = false; }
@@ -184,6 +188,7 @@ export class PlayScene {
     this.fx.update(dt);
     if (this.flash > 0) this.flash -= dt;
     if (this.tutorial?.update(dt)) return; // セリフ・病院の間は止める
+    if (this.intro) { this.updateIntro(dt); return; }
 
     // 時間切れ → 「おしまい！」を少し見せてからリザルトへ
     if (this.ending > 0) {
@@ -793,6 +798,36 @@ export class PlayScene {
 
   // ---- 描画 ----
 
+  // ---- はじめての しくみ の あそびかた ----
+  updateIntro(dt) {
+    const it = this.intro;
+    it.t += dt;
+    let next = input.hit(KEY.confirm);
+    for (const p of input.fresh()) { p.role = 'none'; next = true; }
+    if (!next || it.t < 0.4) return;
+    audio.sfx('ui');
+    it.i++;
+    it.t = 0;
+    if (it.i >= it.pages.length) {
+      this.intro = null;
+      const sv = this.game.save;
+      sv.seenIntro = [...new Set([...(sv.seenIntro ?? []), this.stage.id])];
+      save(sv);
+      input.releaseAll();
+    }
+  }
+
+  drawIntro(ctx) {
+    const it = this.intro;
+    ctx.fillStyle = 'rgba(20,12,8,0.4)';
+    ctx.fillRect(0, 0, screen.W, screen.H);
+    const lines = [...tr(`intro.${it.pages[it.i]}`)];
+    drawHowTo(ctx, lines, 52);
+    const more = it.pages.length > 1 ? ` (${it.i + 1}/${it.pages.length})` : '';
+    const go = (input.lastDevice === 'keyboard' ? tr('intro.nextKey') : tr('intro.nextTouch')) + more;
+    if (Math.floor(it.t * 2) % 2 === 0 || it.t > 1) drawText(ctx, go, screen.W / 2, 52 + lines.length * 10 + 16, { font: 'small', color: UI.white, outline: UI.ink, align: 'center' });
+  }
+
   draw(ctx) {
     this.layoutButtons();
     this.drawWorld(ctx);
@@ -804,6 +839,7 @@ export class PlayScene {
       ctx.fillRect(0, 0, screen.W, screen.H);
     }
     this.tutorial?.draw(ctx);
+    if (this.intro) this.drawIntro(ctx);
     if (this.ending > 0) {
       const a = Math.min(1, (1.8 - this.ending) * 4);
       ctx.fillStyle = `rgba(20,12,8,${0.45 * a})`;

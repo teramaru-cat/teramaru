@@ -15,6 +15,7 @@ const GROUND = {
   G: { base: '#7fb65a', line: null, dot: ['#6aa24a', '#93c96a'] },
   P: { base: '#c99a76', line: '#b0805c', dot: ['#d4a884'] },
   W: { base: '#5aa8d8', line: null, dot: ['#6ab8e4', '#4e9acb'] }, // 池（入れない）
+  D: { base: '#e2cc98', line: null, dot: ['#d4bc84', '#ecd8ac'] }, // 遊び場の砂（歩ける）
   // 家の中（チュートリアル）
   F: { base: '#c8955a', line: '#a87840', dot: ['#d2a068', '#bb8a50'] }, // 板の床
   K: { base: '#efe6d2', line: '#d6cab0', dot: ['#f4ecdc'] }, // 台所のタイル

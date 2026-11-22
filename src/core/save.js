@@ -10,6 +10,7 @@ const DEFAULT = () => ({
   unlocked: [], // 点数で開いたステージの id
   cleared: [], // クリアしたステージの id（チュートリアルなど、点数のないステージ）
   learned: {}, // 覚えたこと（トイレフィーバーなど。ボス戦で覚える）
+  seenIntro: [], // 「あそびかた」（はじめての しくみ の説明）を見たステージの id
   archive: {},
   settings: { mute: false },
 });
